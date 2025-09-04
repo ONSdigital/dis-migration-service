@@ -11,10 +11,11 @@ schemes:
   - http
 tags:
   - name: "hello"
-  - name: "private"
+    description: "Hello world endpoints generated from boilerplate"
 paths:
   /hello:
     get:
+      security: []
       tags:
         - hello
       summary: Example hello world endpoint
@@ -31,6 +32,7 @@ paths:
 
   /health:
     get:
+      security: []
       tags:
         - private
       summary: "Returns API's health status"
