@@ -56,6 +56,10 @@ test: ## Runs unit tests including checks for race conditions and returns covera
 test-component: ## Runs component test suite
 	go test -cover -coverpkg=github.com/ONSdigital/dis-migration-service/... -component
 
+.PHONY: validate-specification
+validate-specification: # Validate swagger spec
+	redocly lint swagger.yaml
+
 .PHONY: help
 help: ## Show help page for list of make targets
 	@echo ''
