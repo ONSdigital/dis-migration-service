@@ -71,3 +71,13 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.1.6
+
+  dis-migration-service-validate-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run specification validation
+        uses: fluximus-prime/redocly-cli-github-action@v1
+        with:
+          args: 'lint swagger.yaml'
