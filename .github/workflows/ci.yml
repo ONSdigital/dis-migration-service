@@ -43,6 +43,24 @@ jobs:
       - name: Run Go build test
         run: make build
 
+  dis-migration-service-unit:
+    needs: dis-migration-service-setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run Go unit tests
+        run: make test
+
+  dis-migration-service-component:
+    needs: dis-migration-service-setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run Go unit tests
+        run: make test-component
+
   dis-migration-service-lint:
     needs: dis-migration-service-setup
     runs-on: ubuntu-latest
