@@ -70,6 +70,7 @@ paths:
           $ref: "#/responses/Forbidden"
         500: 
           $ref: "#/responses/InternalError"
+
   /migration-jobs/{job_id}:
     get:
       security: 
@@ -293,6 +294,7 @@ definitions:
         properties:
           build_time:
             type: string
+            format: datetime
             description: "The build date and time of the API"
             example: "2020-06-11T12:49:20+01:00"
           git_commit:
@@ -306,7 +308,7 @@ definitions:
           language_version:
             type: string
             description: "The version of the programming language used to implement API"
-            example: "go1.14.3"
+            example: "go1.25.1"
           version:
             type: string
             description: "The version of API"
@@ -353,23 +355,16 @@ definitions:
         format: datetime
         description: "The last failed health check date and time of the external service"
         example: "2019-09-22T11:48:51.0000001Z"
-  MigrationJobPreview:
-    type: object
-    properties:
-      allOf:
-        $ref: "#/definitions/MigrationJob"
-      tasks:
-        type: array
-        items:
-          $ref: "#/definitions/MigrationTask"
   MigrationJob:
     type: object
     properties:
       id:
         type: string
+        example: 1
       last_updated:
         type: string
         format: datetime
+        example: "2020-06-11T12:49:20+01:00"
       links:
         type: object
         properties:
@@ -393,28 +388,35 @@ definitions:
                 example: "https://api.beta.ons.gov.uk/v1/migration-jobs/1/tasks"
       source_id:
         type: string
+        description: >
+         "Source ID to start job from - in practice, ths current example is a uri
+         as it only fetches from Zebedee"
+        example: "/economy/inflationandpriceindices/datasets/consumerpriceinflation/data"
       state:
         $ref: "#/definitions/MigrationState"
       type:
         $ref: "#/definitions/MigrationJobType"
 
-  MigrationJobSubmitted:
+  MigrationJobPreview:
     type: object
     properties:
-      id:
-        type: string
-      monitor_url:
-        type: string
-        description: "URL to monitor progress of job on"
+      allOf:
+        $ref: "#/definitions/MigrationJob"
+      tasks:
+        type: array
+        items:
+          $ref: "#/definitions/MigrationTask"
 
   MigrationTask:
     type: object
     properties:
       id: 
         type: string
+        example: 1
       last_updated:
         type: string
         format: datetime
+        example: "2020-06-11T12:49:20+01:00"
       source:
         $ref: "#/definitions/MigrationTaskMetadata"
       state:
@@ -429,10 +431,13 @@ definitions:
     properties:
       id:
         type: string
-      title:
+        example: 1
+      label:
         type: string
+        example: "Consumer price inflation tables"
       uri:
         type: string
+        example: "/data?uri=/economy/inflationandpriceindices/datasets/consumerpriceinflation/data"
 
   MigrationJobList:
     allOf:
@@ -488,16 +493,6 @@ definitions:
       - dataset_edition
       - dataset_version
       - dataset_download
-
-  MigrationTaskStatisticsList:
-    type: array
-    items:
-      type: object
-      properties:
-        type: 
-          $ref: "#/definitions/MigrationTaskType"
-        count:
-          type: integer
 
 securityDefinitions:
   Authorization:
