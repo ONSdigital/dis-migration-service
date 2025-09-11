@@ -59,11 +59,11 @@ paths:
         200: 
           description: "Successful dry run response"
           schema:
-            $ref: "#/definitions/MigrationJob"
+            $ref: "#/definitions/MigrationJobPreview"
         202: 
           description: "Successful task acceptance"
           schema:
-            $ref: "#/definitions/MigrationJobPreview"
+            $ref: "#/definitions/MigrationJob"
         400:
           description: "Invalid request body"
           schema:
@@ -248,12 +248,6 @@ parameters:
       - failed_migration
       - cancelled
     required: false
-  task_id:
-    in: path
-    name: task_id
-    description: "Unique identifier for a migration task"
-    type: string
-    required: true
   MigrationJobPostBody:
     in: body
     name: body
