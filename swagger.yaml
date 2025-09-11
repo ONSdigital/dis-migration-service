@@ -32,6 +32,10 @@ paths:
           description: "Successful response"
           schema:
             $ref: "#/definitions/MigrationJobList"
+        400:
+          description: "Invalid request parameter(s)"
+          schema:
+            $ref: "#/responses/BadRequest"
         401:
           $ref: "#/responses/Unauthorised"
         403: 
@@ -115,6 +119,10 @@ paths:
       responses:
         204: 
           description: "Successful state change"
+        400:
+          description: "Invalid state supplied"
+          schema:
+            $ref: "#/responses/BadRequest"
         401:
           $ref: "#/responses/Unauthorised"
         403: 
@@ -152,6 +160,10 @@ paths:
           description: "Successful response"
           schema:
             $ref: "#/definitions/MigrationTaskList"
+        400:
+          description: "Invalid request parameter(s)"
+          schema:
+            $ref: "#/responses/BadRequest"
         401:
           $ref: "#/responses/Unauthorised"
         404:
