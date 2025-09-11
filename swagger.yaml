@@ -16,7 +16,7 @@ paths:
   /migration-jobs:
     get:
       security: 
-        - Authorization: []
+        - Authorization: [migration:read]
       tags:
         - private
       summary: "Get list of migration jobs"
@@ -41,7 +41,7 @@ paths:
 
     post:
       security: 
-        - Authorization: []
+        - Authorization: [migration:create]
       tags:
         - private
       summary: "Create a migration job"
@@ -74,7 +74,7 @@ paths:
   /migration-jobs/{job_id}:
     get:
       security: 
-        - Authorization: []
+        - Authorization: [migration:read]
       tags:
         - private
       summary: "Get a migration job"
@@ -102,7 +102,7 @@ paths:
   /migration-jobs/{job_id}/state:
     put:
       security: 
-        - Authorization: []
+        - Authorization: [migration:edit]
       tags:
         - private
       summary: "Updates a migration state"
@@ -133,7 +133,7 @@ paths:
   /migration-jobs/{job_id}/tasks:
     get:
       security: 
-        - Authorization: []
+        - Authorization: [migration:read]
       tags:
         - private
       summary: "Gets a migration job's tasks"
