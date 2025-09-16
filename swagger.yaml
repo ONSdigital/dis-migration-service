@@ -84,7 +84,7 @@ paths:
       tags:
         - private
       summary: "Get a migration job"
-      description: "Gets a specific migration job using the unique job id identifier"
+      description: "Gets a specific migration job using the unique job id"
       produces:
         - application/json
       parameters:
@@ -112,7 +112,7 @@ paths:
       tags:
         - private
       summary: "Updates a migration state"
-      description: "Gets a specific migration job using the unique job id identifier"
+      description: "Updates the state of a specific migration job using the unique job id"
       produces:
         - application/json
       consumes:
