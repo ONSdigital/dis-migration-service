@@ -35,13 +35,14 @@ paths:
         400:
           description: "Invalid request parameter(s)"
           schema:
-            $ref: "#/responses/BadRequest"
+            $ref: "#/definitions/ErrorList"
         401:
-          $ref: "#/responses/Unauthorised"
+          $ref: "#/responses/Unauthenticated"
         403: 
           $ref: "#/responses/Forbidden"
         500: 
-          $ref: "#/responses/InternalError"
+          $ref: "#/responses/Error"
+
 
     post:
       security: 
@@ -69,13 +70,13 @@ paths:
         400:
           description: "Invalid request body"
           schema:
-            $ref: "#/responses/BadRequest"
+            $ref: "#/definitions/ErrorList"
         401:
-          $ref: "#/responses/Unauthorised"
+          $ref: "#/responses/Unauthenticated"
         403: 
           $ref: "#/responses/Forbidden"
         500: 
-          $ref: "#/responses/InternalError"
+          $ref: "#/responses/Error"
 
   /migration-jobs/{job_id}:
     get:
@@ -95,15 +96,15 @@ paths:
           schema:
             $ref: "#/definitions/MigrationJob"
         401:
-          $ref: "#/responses/Unauthorised"
+          $ref: "#/responses/Unauthenticated"
         403: 
           $ref: "#/responses/Forbidden"
         404:
           description: "Migration Job not found"
           schema:
-            $ref: "#/responses/NotFound"
+            $ref: "#/definitions/ErrorList"
         500: 
-          $ref: "#/responses/InternalError"
+          $ref: "#/responses/Error"
 
   /migration-jobs/{job_id}/state:
     put:
@@ -126,21 +127,22 @@ paths:
         400:
           description: "Invalid state supplied"
           schema:
-            $ref: "#/responses/BadRequest"
+            $ref: "#/definitions/ErrorList"
         401:
-          $ref: "#/responses/Unauthorised"
+          $ref: "#/responses/Unauthenticated"
         403: 
           $ref: "#/responses/Forbidden"
         404:
           description: "Migration job not found"
           schema:
-            $ref: "#/responses/NotFound"
+            $ref: "#/definitions/ErrorList"
         409:
           description: "State change is not allowed"
           schema:
-            $ref: "#/responses/Conflict"
+            $ref: "#/definitions/ErrorList"
         500: 
-          $ref: "#/responses/InternalError"
+          $ref: "#/responses/Error"
+
   
   /migration-jobs/{job_id}/tasks:
     get:
@@ -167,17 +169,17 @@ paths:
         400:
           description: "Invalid request parameter(s)"
           schema:
-            $ref: "#/responses/BadRequest"
+            $ref: "#/definitions/ErrorList"
         401:
-          $ref: "#/responses/Unauthorised"
+          $ref: "#/responses/Unauthenticated"
+        403: 
+          $ref: "#/responses/Forbidden"
         404:
           description: "Migration job not found"
           schema:
-            $ref: "#/responses/NotFound"
-        403: 
-          $ref: "#/responses/Forbidden"
+            $ref: "#/definitions/ErrorList"
         500: 
-          $ref: "#/responses/InternalError"
+          $ref: "#/responses/Error"
   
   /health:
     get:
@@ -196,7 +198,7 @@ paths:
         429:
           description: "Services warming up or degraded (at least one check in WARNING or CRITICAL status)"
         500:
-          $ref: "#/responses/InternalError"
+          $ref: "#/responses/Error"
 
 parameters:
   dry_run:
@@ -278,18 +280,18 @@ parameters:
           enum: ["approved,cancelled"]
 
 responses:
-  BadRequest:
-    description: "Bad request"
-  Conflict:
-    description: "Conflict"
-  Forbidden:
-    description: "Request is unauthorised"
-  InternalError:
-    description: "Failed to process the request due to an internal error"
-  NotFound:
-    description: "Item not found"
-  Unauthorised:
-    description: "Request is unauthenticated"
+  Unauthenticated:
+    description: "Request is not authenticated"
+    schema:
+      $ref: "#/definitions/ErrorList"
+  Forbidden: 
+    description: "Request is not authorised"
+    schema:
+      $ref: "#/definitions/ErrorList"
+  Error:
+    description: "Generic error response"
+    schema:
+      $ref: "#/definitions/ErrorList"
 
 definitions:
   Health:
@@ -503,6 +505,24 @@ definitions:
       - dataset_edition
       - dataset_version
       - dataset_download
+    
+  ErrorList:
+    type: object
+    properties:
+      errors:
+        type: array
+        items:
+          $ref: '#/definitions/Error'
+
+  Error:
+    type: object
+    properties:
+      code:
+        type: string
+        description: "Code representing the type of error that occurred"
+      description:
+        type: string
+        description: "Description of the error"
 
 securityDefinitions:
   Authorization:
