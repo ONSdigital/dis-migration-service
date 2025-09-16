@@ -8,28 +8,179 @@ info:
     url: "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 basePath: "/v1"
 schemes:
-  - http
+  - https
 tags:
-  - name: "hello"
-    description: "Hello world endpoints generated from boilerplate"
+  - name: "private"
+    description: "Private endpoints"
 paths:
-  /hello:
+  /migration-jobs:
     get:
-      security: []
+      security: 
+        - Authorization: [migration:read]
       tags:
-        - hello
-      summary: Example hello world endpoint
-      description: Returns an example payload.
+        - private
+      summary: "Get list of migration jobs"
+      description: "Lists all migration jobs in a paginated format."
       produces:
         - application/json
+      parameters:
+        - $ref: "#/parameters/limit"
+        - $ref: "#/parameters/offset"
+        - $ref: "#/parameters/state"
       responses:
-        200:
-          description: OK
+        200: 
+          description: "Successful response"
           schema:
-            $ref: "#/definitions/HelloResponse"
-        500:
-          $ref: '#/responses/InternalError'
+            $ref: "#/definitions/MigrationJobList"
+        400:
+          description: "Invalid request parameter(s)"
+          schema:
+            $ref: "#/definitions/ErrorList"
+        401:
+          $ref: "#/responses/Unauthenticated"
+        403: 
+          $ref: "#/responses/Forbidden"
+        500: 
+          $ref: "#/responses/Error"
 
+
+    post:
+      security: 
+        - Authorization: [migration:create]
+      tags:
+        - private
+      summary: "Create a migration job"
+      description: "Creates a migration job using body data."
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/dry_run"
+        - $ref: "#/parameters/MigrationJobPostBody"
+      responses:
+        200: 
+          description: "Successful dry run response"
+          schema:
+            $ref: "#/definitions/MigrationJobPreview"
+        202: 
+          description: "Successful task acceptance"
+          schema:
+            $ref: "#/definitions/MigrationJob"
+        400:
+          description: "Invalid request body"
+          schema:
+            $ref: "#/definitions/ErrorList"
+        401:
+          $ref: "#/responses/Unauthenticated"
+        403: 
+          $ref: "#/responses/Forbidden"
+        500: 
+          $ref: "#/responses/Error"
+
+  /migration-jobs/{job_id}:
+    get:
+      security: 
+        - Authorization: [migration:read]
+      tags:
+        - private
+      summary: "Get a migration job"
+      description: "Gets a specific migration job using the unique job id"
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/job_id"
+      responses:
+        200: 
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/MigrationJob"
+        401:
+          $ref: "#/responses/Unauthenticated"
+        403: 
+          $ref: "#/responses/Forbidden"
+        404:
+          description: "Migration Job not found"
+          schema:
+            $ref: "#/definitions/ErrorList"
+        500: 
+          $ref: "#/responses/Error"
+
+  /migration-jobs/{job_id}/state:
+    put:
+      security: 
+        - Authorization: [migration:edit]
+      tags:
+        - private
+      summary: "Updates a migration state"
+      description: "Updates the state of a specific migration job using the unique job id"
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/job_id"
+        - $ref: "#/parameters/MigrationJobState"
+      responses:
+        204: 
+          description: "Successful state change"
+        400:
+          description: "Invalid state supplied"
+          schema:
+            $ref: "#/definitions/ErrorList"
+        401:
+          $ref: "#/responses/Unauthenticated"
+        403: 
+          $ref: "#/responses/Forbidden"
+        404:
+          description: "Migration job not found"
+          schema:
+            $ref: "#/definitions/ErrorList"
+        409:
+          description: "State change is not allowed"
+          schema:
+            $ref: "#/definitions/ErrorList"
+        500: 
+          $ref: "#/responses/Error"
+
+  
+  /migration-jobs/{job_id}/tasks:
+    get:
+      security: 
+        - Authorization: [migration:read]
+      tags:
+        - private
+      summary: "Gets a migration job's tasks"
+      description: >
+        "Gets a specific migration job using the unique job id identifier and returns 
+        it's tasks in a paginated list"
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/job_id"
+        - $ref: "#/parameters/limit"
+        - $ref: "#/parameters/offset"
+        - $ref: "#/parameters/state"
+      responses:
+        200: 
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/MigrationTaskList"
+        400:
+          description: "Invalid request parameter(s)"
+          schema:
+            $ref: "#/definitions/ErrorList"
+        401:
+          $ref: "#/responses/Unauthenticated"
+        403: 
+          $ref: "#/responses/Forbidden"
+        404:
+          description: "Migration job not found"
+          schema:
+            $ref: "#/definitions/ErrorList"
+        500: 
+          $ref: "#/responses/Error"
+  
   /health:
     get:
       security: []
@@ -47,32 +198,120 @@ paths:
         429:
           description: "Services warming up or degraded (at least one check in WARNING or CRITICAL status)"
         500:
-          $ref: "#/responses/InternalError"
+          $ref: "#/responses/Error"
+
+parameters:
+  dry_run:
+    in: query
+    name: dry_run
+    description: >
+      A modifier for creation to see what would be created if done.
+    type: boolean
+    required: false
+  job_id:
+    in: path
+    name: job_id
+    description: "Unique identifier for a migration job"
+    type: string
+    required: true
+  limit:
+    name: limit
+    in: query
+    description: "The number of items requested, defaulted to 10 and limited to 1000."
+    type: integer
+    required: false
+    default: 10
+  offset:
+    in: query
+    name: offset
+    description: >
+      The offset into the complete ordered set of items which satisfy the query, which specifies the 
+      first item to return (starting at 0). Use this parameter as a pagination mechanism along with 
+      the limit parameter."
+    type: integer
+    required: false
+    default: 0
+  state:
+    in: query
+    name: state
+    description: >
+      A filter for item state, specifies a subset of items to be returned"
+    type: string
+    enum: &STATE
+      - submitted
+      - review 
+      - approved
+      - published
+      - completed
+      # Running states
+      - migrating
+      - publishing
+      - post_publishing
+      - reverting
+      # Failed states
+      - failed_post_publish
+      - failed_publish
+      - failed_migration
+      - cancelled
+    required: false
+  MigrationJobPostBody:
+    in: body
+    name: body
+    schema:
+      type: object
+      properties:
+        source_id:
+          type: string
+        target_id:
+          type: string
+        type:
+          $ref: "#/definitions/MigrationJobType"
+      required:
+        - source_id
+        - type
+  MigrationJobState:
+    in: body
+    name: body
+    schema:
+      type: object
+      properties:
+        state:
+          type: string
+          enum: 
+            - approved
+            - cancelled
 
 responses:
-  InternalError:
-    description: "Failed to process the request due to an internal error"
+  Unauthenticated:
+    description: "Request is not authenticated"
+    schema:
+      $ref: "#/definitions/ErrorList"
+  Forbidden: 
+    description: "Request is not authorised"
+    schema:
+      $ref: "#/definitions/ErrorList"
+  Error:
+    description: "Generic error response"
+    schema:
+      $ref: "#/definitions/ErrorList"
 
 definitions:
-  HelloResponse:
-    type: object
-    properties:
-      message:
-        type: string
-        description: "Message returned by hello world endpoint"
-        example: "Hello, world!"
   Health:
     type: object
     properties:
       status:
         type: string
         description: "The status of the API"
-        enum: ["OK", "WARNING", "CRITICAL"]
+        enum: 
+          - OK
+          - WARNING
+          - CRITICAL
       version:
         type: object
         properties:
           build_time:
             type: string
+            format: datetime
             description: "The build date and time of the API"
             example: "2020-06-11T12:49:20+01:00"
           git_commit:
@@ -86,7 +325,7 @@ definitions:
           language_version:
             type: string
             description: "The version of the programming language used to implement API"
-            example: "go1.14.3"
+            example: "go1.25.1"
           version:
             type: string
             description: "The version of API"
@@ -109,24 +348,194 @@ definitions:
       name:
         type: string
         description: "The name of external service used by API"
-        enum: ["mongodb"]
+        enum: 
+          - mongodb
       status:
         type: string
         description: "The status of the external service"
-        enum: ["OK", "WARNING", "CRITICAL"]
+        enum: 
+          - OK
+          - WARNING
+          - CRITICAL
       message:
         type: string
         description: "The message status of the external service"
         example: "mongodb is OK"
       last_checked:
         type: string
+        format: datetime
         description: "The last health check date and time of the external service"
         example: "2020-06-11T11:49:50.330089Z"
       last_success:
         type: string
+        format: datetime
         description: "The last successful health check date and time of the external service"
         example: "2020-06-11T11:49:50.330089Z"
       last_failure:
         type: string
+        format: datetime
         description: "The last failed health check date and time of the external service"
         example: "2019-09-22T11:48:51.0000001Z"
+  MigrationJob:
+    type: object
+    properties:
+      id:
+        type: string
+        example: 1
+      last_updated:
+        type: string
+        format: datetime
+        example: "2020-06-11T12:49:20+01:00"
+      links:
+        type: object
+        properties:
+          self:
+            description: "A link to the individual migration job"
+            type: object
+            properties:
+              href:
+                description: "A fully qualified URL to the migration job API response"
+                type: string
+                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/1"
+              id:
+                type: string
+          tasks:
+            description: "A link to all the tasks for the migration job"
+            type: object
+            properties:
+              href:
+                description: "A fully qualified URL to the migration job's tasks API response"
+                type: string
+                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/1/tasks"
+      source_id:
+        type: string
+        description: >
+         "Source ID to start job from - in practice, ths current example is a uri
+         as it only fetches from Zebedee"
+        example: "/economy/inflationandpriceindices/datasets/consumerpriceinflation/data"
+      state:
+        $ref: "#/definitions/MigrationState"
+      type:
+        $ref: "#/definitions/MigrationJobType"
+
+  MigrationJobPreview:
+    type: object
+    properties:
+      allOf:
+        $ref: "#/definitions/MigrationJob"
+      tasks:
+        type: array
+        items:
+          $ref: "#/definitions/MigrationTask"
+
+  MigrationTask:
+    type: object
+    properties:
+      id: 
+        type: string
+        example: 1
+      last_updated:
+        type: string
+        format: datetime
+        example: "2020-06-11T12:49:20+01:00"
+      source:
+        $ref: "#/definitions/MigrationTaskMetadata"
+      state:
+        $ref: "#/definitions/MigrationState"
+      target:
+        $ref: "#/definitions/MigrationTaskMetadata"
+      type:
+        $ref: "#/definitions/MigrationTaskType"
+  
+  MigrationTaskMetadata:
+    type: object
+    properties:
+      id:
+        type: string
+        example: 1
+      label:
+        type: string
+        example: "Consumer price inflation tables"
+      uri:
+        type: string
+        example: "/data?uri=/economy/inflationandpriceindices/datasets/consumerpriceinflation/data"
+
+  MigrationJobList:
+    allOf:
+      - $ref: "#/definitions/List"
+      - type: object
+        properties:      
+          items:
+            type: array
+            description: Array containing results.
+            items: 
+              $ref: "#/definitions/MigrationJob"
+
+  MigrationTaskList:
+    allOf:
+      - $ref: "#/definitions/List"
+      - type: object
+        properties:
+          items:
+            type: array
+            description: Array containing results.
+            items: 
+              $ref: "#/definitions/MigrationTask"
+
+  List:
+    type: object
+    properties:
+      count:
+        type: integer
+        description: How many jobs are present in the response
+      limit:
+        type: integer
+        description: Max number of jobs we are returning with this response
+      offset:
+        type: integer
+        description: The number of documents into the full list this response started at
+      total_count:
+        type: integer
+        description: How many jobs are available in total
+
+  MigrationState:
+    type: string
+    enum: *STATE
+
+  MigrationJobType:
+    type: string
+    enum: 
+      - static_dataset
+
+  MigrationTaskType:
+    type: string
+    enum:
+      - dataset
+      - dataset_edition
+      - dataset_version
+      - dataset_download
+    
+  ErrorList:
+    type: object
+    properties:
+      errors:
+        type: array
+        items:
+          $ref: '#/definitions/Error'
+
+  Error:
+    type: object
+    properties:
+      code:
+        type: string
+        description: "Code representing the type of error that occurred"
+      description:
+        type: string
+        description: "Description of the error"
+
+securityDefinitions:
+  Authorization:
+    name: Authorization
+    description: "Service Auth Token used by Auth service"
+    in: header
+    type: apiKey
