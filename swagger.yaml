@@ -277,7 +277,9 @@ parameters:
       properties:
         state:
           type: string
-          enum: ["approved,cancelled"]
+          enum: 
+            - approved
+            - cancelled
 
 responses:
   Unauthenticated:
@@ -300,7 +302,10 @@ definitions:
       status:
         type: string
         description: "The status of the API"
-        enum: ["OK", "WARNING", "CRITICAL"]
+        enum: 
+          - OK
+          - WARNING
+          - CRITICAL
       version:
         type: object
         properties:
@@ -343,11 +348,15 @@ definitions:
       name:
         type: string
         description: "The name of external service used by API"
-        enum: ["mongodb"]
+        enum: 
+          - mongodb
       status:
         type: string
         description: "The status of the external service"
-        enum: ["OK", "WARNING", "CRITICAL"]
+        enum: 
+          - OK
+          - WARNING
+          - CRITICAL
       message:
         type: string
         description: "The message status of the external service"
