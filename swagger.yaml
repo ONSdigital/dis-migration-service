@@ -52,6 +52,8 @@ paths:
       description: "Creates a migration job using body data."
       produces:
         - application/json
+      consumes:
+        - application/json
       parameters:
         - $ref: "#/parameters/dry_run"
         - $ref: "#/parameters/MigrationJobPostBody"
@@ -112,6 +114,8 @@ paths:
       summary: "Updates a migration state"
       description: "Gets a specific migration job using the unique job id identifier"
       produces:
+        - application/json
+      consumes:
         - application/json
       parameters:
         - $ref: "#/parameters/job_id"
