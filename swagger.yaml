@@ -347,7 +347,7 @@ definitions:
         properties:
           build_time:
             type: string
-            format: datetime
+            format: date-time
             description: "The build date and time of the API"
             example: "2020-06-11T12:49:20+01:00"
           git_commit:
@@ -399,17 +399,17 @@ definitions:
         example: "mongodb is OK"
       last_checked:
         type: string
-        format: datetime
+        format: date-time
         description: "The last health check date and time of the external service"
         example: "2020-06-11T11:49:50.330089Z"
       last_success:
         type: string
-        format: datetime
+        format: date-time
         description: "The last successful health check date and time of the external service"
         example: "2020-06-11T11:49:50.330089Z"
       last_failure:
         type: string
-        format: datetime
+        format: date-time
         description: "The last failed health check date and time of the external service"
         example: "2019-09-22T11:48:51.0000001Z"
 
@@ -421,7 +421,7 @@ definitions:
         example: 1
       last_updated:
         type: string
-        format: datetime
+        format: date-time
         example: "2020-06-11T12:49:20+01:00"
       links:
         type: object
@@ -481,7 +481,7 @@ definitions:
         example: 1
       last_updated:
         type: string
-        format: datetime
+        format: date-time
         example: "2020-06-11T12:49:20+01:00"
       source:
         $ref: "#/definitions/MigrationTaskMetadata"
@@ -545,7 +545,7 @@ definitions:
       created_at:
         description: The date and time the event occurred.
         type: string
-        format: datetime
+        format: date-time
         example: "2020-06-11T12:49:20+01:00"
       requested_by:
         description: The user who made the request.
