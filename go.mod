@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dis-migration-service
 
-go 1.24
+go 1.25
 
 require (
 	github.com/ONSdigital/dp-component-test v0.25.0
