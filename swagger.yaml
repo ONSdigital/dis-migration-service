@@ -564,6 +564,10 @@ definitions:
         description: The action taken by the user.
         type: string
         enum: *STATE
+      jobId:
+        description: The ID of the job this event took place on.
+        type: string
+        example: 1
 
   List:
     type: object
