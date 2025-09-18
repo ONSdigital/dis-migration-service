@@ -143,6 +143,42 @@ paths:
         500: 
           $ref: "#/responses/Error"
 
+  /migration-jobs/{job_id}/events:
+    get:
+      security: 
+        - Authorization: [migration:read]
+      tags:
+        - private
+      summary: "Gets a migration job's events"
+      description: >
+        "Gets a specific migration job using the unique job id and returns 
+        it's events (state changes) in a paginated list"
+      produces:
+        - application/json
+      parameters:
+        - $ref: "#/parameters/job_id"
+        - $ref: "#/parameters/limit"
+        - $ref: "#/parameters/offset"
+        - $ref: "#/parameters/state"
+      responses:
+        200: 
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/MigrationJobEventList"
+        400:
+          description: "Invalid request parameter(s)"
+          schema:
+            $ref: "#/definitions/ErrorList"
+        401:
+          $ref: "#/responses/Unauthenticated"
+        403: 
+          $ref: "#/responses/Forbidden"
+        404:
+          description: "Migration job not found"
+          schema:
+            $ref: "#/definitions/ErrorList"
+        500: 
+          $ref: "#/responses/Error"
   
   /migration-jobs/{job_id}/tasks:
     get:
@@ -152,7 +188,7 @@ paths:
         - private
       summary: "Gets a migration job's tasks"
       description: >
-        "Gets a specific migration job using the unique job id identifier and returns 
+        "Gets a specific migration job using the unique job id and returns 
         it's tasks in a paginated list"
       produces:
         - application/json
@@ -311,7 +347,7 @@ definitions:
         properties:
           build_time:
             type: string
-            format: datetime
+            format: date-time
             description: "The build date and time of the API"
             example: "2020-06-11T12:49:20+01:00"
           git_commit:
@@ -363,19 +399,20 @@ definitions:
         example: "mongodb is OK"
       last_checked:
         type: string
-        format: datetime
+        format: date-time
         description: "The last health check date and time of the external service"
         example: "2020-06-11T11:49:50.330089Z"
       last_success:
         type: string
-        format: datetime
+        format: date-time
         description: "The last successful health check date and time of the external service"
         example: "2020-06-11T11:49:50.330089Z"
       last_failure:
         type: string
-        format: datetime
+        format: date-time
         description: "The last failed health check date and time of the external service"
         example: "2019-09-22T11:48:51.0000001Z"
+
   MigrationJob:
     type: object
     properties:
@@ -384,11 +421,19 @@ definitions:
         example: 1
       last_updated:
         type: string
-        format: datetime
+        format: date-time
         example: "2020-06-11T12:49:20+01:00"
       links:
         type: object
         properties:
+          events:
+            description: "A link to all the events for the migration job"
+            type: object
+            properties:
+              href:
+                description: "A fully qualified URL to the migration job's events API response"
+                type: string
+                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/1/events"
           self:
             description: "A link to the individual migration job"
             type: object
@@ -436,7 +481,7 @@ definitions:
         example: 1
       last_updated:
         type: string
-        format: datetime
+        format: date-time
         example: "2020-06-11T12:49:20+01:00"
       source:
         $ref: "#/definitions/MigrationTaskMetadata"
@@ -481,6 +526,48 @@ definitions:
             description: Array containing results.
             items: 
               $ref: "#/definitions/MigrationTask"
+
+  MigrationJobEventList:
+    allOf:
+      - $ref: "#/definitions/List"
+      - type: object
+        properties:      
+          items:
+            type: array
+            description: Array containing results.
+            items: 
+              $ref: "#/definitions/MigrationJobEvent"
+
+  MigrationJobEvent:
+    description: Details of a specific change event forming part of the change and audit log for a migration job.
+    type: object
+    properties:
+      created_at:
+        description: The date and time the event occurred.
+        type: string
+        format: date-time
+        example: "2020-06-11T12:49:20+01:00"
+      requested_by:
+        description: The user who made the request.
+        type: object
+        properties:
+          id:
+            description: The ID of the user.
+            type: string
+            example: 0889d599-3f0e-4564-9d6e-9455a6b73da7
+          email:
+            description: The email of the user. This is only populated if the user is a human user.
+            type: string
+            format: email
+            example: publisher@ons.gov.uk
+      action:
+        description: The action taken by the user.
+        type: string
+        enum: *STATE
+      jobId:
+        description: The ID of the job this event took place on.
+        type: string
+        example: 1
 
   List:
     type: object
