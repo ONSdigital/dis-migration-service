@@ -151,7 +151,7 @@ paths:
         - private
       summary: "Gets a migration job's events"
       description: >
-        "Gets a specific migration job using the unique job id identifier and returns 
+        "Gets a specific migration job using the unique job id and returns 
         it's events (state changes) in a paginated list"
       produces:
         - application/json
@@ -188,7 +188,7 @@ paths:
         - private
       summary: "Gets a migration job's tasks"
       description: >
-        "Gets a specific migration job using the unique job id identifier and returns 
+        "Gets a specific migration job using the unique job id and returns 
         it's tasks in a paginated list"
       produces:
         - application/json
