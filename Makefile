@@ -50,10 +50,12 @@ lint-local: ## Use locally to run linters against Go code
 
 .PHONY: test
 test: ## Runs unit tests including checks for race conditions and returns coverage
+	go env -w GOTOOLCHAIN=go1.25.0+auto
 	go test -race -cover ./...
 
 .PHONY: test-component
 test-component: ## Runs component test suite
+	go env -w GOTOOLCHAIN=go1.25.0+auto
 	go test -cover -coverpkg=github.com/ONSdigital/dis-migration-service/... -component
 
 .PHONY: validate-specification
