@@ -4,8 +4,11 @@
 package mock
 
 import (
+	"context"
 	"github.com/ONSdigital/dis-migration-service/config"
+	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/dis-migration-service/service"
+	"github.com/ONSdigital/dis-migration-service/store"
 	"net/http"
 	"sync"
 )
@@ -26,6 +29,12 @@ var _ service.Initialiser = &InitialiserMock{}
 //			DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 //				panic("mock out the DoGetHealthCheck method")
 //			},
+//			DoGetMigratorFunc: func(ctx context.Context) (migrator.Migrator, error) {
+//				panic("mock out the DoGetMigrator method")
+//			},
+//			DoGetMongoDBFunc: func(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
+//				panic("mock out the DoGetMongoDB method")
+//			},
 //		}
 //
 //		// use mockedInitialiser in code that requires service.Initialiser
@@ -38,6 +47,12 @@ type InitialiserMock struct {
 
 	// DoGetHealthCheckFunc mocks the DoGetHealthCheck method.
 	DoGetHealthCheckFunc func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error)
+
+	// DoGetMigratorFunc mocks the DoGetMigrator method.
+	DoGetMigratorFunc func(ctx context.Context) (migrator.Migrator, error)
+
+	// DoGetMongoDBFunc mocks the DoGetMongoDB method.
+	DoGetMongoDBFunc func(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -59,9 +74,23 @@ type InitialiserMock struct {
 			// Version is the version argument value.
 			Version string
 		}
+		// DoGetMigrator holds details about calls to the DoGetMigrator method.
+		DoGetMigrator []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
+		// DoGetMongoDB holds details about calls to the DoGetMongoDB method.
+		DoGetMongoDB []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg config.MongoConfig
+		}
 	}
 	lockDoGetHTTPServer  sync.RWMutex
 	lockDoGetHealthCheck sync.RWMutex
+	lockDoGetMigrator    sync.RWMutex
+	lockDoGetMongoDB     sync.RWMutex
 }
 
 // DoGetHTTPServer calls DoGetHTTPServerFunc.
@@ -141,5 +170,73 @@ func (mock *InitialiserMock) DoGetHealthCheckCalls() []struct {
 	mock.lockDoGetHealthCheck.RLock()
 	calls = mock.calls.DoGetHealthCheck
 	mock.lockDoGetHealthCheck.RUnlock()
+	return calls
+}
+
+// DoGetMigrator calls DoGetMigratorFunc.
+func (mock *InitialiserMock) DoGetMigrator(ctx context.Context) (migrator.Migrator, error) {
+	if mock.DoGetMigratorFunc == nil {
+		panic("InitialiserMock.DoGetMigratorFunc: method is nil but Initialiser.DoGetMigrator was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockDoGetMigrator.Lock()
+	mock.calls.DoGetMigrator = append(mock.calls.DoGetMigrator, callInfo)
+	mock.lockDoGetMigrator.Unlock()
+	return mock.DoGetMigratorFunc(ctx)
+}
+
+// DoGetMigratorCalls gets all the calls that were made to DoGetMigrator.
+// Check the length with:
+//
+//	len(mockedInitialiser.DoGetMigratorCalls())
+func (mock *InitialiserMock) DoGetMigratorCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockDoGetMigrator.RLock()
+	calls = mock.calls.DoGetMigrator
+	mock.lockDoGetMigrator.RUnlock()
+	return calls
+}
+
+// DoGetMongoDB calls DoGetMongoDBFunc.
+func (mock *InitialiserMock) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
+	if mock.DoGetMongoDBFunc == nil {
+		panic("InitialiserMock.DoGetMongoDBFunc: method is nil but Initialiser.DoGetMongoDB was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Cfg config.MongoConfig
+	}{
+		Ctx: ctx,
+		Cfg: cfg,
+	}
+	mock.lockDoGetMongoDB.Lock()
+	mock.calls.DoGetMongoDB = append(mock.calls.DoGetMongoDB, callInfo)
+	mock.lockDoGetMongoDB.Unlock()
+	return mock.DoGetMongoDBFunc(ctx, cfg)
+}
+
+// DoGetMongoDBCalls gets all the calls that were made to DoGetMongoDB.
+// Check the length with:
+//
+//	len(mockedInitialiser.DoGetMongoDBCalls())
+func (mock *InitialiserMock) DoGetMongoDBCalls() []struct {
+	Ctx context.Context
+	Cfg config.MongoConfig
+} {
+	var calls []struct {
+		Ctx context.Context
+		Cfg config.MongoConfig
+	}
+	mock.lockDoGetMongoDB.RLock()
+	calls = mock.calls.DoGetMongoDB
+	mock.lockDoGetMongoDB.RUnlock()
 	return calls
 }

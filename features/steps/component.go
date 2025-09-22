@@ -6,8 +6,13 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dis-migration-service/config"
+	"github.com/ONSdigital/dis-migration-service/domain"
+	"github.com/ONSdigital/dis-migration-service/migrator"
+	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 	"github.com/ONSdigital/dis-migration-service/service"
 	"github.com/ONSdigital/dis-migration-service/service/mock"
+	"github.com/ONSdigital/dis-migration-service/store"
+	storeMock "github.com/ONSdigital/dis-migration-service/store/mock"
 
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -41,6 +46,8 @@ func NewComponent() (*Component, error) {
 	initMock := &mock.InitialiserMock{
 		DoGetHealthCheckFunc: c.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
+		DoGetMigratorFunc:    c.DoGetMigrator,
+		DoGetMongoDBFunc:     c.DoGetMongoDB,
 	}
 
 	c.svcList = service.NewServiceList(initMock)
@@ -65,7 +72,8 @@ func (c *Component) Close() error {
 
 func (c *Component) InitialiseService() (http.Handler, error) {
 	var err error
-	c.svc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
+	svc := service.New(c.Config, c.svcList)
+	err = svc.Run(context.Background(), "1", "", "", c.errorChan)
 	if err != nil {
 		return nil, err
 	}
@@ -86,4 +94,38 @@ func (c *Component) DoGetHTTPServer(bindAddr string, router http.Handler) servic
 	c.HTTPServer.Addr = bindAddr
 	c.HTTPServer.Handler = router
 	return c.HTTPServer
+}
+
+func (c *Component) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
+	return &storeMock.MongoDBMock{
+		GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			return &domain.Job{
+				ID:          jobID,
+				LastUpdated: "test-time",
+				State:       "submitted",
+				Config: &domain.JobConfig{
+					SourceID: "test-source-id",
+					TargetID: "test-target-id",
+					Type:     "test-type",
+				},
+			}, nil
+		},
+		CreateJobFunc: func(ctx context.Context, job *domain.Job) (*domain.Job, error) {
+			return &domain.Job{
+				ID:          "test-id",
+				LastUpdated: "test-time",
+				Config:      job.Config,
+				State:       job.State,
+			}, nil
+		},
+		CloseFunc: func(ctx context.Context) error { return nil },
+	}, nil
+}
+
+func (c *Component) DoGetMigrator(ctx context.Context) (migrator.Migrator, error) {
+	mig := &migratorMock.MigratorMock{
+		MigrateFunc: func(ctx context.Context, job *domain.Job) {},
+	}
+
+	return mig, nil
 }
