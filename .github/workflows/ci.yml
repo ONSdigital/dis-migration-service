@@ -40,8 +40,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Run Go build test
         run: make build
 
@@ -53,8 +53,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Run Go unit tests
         run: make test
 
@@ -66,8 +66,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Run Go unit tests
         run: make test-component
 
@@ -79,8 +79,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Run Go lint checks
         uses: golangci/golangci-lint-action@v8
         with:
