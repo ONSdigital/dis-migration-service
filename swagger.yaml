@@ -275,7 +275,7 @@ parameters:
     type: string
     enum: &STATE
       - submitted
-      - review 
+      - in_review 
       - approved
       - published
       - completed
