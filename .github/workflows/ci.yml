@@ -25,14 +25,10 @@ jobs:
     needs: dis-migration-service-setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Generate Go Module List
-        run: go list -json -m all > go.list
-      - name: Run Go audit check with Nancy
-        uses: sonatype-nexus-community/nancy-github-action@main
-        with:
-          nancyVersion: "latest"
+      - name: Install dis-vulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: Run dis-vulncheck
+        run: make audit
 
   dis-migration-service-build:
     needs: dis-migration-service-setup
