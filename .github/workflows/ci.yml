@@ -25,6 +25,8 @@ jobs:
     needs: dis-migration-service-setup
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Install dis-vulncheck
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - name: Run dis-vulncheck
