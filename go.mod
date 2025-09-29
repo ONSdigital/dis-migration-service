@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dis-migration-service
 
-go 1.24.0
+go 1.24
 
 require (
 	github.com/ONSdigital/dp-component-test v0.25.0
@@ -43,7 +43,7 @@ require (
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
-	github.com/golang/glog v1.2.5 // indirect
+	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect

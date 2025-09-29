@@ -7,11 +7,19 @@ A Go API for data migration.
 * Run `make debug` to run application on <http://localhost:30100>
 * Run `make help` to see full list of make targets
 
-### Dependencies
+## Tools
+
+To run some of our tests you will need additional tooling:
+
+### Audit
+
+We use `dis-vulncheck` to do auditing, which you will [need to install](https://github.com/ONSdigital/dis-vulncheck).
+
+## Dependencies
 
 * No further dependencies other than those defined in `go.mod`
 
-#### Validating Specification
+## Validating Specification
 
 To validate the swagger specification you can do this via:
 
@@ -25,7 +33,7 @@ To run this, you will need to run Node > v22 and have [redocly CLI v2](https://g
 npm install -g @redocly/cli
 ```
 
-### Configuration
+## Configuration
 
 | Environment variable         | Default            | Description
 | ---------------------------- | ------------------ | -----------
