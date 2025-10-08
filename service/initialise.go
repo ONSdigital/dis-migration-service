@@ -1,6 +1,11 @@
 package service
 
 import (
+	"context"
+
+	"github.com/ONSdigital/dis-migration-service/mongo"
+	"github.com/ONSdigital/dis-migration-service/store"
+	"github.com/ONSdigital/log.go/v2/log"
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -13,6 +18,7 @@ import (
 type ExternalServiceList struct {
 	HealthCheck bool
 	Init        Initialiser
+	MongoDB     bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
@@ -57,4 +63,26 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 	}
 	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
 	return &hc, nil
+}
+
+// GetMongoDB creates a mongoDB client and sets the Mongo flag to true
+func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
+	mongoDB, err := e.Init.DoGetMongoDB(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	e.MongoDB = true
+	return mongoDB, nil
+}
+
+// DoGetMongoDB returns a MongoDB
+func (e *Init) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
+	mongodb := &mongo.Mongo{
+		MongoConfig: cfg,
+	}
+	if err := mongodb.Init(ctx); err != nil {
+		return nil, err
+	}
+	log.Info(ctx, "listening to mongo db session", log.Data{"URI": mongodb.ClusterEndpoint})
+	return mongodb, nil
 }

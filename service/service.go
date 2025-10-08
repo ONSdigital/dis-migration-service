@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/ONSdigital/dis-migration-service/store"
 
 	"github.com/ONSdigital/dis-migration-service/api"
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -21,11 +22,39 @@ type Service struct {
 	HealthCheck HealthChecker
 }
 
+type MigrationsStore struct {
+	store.MongoDB
+}
+
 // Run the service
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
 	log.Info(ctx, "running service")
 
 	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
+
+	// Get MongoDB client
+	//svc.mongoDB, err = svc.ServiceList.GetMongoDB(ctx, cfg.MongoConfig)
+	//if err != nil {
+	//	log.Fatal(ctx, "failed to initialise mongo DB", err)
+	//	return err
+	//}
+
+	// Get MongoDB client
+	mongoDB, err := serviceList.GetMongoDB(ctx, cfg.MongoConfig)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise mongo DB", err)
+		return nil, err
+	}
+
+	// Get Datastore
+	datastore := store.Datastore{Backend: MigrationsStore{mongoDB}}
+
+	// Get Redis client
+	//redisClient, err := serviceList.GetRedisClient(ctx, cfg)
+	//if err != nil {
+	//	log.Fatal(ctx, "failed to initialise dis-redis", err)
+	//	return nil, err
+	//}
 
 	// Get HTTP Server and ... // TODO: Add any middleware that your service requires
 	r := mux.NewRouter()
@@ -41,7 +70,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// TODO: Add other(s) to serviceList here
 
 	// Setup the API
-	a := api.Setup(ctx, r)
+	a := api.Setup(ctx, r, &datastore)
 
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
 

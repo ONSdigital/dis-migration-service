@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/ONSdigital/dis-migration-service/store"
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -16,6 +17,7 @@ import (
 type Initialiser interface {
 	DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
+	DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error)
 }
 
 // HTTPServer defines the required methods from the HTTP server
