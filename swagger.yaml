@@ -159,7 +159,6 @@ paths:
         - $ref: "#/parameters/job_id"
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
-        - $ref: "#/parameters/state"
       responses:
         200: 
           description: "Successful response"
