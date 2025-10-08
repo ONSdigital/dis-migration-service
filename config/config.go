@@ -56,7 +56,7 @@ func Get() (*Config, error) {
 				ClusterEndpoint:               "localhost:27017",
 				Username:                      "",
 				Password:                      "",
-				Database:                      "bundles",
+				Database:                      "migrations",
 				Collections:                   map[string]string{JobsCollectionTitle: JobsCollectionName, EventsCollectionTitle: EventsCollectionName, TasksCollectionTitle: TasksCollectionName},
 				ReplicaSet:                    "",
 				IsStrongReadConcernEnabled:    false,
