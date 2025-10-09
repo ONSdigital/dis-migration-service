@@ -33,13 +33,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
 
 	// Get MongoDB client
-	//svc.mongoDB, err = svc.ServiceList.GetMongoDB(ctx, cfg.MongoConfig)
-	//if err != nil {
-	//	log.Fatal(ctx, "failed to initialise mongo DB", err)
-	//	return err
-	//}
-
-	// Get MongoDB client
 	mongoDB, err := serviceList.GetMongoDB(ctx, cfg.MongoConfig)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise mongo DB", err)
@@ -48,13 +41,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	// Get Datastore
 	datastore := store.Datastore{Backend: MigrationsStore{mongoDB}}
-
-	// Get Redis client
-	//redisClient, err := serviceList.GetRedisClient(ctx, cfg)
-	//if err != nil {
-	//	log.Fatal(ctx, "failed to initialise dis-redis", err)
-	//	return nil, err
-	//}
 
 	// Get HTTP Server and ... // TODO: Add any middleware that your service requires
 	r := mux.NewRouter()
@@ -72,14 +58,14 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// Setup the API
 	a := api.Setup(ctx, r, &datastore)
 
+	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
-
 	if err != nil {
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
 
-	if err := registerCheckers(ctx, hc); err != nil {
+	if err := registerCheckers(ctx, hc, mongoDB); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -150,8 +136,16 @@ func (svc *Service) Close(ctx context.Context) error {
 }
 
 func registerCheckers(ctx context.Context,
-	hc HealthChecker) (err error) {
-	// TODO: add other health checks here, as per dp-upload-service
+	hc HealthChecker, mongoCli store.MongoDB) (err error) {
+	hasErrors := false
 
+	if err = hc.AddCheck("Redis", mongoCli.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for dis-redis", err)
+	}
+
+	if hasErrors {
+		return errors.New("Error(s) registering checkers for healthcheck")
+	}
 	return nil
 }
