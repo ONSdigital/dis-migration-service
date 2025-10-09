@@ -1,6 +1,7 @@
 package config
 
 import (
+	dpMongo "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"os"
 	"testing"
 	"time"
@@ -31,6 +32,23 @@ func TestConfig(t *testing.T) {
 					OTExporterOTLPEndpoint:     "localhost:4317",
 					OTServiceName:              "dis-migration-service",
 					OtelEnabled:                false,
+					MongoConfig: MongoConfig{
+						MongoDriverConfig: dpMongo.MongoDriverConfig{
+							ClusterEndpoint:               "localhost:27017",
+							Username:                      "",
+							Password:                      "",
+							Database:                      "migrations",
+							Collections:                   map[string]string{JobsCollectionTitle: JobsCollectionName, EventsCollectionTitle: EventsCollectionName, TasksCollectionTitle: TasksCollectionName},
+							ReplicaSet:                    "",
+							IsStrongReadConcernEnabled:    false,
+							IsWriteConcernMajorityEnabled: true,
+							ConnectTimeout:                5 * time.Second,
+							QueryTimeout:                  15 * time.Second,
+							TLSConnectionConfig: dpMongo.TLSConnectionConfig{
+								IsSSL: false,
+							},
+						},
+					},
 				})
 			})
 

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ONSdigital/dis-migration-service/store"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,7 +15,8 @@ func TestSetup(t *testing.T) {
 	Convey("Given an API instance", t, func() {
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r)
+		dataStore := &store.Datastore{}
+		api := Setup(ctx, r, dataStore)
 
 		// TODO: remove hello world example handler route test case
 		Convey("When created the following routes should have been added", func() {
