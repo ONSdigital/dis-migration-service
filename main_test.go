@@ -14,17 +14,27 @@ import (
 
 var componentFlag = flag.Bool("component", false, "perform component tests")
 
+const mongoVersion = "4.4.8"
+const databaseName = "testing"
+const replicaSetName = "rs0"
+
 type ComponentTest struct {
 	MongoFeature *componenttest.MongoFeature
 }
 
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
-	component, err := steps.NewComponent()
+	mongoOpts := componenttest.MongoOptions{MongoVersion: mongoVersion, DatabaseName: databaseName, ReplicaSetName: replicaSetName}
+	f.MongoFeature = componenttest.NewMongoFeature(mongoOpts)
+
+	component, err := steps.NewMigrationComponent(f.MongoFeature)
 	if err != nil {
 		panic(err)
 	}
 
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+		if f.MongoFeature == nil {
+			f.MongoFeature = componenttest.NewMongoFeature(mongoOpts)
+		}
 		component.Reset()
 
 		return ctx, nil
@@ -38,6 +48,7 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 		return ctx, nil
 	})
 
+	f.MongoFeature.RegisterSteps(ctx)
 	component.RegisterSteps(ctx)
 }
 

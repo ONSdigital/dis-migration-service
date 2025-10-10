@@ -16,7 +16,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
-type Component struct {
+type MigrationComponent struct {
 	componenttest.ErrorFeature
 	svcList        *service.ExternalServiceList
 	svc            *service.Service
@@ -26,13 +26,16 @@ type Component struct {
 	ServiceRunning bool
 	apiFeature     *componenttest.APIFeature
 	MongoClient    *mongo.Mongo
+	mongoFeature   *componenttest.MongoFeature
+	StartTime      time.Time
 }
 
-func NewComponent() (*Component, error) {
-	c := &Component{
+func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationComponent, error) {
+	c := &MigrationComponent{
 		HTTPServer:     &http.Server{ReadHeaderTimeout: 3 * time.Second},
 		errorChan:      make(chan error),
 		ServiceRunning: false,
+		mongoFeature:   mongoFeat,
 	}
 
 	var err error
@@ -55,12 +58,12 @@ func NewComponent() (*Component, error) {
 	return c, nil
 }
 
-func (c *Component) Reset() *Component {
+func (c *MigrationComponent) Reset() *MigrationComponent {
 	c.apiFeature.Reset()
 	return c
 }
 
-func (c *Component) Close() error {
+func (c *MigrationComponent) Close() error {
 	if c.svc != nil && c.ServiceRunning {
 		c.svc.Close(context.Background())
 		c.ServiceRunning = false
@@ -68,7 +71,7 @@ func (c *Component) Close() error {
 	return nil
 }
 
-func (c *Component) InitialiseService() (http.Handler, error) {
+func (c *MigrationComponent) InitialiseService() (http.Handler, error) {
 	var err error
 	c.svc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
 	if err != nil {
@@ -79,7 +82,7 @@ func (c *Component) InitialiseService() (http.Handler, error) {
 	return c.HTTPServer.Handler, nil
 }
 
-func (c *Component) DoGetHealthcheckOk(cfg *config.Config, buildTime, gitCommit, version string) (service.HealthChecker, error) {
+func (c *MigrationComponent) DoGetHealthcheckOk(cfg *config.Config, buildTime, gitCommit, version string) (service.HealthChecker, error) {
 	return &mock.HealthCheckerMock{
 		AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
 		StartFunc:    func(ctx context.Context) {},
@@ -87,12 +90,12 @@ func (c *Component) DoGetHealthcheckOk(cfg *config.Config, buildTime, gitCommit,
 	}, nil
 }
 
-func (c *Component) DoGetHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {
+func (c *MigrationComponent) DoGetHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {
 	c.HTTPServer.Addr = bindAddr
 	c.HTTPServer.Handler = router
 	return c.HTTPServer
 }
 
-func (c *Component) DoGetMongoDB(context.Context, config.MongoConfig) (store.MongoDB, error) {
+func (c *MigrationComponent) DoGetMongoDB(context.Context, config.MongoConfig) (store.MongoDB, error) {
 	return c.MongoClient, nil
 }
