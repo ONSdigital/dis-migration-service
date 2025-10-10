@@ -2,6 +2,8 @@ package steps
 
 import (
 	"context"
+	"github.com/ONSdigital/dis-migration-service/mongo"
+	"github.com/ONSdigital/dis-migration-service/store"
 	"net/http"
 	"time"
 
@@ -22,6 +24,7 @@ type Component struct {
 	HTTPServer     *http.Server
 	ServiceRunning bool
 	apiFeature     *componenttest.APIFeature
+	MongoClient    *mongo.Mongo
 }
 
 func NewComponent() (*Component, error) {
@@ -41,6 +44,7 @@ func NewComponent() (*Component, error) {
 	initMock := &mock.InitialiserMock{
 		DoGetHealthCheckFunc: c.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
+		DoGetMongoDBFunc:     c.DoGetMongoDB,
 	}
 
 	c.svcList = service.NewServiceList(initMock)
@@ -86,4 +90,8 @@ func (c *Component) DoGetHTTPServer(bindAddr string, router http.Handler) servic
 	c.HTTPServer.Addr = bindAddr
 	c.HTTPServer.Handler = router
 	return c.HTTPServer
+}
+
+func (c *Component) DoGetMongoDB(context.Context, config.MongoConfig) (store.MongoDB, error) {
+	return c.MongoClient, nil
 }
