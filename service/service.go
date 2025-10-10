@@ -140,9 +140,9 @@ func registerCheckers(ctx context.Context,
 	hc HealthChecker, mongoCli store.MongoDB) (err error) {
 	hasErrors := false
 
-	if err = hc.AddCheck("Redis", mongoCli.Checker); err != nil {
+	if err = hc.AddCheck("Mongo DB", mongoCli.Checker); err != nil {
 		hasErrors = true
-		log.Error(ctx, "error adding check for dis-redis", err)
+		log.Error(ctx, "error adding check for mongo db", err)
 	}
 
 	if hasErrors {
