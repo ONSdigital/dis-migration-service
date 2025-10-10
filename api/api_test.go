@@ -2,10 +2,11 @@ package api
 
 import (
 	"context"
-	"github.com/ONSdigital/dis-migration-service/store"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/ONSdigital/dis-migration-service/store"
 
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"

@@ -2,10 +2,11 @@ package steps
 
 import (
 	"context"
-	"github.com/ONSdigital/dis-migration-service/mongo"
-	"github.com/ONSdigital/dis-migration-service/store"
 	"net/http"
 	"time"
+
+	"github.com/ONSdigital/dis-migration-service/mongo"
+	"github.com/ONSdigital/dis-migration-service/store"
 
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/service"

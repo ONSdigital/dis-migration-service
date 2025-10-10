@@ -3,12 +3,13 @@ package service_test
 import (
 	"context"
 	"fmt"
-	"github.com/ONSdigital/dis-migration-service/store"
-	storetest "github.com/ONSdigital/dis-migration-service/store/datastoretest"
 	"net/http"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/ONSdigital/dis-migration-service/store"
+	storetest "github.com/ONSdigital/dis-migration-service/store/datastoretest"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 

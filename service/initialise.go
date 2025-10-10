@@ -3,10 +3,11 @@ package service
 import (
 	"context"
 
+	"net/http"
+
 	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
-	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/config"
 

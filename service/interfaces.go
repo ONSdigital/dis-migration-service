@@ -2,8 +2,9 @@ package service
 
 import (
 	"context"
-	"github.com/ONSdigital/dis-migration-service/store"
 	"net/http"
+
+	"github.com/ONSdigital/dis-migration-service/store"
 
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"

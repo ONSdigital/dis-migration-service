@@ -1,10 +1,11 @@
 package config
 
 import (
-	dpMongo "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"os"
 	"testing"
 	"time"
+
+	dpMongo "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
