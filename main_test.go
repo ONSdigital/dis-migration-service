@@ -26,30 +26,35 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	mongoOpts := componenttest.MongoOptions{MongoVersion: mongoVersion, DatabaseName: databaseName, ReplicaSetName: replicaSetName}
 	f.MongoFeature = componenttest.NewMongoFeature(mongoOpts)
 
-	component, err := steps.NewMigrationComponent(f.MongoFeature)
+	migrationComponent, err := steps.NewMigrationComponent(f.MongoFeature)
 	if err != nil {
 		panic(err)
 	}
+
+	apiFeature := migrationComponent.InitAPIFeature()
 
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		if f.MongoFeature == nil {
 			f.MongoFeature = componenttest.NewMongoFeature(mongoOpts)
 		}
-		component.Reset()
+		migrationComponent.Reset()
+		apiFeature.Reset()
 
 		return ctx, nil
 	})
 
 	ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-		if closeErr := component.Close(); closeErr != nil {
+		if closeErr := migrationComponent.Close(); closeErr != nil {
 			panic(closeErr)
 		}
+		migrationComponent.Reset()
+		apiFeature.Reset()
 
 		return ctx, nil
 	})
 
 	f.MongoFeature.RegisterSteps(ctx)
-	component.RegisterSteps(ctx)
+	migrationComponent.RegisterSteps(ctx)
 }
 
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {

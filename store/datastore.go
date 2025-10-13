@@ -23,10 +23,10 @@ type MongoDB interface {
 
 // Storer represents basic data access via Get, Remove and Upsert methods, abstracting it from mongoDB
 type Storer interface {
-	dataMongoDB
+	MongoDB
 }
 
-type dataMongoDB interface {
-	Checker(ctx context.Context, state *healthcheck.CheckState) error
-	Close(ctx context.Context) error
-}
+//type dataMongoDB interface {
+//	Checker(ctx context.Context, state *healthcheck.CheckState) error
+//	Close(ctx context.Context) error
+//}

@@ -2,7 +2,11 @@ package steps
 
 import (
 	"context"
+	"fmt"
+	"github.com/ONSdigital/dp-component-test/utils"
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/ONSdigital/dis-migration-service/mongo"
@@ -11,9 +15,13 @@ import (
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/service"
 	"github.com/ONSdigital/dis-migration-service/service/mock"
-
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+)
+
+const (
+	gitCommitHash = "6584b786caac36b6214ffe04bf62f058d4021538"
+	appVersion    = "v1.2.3"
 )
 
 type MigrationComponent struct {
@@ -42,8 +50,25 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 
 	c.Config, err = config.Get()
 	if err != nil {
-		return nil, err
+		return &MigrationComponent{}, fmt.Errorf("failed to get config: %w", err)
 	}
+
+	mongodb := &mongo.Mongo{
+		MongoConfig: config.MongoConfig{
+			MongoDriverConfig: mongodriver.MongoDriverConfig{
+				ClusterEndpoint: c.mongoFeature.Server.URI(),
+				Database:        utils.RandomDatabase(),
+				Collections:     c.Config.Collections,
+				ConnectTimeout:  c.Config.ConnectTimeout,
+				QueryTimeout:    c.Config.QueryTimeout,
+			},
+		}}
+
+	if err := mongodb.Init(context.Background()); err != nil {
+		return &MigrationComponent{}, err
+	}
+
+	c.MongoClient = mongodb
 
 	initMock := &mock.InitialiserMock{
 		DoGetHealthCheckFunc: c.DoGetHealthcheckOk,
@@ -51,14 +76,31 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 		DoGetMongoDBFunc:     c.DoGetMongoDB,
 	}
 
+	c.apiFeature = componenttest.NewAPIFeature(c.InitialiseService)
+	c.Config.HealthCheckInterval = 1 * time.Second
+	c.Config.HealthCheckCriticalTimeout = 3 * time.Second
+	c.Config.BindAddr = "localhost:0"
+	c.StartTime = time.Now()
 	c.svcList = service.NewServiceList(initMock)
 
-	c.apiFeature = componenttest.NewAPIFeature(c.InitialiseService)
+	c.HTTPServer = &http.Server{ReadHeaderTimeout: 3 * time.Second}
+	c.svc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
+	if err != nil {
+		return &MigrationComponent{}, err
+	}
+	c.ServiceRunning = true
 
 	return c, nil
 }
 
+func (c *MigrationComponent) InitAPIFeature() *componenttest.APIFeature {
+	c.apiFeature = componenttest.NewAPIFeature(c.InitialiseService)
+
+	return c.apiFeature
+}
+
 func (c *MigrationComponent) Reset() *MigrationComponent {
+	c.MongoClient.Database = utils.RandomDatabase()
 	c.apiFeature.Reset()
 	return c
 }
@@ -82,12 +124,14 @@ func (c *MigrationComponent) InitialiseService() (http.Handler, error) {
 	return c.HTTPServer.Handler, nil
 }
 
-func (c *MigrationComponent) DoGetHealthcheckOk(cfg *config.Config, buildTime, gitCommit, version string) (service.HealthChecker, error) {
-	return &mock.HealthCheckerMock{
-		AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
-		StartFunc:    func(ctx context.Context) {},
-		StopFunc:     func() {},
-	}, nil
+func (c *MigrationComponent) DoGetHealthcheckOk(cfg *config.Config, _, _, _ string) (service.HealthChecker, error) {
+	componentBuildTime := strconv.Itoa(int(time.Now().Unix()))
+	versionInfo, err := healthcheck.NewVersionInfo(componentBuildTime, gitCommitHash, appVersion)
+	if err != nil {
+		return nil, err
+	}
+	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
+	return &hc, nil
 }
 
 func (c *MigrationComponent) DoGetHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {

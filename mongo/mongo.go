@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ONSdigital/dis-migration-service/config"
-	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 
 	mongohealth "github.com/ONSdigital/dp-mongodb/v3/health"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
@@ -43,6 +43,23 @@ func (m *Mongo) Close(ctx context.Context) error {
 }
 
 // Checker is called by the healthcheck library to check the health state of this mongoDB instance
-func (m *Mongo) Checker(ctx context.Context, state *healthcheck.CheckState) error {
+func (m *Mongo) Checker(ctx context.Context, state *health.CheckState) error {
+	//if state == nil {
+	//	state = &health.CheckState{}
+	//}
+	//
+	//statusCode, err := m.Ping(ctx)
+	//if err != nil {
+	//	if updateErr := state.Update(health.StatusCritical, err.Error(), statusCode); updateErr != nil {
+	//		return updateErr
+	//	}
+	//
+	//	return nil
+	//}
+	//
+	//if updateErr := state.Update(health.StatusOK, MsgHealthy, statusCode); updateErr != nil {
+	//	return updateErr
+	//}
+
 	return m.healthClient.Checker(ctx, state)
 }
