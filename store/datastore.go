@@ -25,8 +25,3 @@ type MongoDB interface {
 type Storer interface {
 	MongoDB
 }
-
-//type dataMongoDB interface {
-//	Checker(ctx context.Context, state *healthcheck.CheckState) error
-//	Close(ctx context.Context) error
-//}

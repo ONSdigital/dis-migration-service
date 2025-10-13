@@ -3,11 +3,12 @@ package steps
 import (
 	"context"
 	"fmt"
-	"github.com/ONSdigital/dp-component-test/utils"
-	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/ONSdigital/dp-component-test/utils"
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 
 	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dis-migration-service/store"
