@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ONSdigital/dis-migration-service/clients"
+	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/migrator"
@@ -48,6 +50,7 @@ func NewComponent() (*Component, error) {
 		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
 		DoGetMigratorFunc:    c.DoGetMigrator,
 		DoGetMongoDBFunc:     c.DoGetMongoDB,
+		DoGetAppClientsFunc:  c.DoGetAppClients,
 	}
 
 	c.svcList = service.NewServiceList(initMock)
@@ -122,10 +125,20 @@ func (c *Component) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (s
 	}, nil
 }
 
-func (c *Component) DoGetMigrator(ctx context.Context) (migrator.Migrator, error) {
+func (c *Component) DoGetMigrator(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
 	mig := &migratorMock.MigratorMock{
 		MigrateFunc: func(ctx context.Context, job *domain.Job) {},
 	}
 
 	return mig, nil
+}
+
+func (c *Component) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients.ClientList {
+	return &clients.ClientList{
+		DatasetAPI:    &clientMocks.DatasetAPIClientMock{},
+		FilesAPI:      &clientMocks.FilesAPIClientMock{},
+		RedirectAPI:   &clientMocks.RedirectAPIClientMock{},
+		UploadService: &clientMocks.UploadServiceClientMock{},
+		Zebedee:       &clientMocks.ZebedeeClientMock{},
+	}
 }

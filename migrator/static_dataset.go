@@ -7,14 +7,7 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
-//go:generate moq -out mock/executor.go -pkg mock . TaskExecutor
-type TaskExecutor interface {
-	Migrate(ctx context.Context, job *domain.Job) error
-}
-
-type defaultExecutor struct{}
-
-func (e *defaultExecutor) Migrate(ctx context.Context, job *domain.Job) error {
+func (mig *migrator) migrateStaticDataset(ctx context.Context, job *domain.Job) error {
 	logData := log.Data{
 		"id": job.ID,
 	}

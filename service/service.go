@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/api"
+	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/dis-migration-service/store"
@@ -25,6 +26,7 @@ type Service struct {
 	ServiceList *ExternalServiceList
 	mongoDB     store.MongoDB
 	migrator    migrator.Migrator
+	clients     *clients.ClientList
 }
 
 type MigrationServiceStore struct {
@@ -55,8 +57,11 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	// Get Datastore
 	datastore := store.Datastore{Backend: MigrationServiceStore{svc.mongoDB}}
 
+	// Get app clients
+	svc.clients = svc.ServiceList.GetAppClients(ctx, svc.Config)
+
 	// Get Migrator
-	svc.migrator, err = svc.ServiceList.GetMigrator(ctx)
+	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, datastore, svc.clients)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise migrator", err)
 		return err

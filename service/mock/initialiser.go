@@ -5,6 +5,7 @@ package mock
 
 import (
 	"context"
+	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/dis-migration-service/service"
@@ -23,13 +24,16 @@ var _ service.Initialiser = &InitialiserMock{}
 //
 //		// make and configure a mocked service.Initialiser
 //		mockedInitialiser := &InitialiserMock{
+//			DoGetAppClientsFunc: func(ctx context.Context, cfg *config.Config) *clients.ClientList {
+//				panic("mock out the DoGetAppClients method")
+//			},
 //			DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
 //				panic("mock out the DoGetHTTPServer method")
 //			},
 //			DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 //				panic("mock out the DoGetHealthCheck method")
 //			},
-//			DoGetMigratorFunc: func(ctx context.Context) (migrator.Migrator, error) {
+//			DoGetMigratorFunc: func(ctx context.Context, storeMoqParam store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
 //				panic("mock out the DoGetMigrator method")
 //			},
 //			DoGetMongoDBFunc: func(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
@@ -42,6 +46,9 @@ var _ service.Initialiser = &InitialiserMock{}
 //
 //	}
 type InitialiserMock struct {
+	// DoGetAppClientsFunc mocks the DoGetAppClients method.
+	DoGetAppClientsFunc func(ctx context.Context, cfg *config.Config) *clients.ClientList
+
 	// DoGetHTTPServerFunc mocks the DoGetHTTPServer method.
 	DoGetHTTPServerFunc func(bindAddr string, router http.Handler) service.HTTPServer
 
@@ -49,13 +56,20 @@ type InitialiserMock struct {
 	DoGetHealthCheckFunc func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error)
 
 	// DoGetMigratorFunc mocks the DoGetMigrator method.
-	DoGetMigratorFunc func(ctx context.Context) (migrator.Migrator, error)
+	DoGetMigratorFunc func(ctx context.Context, storeMoqParam store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error)
 
 	// DoGetMongoDBFunc mocks the DoGetMongoDB method.
 	DoGetMongoDBFunc func(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// DoGetAppClients holds details about calls to the DoGetAppClients method.
+		DoGetAppClients []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
+		}
 		// DoGetHTTPServer holds details about calls to the DoGetHTTPServer method.
 		DoGetHTTPServer []struct {
 			// BindAddr is the bindAddr argument value.
@@ -78,6 +92,10 @@ type InitialiserMock struct {
 		DoGetMigrator []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// StoreMoqParam is the storeMoqParam argument value.
+			StoreMoqParam store.Datastore
+			// ClientList is the clientList argument value.
+			ClientList *clients.ClientList
 		}
 		// DoGetMongoDB holds details about calls to the DoGetMongoDB method.
 		DoGetMongoDB []struct {
@@ -87,10 +105,47 @@ type InitialiserMock struct {
 			Cfg config.MongoConfig
 		}
 	}
+	lockDoGetAppClients  sync.RWMutex
 	lockDoGetHTTPServer  sync.RWMutex
 	lockDoGetHealthCheck sync.RWMutex
 	lockDoGetMigrator    sync.RWMutex
 	lockDoGetMongoDB     sync.RWMutex
+}
+
+// DoGetAppClients calls DoGetAppClientsFunc.
+func (mock *InitialiserMock) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients.ClientList {
+	if mock.DoGetAppClientsFunc == nil {
+		panic("InitialiserMock.DoGetAppClientsFunc: method is nil but Initialiser.DoGetAppClients was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}{
+		Ctx: ctx,
+		Cfg: cfg,
+	}
+	mock.lockDoGetAppClients.Lock()
+	mock.calls.DoGetAppClients = append(mock.calls.DoGetAppClients, callInfo)
+	mock.lockDoGetAppClients.Unlock()
+	return mock.DoGetAppClientsFunc(ctx, cfg)
+}
+
+// DoGetAppClientsCalls gets all the calls that were made to DoGetAppClients.
+// Check the length with:
+//
+//	len(mockedInitialiser.DoGetAppClientsCalls())
+func (mock *InitialiserMock) DoGetAppClientsCalls() []struct {
+	Ctx context.Context
+	Cfg *config.Config
+} {
+	var calls []struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}
+	mock.lockDoGetAppClients.RLock()
+	calls = mock.calls.DoGetAppClients
+	mock.lockDoGetAppClients.RUnlock()
+	return calls
 }
 
 // DoGetHTTPServer calls DoGetHTTPServerFunc.
@@ -174,19 +229,23 @@ func (mock *InitialiserMock) DoGetHealthCheckCalls() []struct {
 }
 
 // DoGetMigrator calls DoGetMigratorFunc.
-func (mock *InitialiserMock) DoGetMigrator(ctx context.Context) (migrator.Migrator, error) {
+func (mock *InitialiserMock) DoGetMigrator(ctx context.Context, storeMoqParam store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
 	if mock.DoGetMigratorFunc == nil {
 		panic("InitialiserMock.DoGetMigratorFunc: method is nil but Initialiser.DoGetMigrator was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
+		Ctx           context.Context
+		StoreMoqParam store.Datastore
+		ClientList    *clients.ClientList
 	}{
-		Ctx: ctx,
+		Ctx:           ctx,
+		StoreMoqParam: storeMoqParam,
+		ClientList:    clientList,
 	}
 	mock.lockDoGetMigrator.Lock()
 	mock.calls.DoGetMigrator = append(mock.calls.DoGetMigrator, callInfo)
 	mock.lockDoGetMigrator.Unlock()
-	return mock.DoGetMigratorFunc(ctx)
+	return mock.DoGetMigratorFunc(ctx, storeMoqParam, clientList)
 }
 
 // DoGetMigratorCalls gets all the calls that were made to DoGetMigrator.
@@ -194,10 +253,14 @@ func (mock *InitialiserMock) DoGetMigrator(ctx context.Context) (migrator.Migrat
 //
 //	len(mockedInitialiser.DoGetMigratorCalls())
 func (mock *InitialiserMock) DoGetMigratorCalls() []struct {
-	Ctx context.Context
+	Ctx           context.Context
+	StoreMoqParam store.Datastore
+	ClientList    *clients.ClientList
 } {
 	var calls []struct {
-		Ctx context.Context
+		Ctx           context.Context
+		StoreMoqParam store.Datastore
+		ClientList    *clients.ClientList
 	}
 	mock.lockDoGetMigrator.RLock()
 	calls = mock.calls.DoGetMigrator
