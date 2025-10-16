@@ -5,11 +5,11 @@ Feature: Health endpoint
 
     Scenario: Returning a OK (200) status when health endpoint called
         Given mongodb is healthy
-        Given I have a healthcheck interval of 1 second
+        And I have a healthcheck interval of 1 second
         And I wait 2 seconds for the healthcheck to be available
         When I GET "/health"
-        When the health checks should have completed within 6 seconds
-        Then I should receive the following health JSON response:
+        Then the health checks should have completed within 6 seconds
+        And I should receive the following health JSON response:
         """
             {
               "status": "OK",

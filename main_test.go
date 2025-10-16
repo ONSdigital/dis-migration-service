@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/ONSdigital/log.go/v2/log"
 	"os"
 	"testing"
 
 	"github.com/ONSdigital/dis-migration-service/features/steps"
-	componenttest "github.com/ONSdigital/dp-component-test"
+	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 )
@@ -19,46 +20,69 @@ const databaseName = "testing"
 const replicaSetName = "rs0"
 
 type ComponentTest struct {
-	MongoFeature *componenttest.MongoFeature
+	MongoFeature *componentTest.MongoFeature
 }
 
-func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
-	mongoOpts := componenttest.MongoOptions{MongoVersion: mongoVersion, DatabaseName: databaseName, ReplicaSetName: replicaSetName}
-	f.MongoFeature = componenttest.NewMongoFeature(mongoOpts)
+func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
+
+	ctx := context.Background()
+	if f.MongoFeature == nil {
+		mongoOpts := componentTest.MongoOptions{MongoVersion: mongoVersion, DatabaseName: databaseName}
+		f.MongoFeature = componentTest.NewMongoFeature(mongoOpts)
+		f.MongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "jobs")
+		f.MongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "events")
+		f.MongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "tasks")
+	}
 
 	migrationComponent, err := steps.NewMigrationComponent(f.MongoFeature)
 	if err != nil {
-		panic(err)
+		log.Error(ctx, "error occurred while creating a new migrationComponent", err)
+		os.Exit(1)
 	}
 
 	apiFeature := migrationComponent.InitAPIFeature()
 
-	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+	godogCtx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		if f.MongoFeature == nil {
-			f.MongoFeature = componenttest.NewMongoFeature(mongoOpts)
+			f.MongoFeature = componentTest.NewMongoFeature(componentTest.MongoOptions{MongoVersion: mongoVersion, DatabaseName: databaseName})
 		}
-		migrationComponent.Reset()
+		//migrationComponent.Reset()
 		apiFeature.Reset()
 
 		return ctx, nil
 	})
 
-	ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-		if closeErr := migrationComponent.Close(); closeErr != nil {
-			panic(closeErr)
+	godogCtx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+		if f.MongoFeature != nil {
+			if closeErr := f.MongoFeature.Close(); closeErr != nil {
+				log.Error(context.Background(), "error occurred while closing the MongoFeature", closeErr)
+				os.Exit(1)
+			}
 		}
-		migrationComponent.Reset()
-		apiFeature.Reset()
+		//migrationComponent.Reset()
+		//apiFeature.Reset()
 
 		return ctx, nil
 	})
 
-	f.MongoFeature.RegisterSteps(ctx)
-	migrationComponent.RegisterSteps(ctx)
+	f.MongoFeature.RegisterSteps(godogCtx)
+	apiFeature.RegisterSteps(godogCtx)
+	migrationComponent.RegisterSteps(godogCtx)
 }
 
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctxBackground := context.Background()
 
+	ctx.BeforeSuite(func() {
+		f.MongoFeature = componentTest.NewMongoFeature(componentTest.MongoOptions{MongoVersion: mongoVersion, DatabaseName: databaseName})
+	})
+	ctx.AfterSuite(func() {
+		err := f.MongoFeature.Close()
+		if err != nil {
+			log.Error(ctxBackground, "error occurred while closing the MongoFeature", err)
+			os.Exit(1)
+		}
+	})
 }
 
 func TestComponent(t *testing.T) {

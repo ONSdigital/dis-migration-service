@@ -11,8 +11,6 @@ import (
 )
 
 func (c *MigrationComponent) RegisterSteps(ctx *godog.ScenarioContext) {
-	c.apiFeature.RegisterSteps(ctx)
-
 	ctx.Step(`^I should receive a hello-world response$`, c.iShouldReceiveAHelloworldResponse)
 	ctx.Step(`^mongodb is healthy$`, c.mongodbIsHealthy)
 	ctx.Step(`^the migration service is running$`, c.theMigrationServiceIsRunning)

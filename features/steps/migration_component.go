@@ -65,8 +65,12 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 			},
 		}}
 
-	if err := mongodb.Init(context.Background()); err != nil {
-		return &MigrationComponent{}, err
+	//if err := mongodb.Init(context.Background()); err != nil {
+	//	return &MigrationComponent{}, err
+	//}
+	ctx := context.Background()
+	if dbErr := mongodb.Init(ctx); dbErr != nil {
+		return nil, fmt.Errorf("failed to initialise mongo DB: %w", dbErr)
 	}
 
 	c.MongoClient = mongodb
@@ -77,7 +81,6 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 		DoGetMongoDBFunc:     c.DoGetMongoDB,
 	}
 
-	c.apiFeature = componenttest.NewAPIFeature(c.InitialiseService)
 	c.Config.HealthCheckInterval = 1 * time.Second
 	c.Config.HealthCheckCriticalTimeout = 3 * time.Second
 	c.Config.BindAddr = "localhost:0"
@@ -100,28 +103,33 @@ func (c *MigrationComponent) InitAPIFeature() *componenttest.APIFeature {
 	return c.apiFeature
 }
 
-func (c *MigrationComponent) Reset() *MigrationComponent {
+func (c *MigrationComponent) Reset() error {
 	c.MongoClient.Database = utils.RandomDatabase()
 	c.apiFeature.Reset()
-	return c
+
+	return nil
 }
 
 func (c *MigrationComponent) Close() error {
 	if c.svc != nil && c.ServiceRunning {
-		c.svc.Close(context.Background())
+		c.mongoFeature.Close()
+		if err := c.svc.Close(context.Background()); err != nil {
+			return err
+		}
 		c.ServiceRunning = false
 	}
+
 	return nil
 }
 
 func (c *MigrationComponent) InitialiseService() (http.Handler, error) {
-	var err error
-	c.svc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
-	if err != nil {
-		return nil, err
-	}
-
-	c.ServiceRunning = true
+	//var err error
+	//c.svc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//c.ServiceRunning = true
 	return c.HTTPServer.Handler, nil
 }
 
@@ -136,8 +144,11 @@ func (c *MigrationComponent) DoGetHealthcheckOk(cfg *config.Config, _, _, _ stri
 }
 
 func (c *MigrationComponent) DoGetHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {
-	c.HTTPServer.Addr = bindAddr
-	c.HTTPServer.Handler = router
+	c.HTTPServer = &http.Server{
+		ReadHeaderTimeout: 3 * time.Second,
+		Addr:              bindAddr,
+		Handler:           router,
+	}
 	return c.HTTPServer
 }
 
