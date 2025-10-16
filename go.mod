@@ -2,10 +2,8 @@ module github.com/ONSdigital/dis-migration-service
 
 go 1.24
 
-replace github.com/ONSdigital/dp-component-test => /Users/cookel/EllasFiles/DpCodeRepos/dp-component-test
-
 require (
-	github.com/ONSdigital/dp-component-test v0.25.0
+	github.com/ONSdigital/dp-component-test v0.26.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-mongodb/v3 v3.8.0
 	github.com/ONSdigital/dp-net/v2 v2.22.0

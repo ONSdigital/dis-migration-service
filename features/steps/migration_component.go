@@ -54,11 +54,6 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 		return &MigrationComponent{}, fmt.Errorf("failed to get config: %w", err)
 	}
 
-	//mongoURL := c.mongoFeature.Server.URI()
-
-	//os.Setenv("MONGO_URL", mongoURL)
-	//os.Setenv("DATABASE_NAME", "testing")
-
 	mongodb := &mongo.Mongo{
 		MongoConfig: config.MongoConfig{
 			MongoDriverConfig: mongodriver.MongoDriverConfig{
@@ -70,9 +65,6 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 			},
 		}}
 
-	//if err := mongodb.Init(context.Background()); err != nil {
-	//	return &MigrationComponent{}, err
-	//}
 	ctx := context.Background()
 	if dbErr := mongodb.Init(ctx); dbErr != nil {
 		return nil, fmt.Errorf("failed to initialise mongo DB: %w", dbErr)
