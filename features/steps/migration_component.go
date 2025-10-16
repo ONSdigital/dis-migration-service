@@ -54,10 +54,15 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 		return &MigrationComponent{}, fmt.Errorf("failed to get config: %w", err)
 	}
 
+	//mongoURL := c.mongoFeature.Server.URI()
+
+	//os.Setenv("MONGO_URL", mongoURL)
+	//os.Setenv("DATABASE_NAME", "testing")
+
 	mongodb := &mongo.Mongo{
 		MongoConfig: config.MongoConfig{
 			MongoDriverConfig: mongodriver.MongoDriverConfig{
-				ClusterEndpoint: c.mongoFeature.Server.URI(),
+				ClusterEndpoint: mongoFeat.Server.URI(),
 				Database:        utils.RandomDatabase(),
 				Collections:     c.Config.Collections,
 				ConnectTimeout:  c.Config.ConnectTimeout,
@@ -112,7 +117,7 @@ func (c *MigrationComponent) Reset() error {
 
 func (c *MigrationComponent) Close() error {
 	if c.svc != nil && c.ServiceRunning {
-		c.mongoFeature.Close()
+		//c.mongoFeature.Close()
 		if err := c.svc.Close(context.Background()); err != nil {
 			return err
 		}
