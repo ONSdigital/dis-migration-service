@@ -59,7 +59,7 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 		MongoConfig: config.MongoConfig{
 			MongoDriverConfig: mongodriver.MongoDriverConfig{
 				ClusterEndpoint: mongoFeat.Server.URI(),
-				//Database:        utils.RandomDatabase(),
+				// Database:        utils.RandomDatabase(),
 				Database:       databaseName,
 				Collections:    c.Config.Collections,
 				ConnectTimeout: c.Config.ConnectTimeout,
@@ -111,7 +111,6 @@ func (c *MigrationComponent) Reset() error {
 
 func (c *MigrationComponent) Close() error {
 	if c.svc != nil && c.ServiceRunning {
-		//c.mongoFeature.Close()
 		if err := c.svc.Close(context.Background()); err != nil {
 			return err
 		}
@@ -122,13 +121,6 @@ func (c *MigrationComponent) Close() error {
 }
 
 func (c *MigrationComponent) InitialiseService() (http.Handler, error) {
-	//var err error
-	//c.svc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//c.ServiceRunning = true
 	return c.HTTPServer.Handler, nil
 }
 

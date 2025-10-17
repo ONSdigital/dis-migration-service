@@ -40,9 +40,14 @@ func (c *MigrationComponent) theMigrationServiceIsRunning() error {
 }
 
 func (c *MigrationComponent) allItsExpectedCollectionsExist() error {
-	//c.mongoFeature.Client.ListDatabaseNames()
-	c.mongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "jobs")
-	c.mongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "events")
-	c.mongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "tasks")
-	return nil
+	err := c.mongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "jobs")
+	if err != nil {
+		return err
+	}
+	err = c.mongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "events")
+	if err != nil {
+		return err
+	}
+	err = c.mongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "tasks")
+	return err
 }
