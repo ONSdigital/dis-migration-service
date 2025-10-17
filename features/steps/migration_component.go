@@ -23,6 +23,7 @@ import (
 const (
 	gitCommitHash = "6584b786caac36b6214ffe04bf62f058d4021538"
 	appVersion    = "v1.2.3"
+	databaseName  = "testing"
 )
 
 type MigrationComponent struct {
@@ -58,10 +59,11 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 		MongoConfig: config.MongoConfig{
 			MongoDriverConfig: mongodriver.MongoDriverConfig{
 				ClusterEndpoint: mongoFeat.Server.URI(),
-				Database:        utils.RandomDatabase(),
-				Collections:     c.Config.Collections,
-				ConnectTimeout:  c.Config.ConnectTimeout,
-				QueryTimeout:    c.Config.QueryTimeout,
+				//Database:        utils.RandomDatabase(),
+				Database:       databaseName,
+				Collections:    c.Config.Collections,
+				ConnectTimeout: c.Config.ConnectTimeout,
+				QueryTimeout:   c.Config.QueryTimeout,
 			},
 		}}
 
