@@ -3,9 +3,10 @@ package steps
 import (
 	"context"
 	"errors"
-	"github.com/ONSdigital/log.go/v2/log"
 	"io"
 	"strings"
+
+	"github.com/ONSdigital/log.go/v2/log"
 
 	"github.com/cucumber/godog"
 	"github.com/stretchr/testify/assert"
