@@ -6,7 +6,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
-// Datastore provides a datastore.Storer interface used to store, retrieve, remove or update migrations
+// Datastore provides a datastore.Storer interface used to store migrations
 //
 //go:generate moq -out datastoretest/mongo.go -pkg storetest . MongoDB
 //go:generate moq -out datastoretest/datastore.go -pkg storetest . Storer

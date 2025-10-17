@@ -59,11 +59,10 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 		MongoConfig: config.MongoConfig{
 			MongoDriverConfig: mongodriver.MongoDriverConfig{
 				ClusterEndpoint: mongoFeat.Server.URI(),
-				// Database:        utils.RandomDatabase(),
-				Database:       databaseName,
-				Collections:    c.Config.Collections,
-				ConnectTimeout: c.Config.ConnectTimeout,
-				QueryTimeout:   c.Config.QueryTimeout,
+				Database:        databaseName,
+				Collections:     c.Config.Collections,
+				ConnectTimeout:  c.Config.ConnectTimeout,
+				QueryTimeout:    c.Config.QueryTimeout,
 			},
 		}}
 

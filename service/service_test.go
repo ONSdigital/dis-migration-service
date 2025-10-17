@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dis-migration-service/store"
-	storetest "github.com/ONSdigital/dis-migration-service/store/datastoretest"
+	storeTest "github.com/ONSdigital/dis-migration-service/store/datastoretest"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 
@@ -66,7 +66,7 @@ func TestRun(t *testing.T) {
 			},
 		}
 
-		mongoMock := &storetest.MongoDBMock{}
+		mongoMock := &storeTest.MongoDBMock{}
 
 		funcDoGetHealthcheckOk := func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 			return hcMock, nil
@@ -160,8 +160,8 @@ func TestRun(t *testing.T) {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldResemble, fmt.Sprintf("unable to register checkers: %s", errAddheckFail.Error()))
 				So(svcList.HealthCheck, ShouldBeTrue)
-				// ADD CODE: add code to confirm checkers exist
 				So(len(hcMockAddFail.AddCheckCalls()), ShouldEqual, 1)
+				So(hcMockAddFail.AddCheckCalls()[0].Name, ShouldResemble, "Mongo DB")
 			})
 			Reset(func() {
 				// This reset is run after each `Convey` at the same scope (indentation)
@@ -201,7 +201,7 @@ func TestClose(t *testing.T) {
 
 		hcStopped := false
 
-		mongoMock := &storetest.MongoDBMock{}
+		mongoMock := &storeTest.MongoDBMock{}
 
 		// healthcheck Stop does not depend on any other service being closed/stopped
 		hcMock := &mock.HealthCheckerMock{

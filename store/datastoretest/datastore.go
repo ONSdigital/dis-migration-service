@@ -20,10 +20,10 @@ var _ store.Storer = &StorerMock{}
 //
 // 		// make and configure a mocked store.Storer
 // 		mockedStorer := &StorerMock{
-// 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
+// 			CheckerFunc: func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error {
 // 				panic("mock out the Checker method")
 // 			},
-// 			CloseFunc: func(ctx context.Context) error {
+// 			CloseFunc: func(contextMoqParam context.Context) error {
 // 				panic("mock out the Close method")
 // 			},
 // 		}
@@ -34,24 +34,24 @@ var _ store.Storer = &StorerMock{}
 // 	}
 type StorerMock struct {
 	// CheckerFunc mocks the Checker method.
-	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
+	CheckerFunc func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error
 
 	// CloseFunc mocks the Close method.
-	CloseFunc func(ctx context.Context) error
+	CloseFunc func(contextMoqParam context.Context) error
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// Checker holds details about calls to the Checker method.
 		Checker []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// State is the state argument value.
-			State *healthcheck.CheckState
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CheckState is the checkState argument value.
+			CheckState *healthcheck.CheckState
 		}
 		// Close holds details about calls to the Close method.
 		Close []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
 		}
 	}
 	lockChecker sync.RWMutex
@@ -59,33 +59,33 @@ type StorerMock struct {
 }
 
 // Checker calls CheckerFunc.
-func (mock *StorerMock) Checker(ctx context.Context, state *healthcheck.CheckState) error {
+func (mock *StorerMock) Checker(contextMoqParam context.Context, checkState *healthcheck.CheckState) error {
 	if mock.CheckerFunc == nil {
 		panic("StorerMock.CheckerFunc: method is nil but Storer.Checker was just called")
 	}
 	callInfo := struct {
-		Ctx   context.Context
-		State *healthcheck.CheckState
+		ContextMoqParam context.Context
+		CheckState      *healthcheck.CheckState
 	}{
-		Ctx:   ctx,
-		State: state,
+		ContextMoqParam: contextMoqParam,
+		CheckState:      checkState,
 	}
 	mock.lockChecker.Lock()
 	mock.calls.Checker = append(mock.calls.Checker, callInfo)
 	mock.lockChecker.Unlock()
-	return mock.CheckerFunc(ctx, state)
+	return mock.CheckerFunc(contextMoqParam, checkState)
 }
 
 // CheckerCalls gets all the calls that were made to Checker.
 // Check the length with:
 //     len(mockedStorer.CheckerCalls())
 func (mock *StorerMock) CheckerCalls() []struct {
-	Ctx   context.Context
-	State *healthcheck.CheckState
+	ContextMoqParam context.Context
+	CheckState      *healthcheck.CheckState
 } {
 	var calls []struct {
-		Ctx   context.Context
-		State *healthcheck.CheckState
+		ContextMoqParam context.Context
+		CheckState      *healthcheck.CheckState
 	}
 	mock.lockChecker.RLock()
 	calls = mock.calls.Checker
@@ -94,29 +94,29 @@ func (mock *StorerMock) CheckerCalls() []struct {
 }
 
 // Close calls CloseFunc.
-func (mock *StorerMock) Close(ctx context.Context) error {
+func (mock *StorerMock) Close(contextMoqParam context.Context) error {
 	if mock.CloseFunc == nil {
 		panic("StorerMock.CloseFunc: method is nil but Storer.Close was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
+		ContextMoqParam context.Context
 	}{
-		Ctx: ctx,
+		ContextMoqParam: contextMoqParam,
 	}
 	mock.lockClose.Lock()
 	mock.calls.Close = append(mock.calls.Close, callInfo)
 	mock.lockClose.Unlock()
-	return mock.CloseFunc(ctx)
+	return mock.CloseFunc(contextMoqParam)
 }
 
 // CloseCalls gets all the calls that were made to Close.
 // Check the length with:
 //     len(mockedStorer.CloseCalls())
 func (mock *StorerMock) CloseCalls() []struct {
-	Ctx context.Context
+	ContextMoqParam context.Context
 } {
 	var calls []struct {
-		Ctx context.Context
+		ContextMoqParam context.Context
 	}
 	mock.lockClose.RLock()
 	calls = mock.calls.Close

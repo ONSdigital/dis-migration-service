@@ -18,7 +18,7 @@ type Mongo struct {
 }
 
 // Init returns an initialised Mongo object encapsulating a connection to the mongo server/cluster with the given configuration,
-// a health client to check the health of the mongo server/cluster, and a lock client
+// and a health client to check the health of the mongo server/cluster
 func (m *Mongo) Init(ctx context.Context) (err error) {
 	m.Connection, err = mongodriver.Open(&m.MongoDriverConfig)
 	if err != nil {
