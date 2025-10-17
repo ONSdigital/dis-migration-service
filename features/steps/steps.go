@@ -3,6 +3,7 @@ package steps
 import (
 	"context"
 	"errors"
+	"github.com/ONSdigital/log.go/v2/log"
 	"io"
 	"strings"
 
@@ -15,6 +16,7 @@ func (c *MigrationComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^mongodb is healthy$`, c.mongodbIsHealthy)
 	ctx.Step(`^all its expected collections exist$`, c.allItsExpectedCollectionsExist)
 	ctx.Step(`^the migration service is running$`, c.theMigrationServiceIsRunning)
+	ctx.Step(`^mongodb stops running$`, c.mongodbStopsRunning)
 }
 
 func (c *MigrationComponent) iShouldReceiveAHelloworldResponse() error {
@@ -40,14 +42,24 @@ func (c *MigrationComponent) theMigrationServiceIsRunning() error {
 }
 
 func (c *MigrationComponent) allItsExpectedCollectionsExist() error {
-	err := c.mongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "jobs")
+	ctx := context.Background()
+
+	err := c.mongoFeature.Client.Database(databaseName).CreateCollection(ctx, "jobs")
 	if err != nil {
 		return err
 	}
-	err = c.mongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "events")
+	err = c.mongoFeature.Client.Database(databaseName).CreateCollection(ctx, "events")
 	if err != nil {
 		return err
 	}
-	err = c.mongoFeature.Client.Database(databaseName).CreateCollection(context.Background(), "tasks")
+	err = c.mongoFeature.Client.Database(databaseName).CreateCollection(ctx, "tasks")
+	return err
+}
+
+func (c *MigrationComponent) mongodbStopsRunning() error {
+	err := c.MongoClient.Close(context.Background())
+	if err != nil {
+		log.Error(context.Background(), "error occurred while stopping the Mongo client", err)
+	}
 	return err
 }
