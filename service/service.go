@@ -2,99 +2,108 @@ package service
 
 import (
 	"context"
-
-	"github.com/ONSdigital/dis-migration-service/store"
+	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/api"
 	"github.com/ONSdigital/dis-migration-service/config"
+	"github.com/ONSdigital/dis-migration-service/migrator"
+	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 
 // Service contains all the configs, server and clients to run the API
 type Service struct {
+	API         *api.MigrationAPI
 	Config      *config.Config
-	Server      HTTPServer
-	Router      *mux.Router
-	API         *api.API
-	ServiceList *ExternalServiceList
 	HealthCheck HealthChecker
+	Router      *mux.Router
+	Server      HTTPServer
+	ServiceList *ExternalServiceList
+	mongoDB     store.MongoDB
+	migrator    migrator.Migrator
 }
 
-type MigrationsStore struct {
+type MigrationServiceStore struct {
 	store.MongoDB
 }
 
-// Run the service
-func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
-	log.Info(ctx, "running service")
+func New(cfg *config.Config, serviceList *ExternalServiceList) *Service {
+	svc := &Service{
+		Config:      cfg,
+		ServiceList: serviceList,
+	}
 
-	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
+	return svc
+}
+
+// Run the service
+func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version string, svcErrors chan error) (err error) {
+	log.Info(ctx, "running service")
+	log.Info(ctx, "using service configuration", log.Data{"config": svc.Config})
 
 	// Get MongoDB client
-	mongoDB, err := serviceList.GetMongoDB(ctx, cfg.MongoConfig)
+	svc.mongoDB, err = svc.ServiceList.GetMongoDB(ctx, svc.Config.MongoConfig)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise mongo DB", err)
-		return nil, err
+		return err
 	}
 
 	// Get Datastore
-	datastore := store.Datastore{Backend: MigrationsStore{mongoDB}}
+	datastore := store.Datastore{Backend: MigrationServiceStore{svc.mongoDB}}
 
-	// Get HTTP Server and ... // TODO: Add any middleware that your service requires
+	// Get Migrator
+	svc.migrator, err = svc.ServiceList.GetMigrator(ctx)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise migrator", err)
+		return err
+	}
+
+	// Setup healthcheck
+	svc.HealthCheck, err = svc.ServiceList.GetHealthCheck(svc.Config, buildTime, gitCommit, version)
+	if err != nil {
+		log.Error(ctx, "could not instantiate healthcheck", err)
+		return err
+	}
+
+	if err := svc.registerCheckers(ctx); err != nil {
+		return errors.Wrap(err, "unable to register checkers")
+	}
+
+	// Initialise the router
 	r := mux.NewRouter()
 
-	if cfg.OtelEnabled {
-		r.Use(otelmux.Middleware(cfg.OTServiceName))
-
+	if svc.Config.OtelEnabled {
+		r.Use(otelmux.Middleware(svc.Config.OTServiceName))
 		// TODO: Any middleware will require 'otelhttp.NewMiddleware(cfg.OTServiceName),' included for Open Telemetry
 	}
 
-	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
-
-	// TODO: Add other(s) to serviceList here
+	middleware := svc.createMiddleware()
+	svc.Server = svc.ServiceList.GetHTTPServer(svc.Config.BindAddr, middleware.Then(r))
 
 	// Setup the API
-	a := api.Setup(ctx, r, &datastore)
+	svc.API = api.Setup(ctx, r, &datastore, svc.migrator)
 
-	// Get HealthCheck
-	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
-	if err != nil {
-		log.Fatal(ctx, "could not instantiate healthcheck", err)
-		return nil, err
-	}
-
-	if err := registerCheckers(ctx, hc, mongoDB); err != nil {
-		return nil, errors.Wrap(err, "unable to register checkers")
-	}
-
-	r.StrictSlash(true).Path("/health").HandlerFunc(hc.Handler)
-	hc.Start(ctx)
+	svc.HealthCheck.Start(ctx)
 
 	// Run the http server in a new go-routine
 	go func() {
-		if err := s.ListenAndServe(); err != nil {
+		if err := svc.Server.ListenAndServe(); err != nil {
 			svcErrors <- errors.Wrap(err, "failure in http listen and serve")
 		}
 	}()
 
-	return &Service{
-		Config:      cfg,
-		Router:      r,
-		API:         a,
-		HealthCheck: hc,
-		ServiceList: serviceList,
-		Server:      s,
-	}, nil
+	return nil
 }
 
 // Close gracefully shuts the service down in the required order, with timeout
 func (svc *Service) Close(ctx context.Context) error {
 	timeout := svc.Config.GracefulShutdownTimeout
 	log.Info(ctx, "commencing graceful shutdown", log.Data{"graceful_shutdown_timeout": timeout})
-	ctx, cancel := context.WithTimeout(ctx, timeout)
+	shutdownContext, cancel := context.WithTimeout(ctx, timeout)
 
 	// track shutown gracefully closes up
 	var hasShutdownError bool
@@ -108,39 +117,76 @@ func (svc *Service) Close(ctx context.Context) error {
 		}
 
 		// stop any incoming requests before closing any outbound connections
-		if err := svc.Server.Shutdown(ctx); err != nil {
+		if err := svc.Server.Shutdown(shutdownContext); err != nil {
 			log.Error(ctx, "failed to shutdown http server", err)
 			hasShutdownError = true
 		}
 
-		// TODO: Close other dependencies, in the expected order
+		// Close Migrator
+		if svc.ServiceList.Migrator {
+			if err := svc.migrator.Shutdown(shutdownContext); err != nil {
+				log.Error(shutdownContext, "failed to close migrator", err)
+				hasShutdownError = true
+			}
+		}
+
+		// Close MongoDB (if it exists)
+		if svc.ServiceList.MongoDB {
+			if err := svc.mongoDB.Close(shutdownContext); err != nil {
+				log.Error(shutdownContext, "failed to close mongo db session", err)
+				hasShutdownError = true
+			}
+		}
 	}()
 
 	// wait for shutdown success (via cancel) or failure (timeout)
-	<-ctx.Done()
+	<-shutdownContext.Done()
 
 	// timeout expired
-	if ctx.Err() == context.DeadlineExceeded {
-		log.Error(ctx, "shutdown timed out", ctx.Err())
-		return ctx.Err()
+	if shutdownContext.Err() == context.DeadlineExceeded {
+		log.Error(shutdownContext, "shutdown timed out", ctx.Err())
+		return shutdownContext.Err()
 	}
 
 	// other error
 	if hasShutdownError {
 		err := errors.New("failed to shutdown gracefully")
-		log.Error(ctx, "failed to shutdown gracefully ", err)
+		log.Error(shutdownContext, "failed to shutdown gracefully ", err)
 		return err
 	}
 
-	log.Info(ctx, "graceful shutdown was successful")
+	log.Info(shutdownContext, "graceful shutdown was successful")
 	return nil
 }
 
-func registerCheckers(ctx context.Context,
-	hc HealthChecker, mongoCli store.MongoDB) (err error) {
+// CreateMiddleware creates an Alice middleware chain of handlers
+// to forward collectionID from cookie from header
+func (svc *Service) createMiddleware() alice.Chain {
+	// healthcheck
+	healthcheckHandler := healthcheckMiddleware(svc.HealthCheck.Handler, "/health")
+	middleware := alice.New(healthcheckHandler)
+
+	return middleware
+}
+
+// healthcheckMiddleware creates a new http.Handler to intercept /health requests.
+func healthcheckMiddleware(healthcheckHandler func(http.ResponseWriter, *http.Request), path string) func(http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			if (req.Method == "GET" || req.Method == "HEAD") && req.URL.Path == path {
+				healthcheckHandler(w, req)
+				return
+			}
+
+			h.ServeHTTP(w, req)
+		})
+	}
+}
+
+func (svc *Service) registerCheckers(ctx context.Context) (err error) {
 	hasErrors := false
 
-	if err = hc.AddCheck("Mongo DB", mongoCli.Checker); err != nil {
+	if err = svc.HealthCheck.AddCheck("Mongo DB", svc.mongoDB.Checker); err != nil {
 		hasErrors = true
 		log.Error(ctx, "error adding check for mongo db", err)
 	}

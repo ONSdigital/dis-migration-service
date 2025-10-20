@@ -613,7 +613,7 @@ definitions:
     type: object
     properties:
       code:
-        type: string
+        type: integer
         description: "Code representing the type of error that occurred"
       description:
         type: string

@@ -2,14 +2,13 @@ package service
 
 import (
 	"context"
-
 	"net/http"
 
+	"github.com/ONSdigital/dis-migration-service/config"
+	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
-
-	"github.com/ONSdigital/dis-migration-service/config"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
@@ -20,6 +19,7 @@ type ExternalServiceList struct {
 	HealthCheck bool
 	Init        Initialiser
 	MongoDB     bool
+	Migrator    bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
@@ -66,16 +66,6 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 	return &hc, nil
 }
 
-// GetMongoDB creates a mongoDB client and sets the Mongo flag to true
-func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
-	mongoDB, err := e.Init.DoGetMongoDB(ctx, cfg)
-	if err != nil {
-		return nil, err
-	}
-	e.MongoDB = true
-	return mongoDB, nil
-}
-
 // DoGetMongoDB returns a MongoDB
 func (e *Init) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
 	mongodb := &mongo.Mongo{
@@ -86,4 +76,25 @@ func (e *Init) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.
 	}
 	log.Info(ctx, "listening to mongo db session", log.Data{"URI": mongodb.ClusterEndpoint})
 	return mongodb, nil
+}
+
+// GetMongoDB returns a mongodb health client and dataset mongo object
+func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
+	mongodb, err := e.Init.DoGetMongoDB(ctx, cfg)
+	if err != nil {
+		log.Error(ctx, "failed to initialise mongo", err)
+		return nil, err
+	}
+	e.MongoDB = true
+	return mongodb, nil
+}
+
+func (e *ExternalServiceList) GetMigrator(ctx context.Context) (migrator.Migrator, error) {
+	mig, err := e.Init.DoGetMigrator(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	e.Migrator = true
+	return mig, nil
 }
