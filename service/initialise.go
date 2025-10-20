@@ -98,3 +98,11 @@ func (e *ExternalServiceList) GetMigrator(ctx context.Context) (migrator.Migrato
 	e.Migrator = true
 	return mig, nil
 }
+
+// DoGetMigrator returns a Migrator
+func (e *Init) DoGetMigrator(ctx context.Context) (migrator.Migrator, error) {
+	mig := migrator.NewDefaultMigrator()
+
+	log.Info(ctx, "migrator initialised")
+	return mig, nil
+}
