@@ -69,6 +69,8 @@ func TestRun(t *testing.T) {
 		}
 
 		mongoMock := &storeMock.MongoDBMock{}
+		
+		migrMock := &migratorMock.MigratorMock{}
 
 		funcDoGetHealthcheckOk := func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 			return hcMock, nil
@@ -87,7 +89,7 @@ func TestRun(t *testing.T) {
 		}
 
 		funcDoGetMigrator := func(ctx context.Context) (migrator.Migrator, error) {
-			return &migratorMock.MigratorMock{}, nil
+			return migrMock, nil
 		}
 
 		Convey("Given that initialising healthcheck returns an error", func() {
@@ -162,7 +164,8 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
-				DoGetMongoDBFunc: funcDoGetMongoDBOk,
+				DoGetMongoDBFunc:  funcDoGetMongoDBOk,
+				DoGetMigratorFunc: funcDoGetMigrator,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)

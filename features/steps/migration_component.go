@@ -3,6 +3,7 @@ package steps
 import (
 	"context"
 	"fmt"
+	"github.com/ONSdigital/dis-migration-service/migrator"
 	"net/http"
 	"strconv"
 	"time"
@@ -38,6 +39,7 @@ type MigrationComponent struct {
 	MongoClient    *mongo.Mongo
 	mongoFeature   *componenttest.MongoFeature
 	StartTime      time.Time
+	migrator       migrator.Migrator
 }
 
 func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationComponent, error) {
@@ -77,6 +79,7 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 		DoGetHealthCheckFunc: c.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
 		DoGetMongoDBFunc:     c.DoGetMongoDB,
+		DoGetMigratorFunc:    c.DoGetMigrator,
 	}
 
 	c.Config.HealthCheckInterval = 1 * time.Second
@@ -144,4 +147,8 @@ func (c *MigrationComponent) DoGetHTTPServer(bindAddr string, router http.Handle
 
 func (c *MigrationComponent) DoGetMongoDB(context.Context, config.MongoConfig) (store.MongoDB, error) {
 	return c.MongoClient, nil
+}
+
+func (c *MigrationComponent) DoGetMigrator(context.Context) (migrator.Migrator, error) {
+	return c.migrator, nil
 }
