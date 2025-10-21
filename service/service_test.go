@@ -69,7 +69,7 @@ func TestRun(t *testing.T) {
 		}
 
 		mongoMock := &storeMock.MongoDBMock{}
-		
+
 		migrMock := &migratorMock.MigratorMock{}
 
 		funcDoGetHealthcheckOk := func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {

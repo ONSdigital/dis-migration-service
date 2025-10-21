@@ -3,7 +3,9 @@ package steps
 import (
 	"context"
 	"fmt"
+	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/migrator"
+	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 	"net/http"
 	"strconv"
 	"time"
@@ -145,10 +147,38 @@ func (c *MigrationComponent) DoGetHTTPServer(bindAddr string, router http.Handle
 	return c.HTTPServer
 }
 
-func (c *MigrationComponent) DoGetMongoDB(context.Context, config.MongoConfig) (store.MongoDB, error) {
+func (c *MigrationComponent) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
+	//return &storeMock.MongoDBMock{
+	//	GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+	//		return &domain.Job{
+	//			ID:          jobID,
+	//			LastUpdated: "test-time",
+	//			State:       "submitted",
+	//			Config: &domain.JobConfig{
+	//				SourceID: "test-source-id",
+	//				TargetID: "test-target-id",
+	//				Type:     "test-type",
+	//			},
+	//		}, nil
+	//	},
+	//	CreateJobFunc: func(ctx context.Context, job *domain.Job) (*domain.Job, error) {
+	//		return &domain.Job{
+	//			ID:          "test-id",
+	//			LastUpdated: "test-time",
+	//			Config:      job.Config,
+	//			State:       job.State,
+	//		}, nil
+	//	},
+	//	CloseFunc:   func(ctx context.Context) error { return nil },
+	//	CheckerFunc: func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error { return nil },
+	//}, nil
 	return c.MongoClient, nil
 }
 
-func (c *MigrationComponent) DoGetMigrator(context.Context) (migrator.Migrator, error) {
-	return c.migrator, nil
+func (c *MigrationComponent) DoGetMigrator(ctx context.Context) (migrator.Migrator, error) {
+	mig := &migratorMock.MigratorMock{
+		MigrateFunc: func(ctx context.Context, job *domain.Job) {},
+	}
+
+	return mig, nil
 }

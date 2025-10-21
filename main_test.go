@@ -17,7 +17,7 @@ import (
 var componentFlag = flag.Bool("component", false, "perform component tests")
 
 const mongoVersion = "4.4.8"
-const databaseName = "testing"
+const databaseName = "migrations"
 
 type ComponentTest struct {
 	Mongo *componentTest.MongoFeature
@@ -50,6 +50,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 
 	apiFeature.RegisterSteps(godogCtx)
 	migrationComponent.RegisterSteps(godogCtx)
+	f.Mongo.RegisterSteps(godogCtx)
 }
 
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
