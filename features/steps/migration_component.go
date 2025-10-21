@@ -3,12 +3,13 @@ package steps
 import (
 	"context"
 	"fmt"
-	"github.com/ONSdigital/dis-migration-service/domain"
-	"github.com/ONSdigital/dis-migration-service/migrator"
-	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/ONSdigital/dis-migration-service/domain"
+	"github.com/ONSdigital/dis-migration-service/migrator"
+	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 
 	"github.com/ONSdigital/dp-component-test/utils"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
@@ -41,7 +42,6 @@ type MigrationComponent struct {
 	MongoClient    *mongo.Mongo
 	mongoFeature   *componenttest.MongoFeature
 	StartTime      time.Time
-	migrator       migrator.Migrator
 }
 
 func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationComponent, error) {
@@ -148,30 +148,6 @@ func (c *MigrationComponent) DoGetHTTPServer(bindAddr string, router http.Handle
 }
 
 func (c *MigrationComponent) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
-	//return &storeMock.MongoDBMock{
-	//	GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-	//		return &domain.Job{
-	//			ID:          jobID,
-	//			LastUpdated: "test-time",
-	//			State:       "submitted",
-	//			Config: &domain.JobConfig{
-	//				SourceID: "test-source-id",
-	//				TargetID: "test-target-id",
-	//				Type:     "test-type",
-	//			},
-	//		}, nil
-	//	},
-	//	CreateJobFunc: func(ctx context.Context, job *domain.Job) (*domain.Job, error) {
-	//		return &domain.Job{
-	//			ID:          "test-id",
-	//			LastUpdated: "test-time",
-	//			Config:      job.Config,
-	//			State:       job.State,
-	//		}, nil
-	//	},
-	//	CloseFunc:   func(ctx context.Context) error { return nil },
-	//	CheckerFunc: func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error { return nil },
-	//}, nil
 	return c.MongoClient, nil
 }
 
