@@ -90,8 +90,7 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 	c.StartTime = time.Now()
 	c.svcList = service.NewServiceList(initMock)
 	c.HTTPServer = &http.Server{ReadHeaderTimeout: 3 * time.Second}
-	c.serviceSvc = service.New(c.Config, c.svcList)
-	err = c.serviceSvc.Run(context.Background(), "1", "", "", c.errorChan)
+	c.serviceSvc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
 	if err != nil {
 		return &MigrationComponent{}, err
 	}

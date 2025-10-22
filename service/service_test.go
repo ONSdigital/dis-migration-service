@@ -103,8 +103,7 @@ func TestRun(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 
-			svc := service.New(cfg, svcList)
-			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			Convey("Then service Run fails with the same error and the flag is not set", func() {
 				So(err, ShouldResemble, errHealthcheck)
@@ -128,8 +127,7 @@ func TestRun(t *testing.T) {
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
 
-			svc := service.New(cfg, svcList)
-			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			Convey("Then service Run succeeds and all the flags are set", func() {
 				So(err, ShouldBeNil)
@@ -169,8 +167,7 @@ func TestRun(t *testing.T) {
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			svc := service.New(cfg, svcList)
-			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			Convey("Then service Run fails, but all checks try to register", func() {
 				So(err, ShouldNotBeNil)
@@ -196,8 +193,7 @@ func TestRun(t *testing.T) {
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
 
-			svc := service.New(cfg, svcList)
-			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			So(err, ShouldBeNil)
 
@@ -276,8 +272,7 @@ func TestClose(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 
-			svc := service.New(cfg, svcList)
-			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
+			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			So(err, ShouldBeNil)
 
@@ -307,8 +302,7 @@ func TestClose(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 
-			svc := service.New(cfg, svcList)
-			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
+			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			So(err, ShouldBeNil)
 

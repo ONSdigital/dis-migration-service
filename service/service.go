@@ -31,72 +31,73 @@ type MigrationServiceStore struct {
 	store.MongoDB
 }
 
-func New(cfg *config.Config, serviceList *ExternalServiceList) *Service {
-	svc := &Service{
-		Config:      cfg,
-		ServiceList: serviceList,
-	}
-
-	return svc
-}
-
 // Run the service
-func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version string, svcErrors chan error) (err error) {
+func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
 	log.Info(ctx, "running service")
-	log.Info(ctx, "using service configuration", log.Data{"config": svc.Config})
+	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
 
 	// Get MongoDB client
-	svc.mongoDB, err = svc.ServiceList.GetMongoDB(ctx, svc.Config.MongoConfig)
+	mongoDB, err := serviceList.GetMongoDB(ctx, cfg.MongoConfig)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise mongo DB", err)
-		return err
+		return nil, err
 	}
 
 	// Get Datastore
-	datastore := store.Datastore{Backend: MigrationServiceStore{svc.mongoDB}}
+	datastore := store.Datastore{Backend: MigrationServiceStore{mongoDB}}
 
 	// Get Migrator
-	svc.migrator, err = svc.ServiceList.GetMigrator(ctx)
+	migr, err := serviceList.GetMigrator(ctx)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise migrator", err)
-		return err
+		return nil, err
 	}
 
 	// Setup healthcheck
-	svc.HealthCheck, err = svc.ServiceList.GetHealthCheck(svc.Config, buildTime, gitCommit, version)
+	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
 	if err != nil {
-		log.Error(ctx, "could not instantiate healthcheck", err)
-		return err
+		log.Fatal(ctx, "could not instantiate healthcheck", err)
+		return nil, err
 	}
 
-	if err := svc.registerCheckers(ctx); err != nil {
-		return errors.Wrap(err, "unable to register checkers")
+	if err := registerCheckers(ctx, hc, mongoDB); err != nil {
+		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
 	// Initialise the router
 	r := mux.NewRouter()
 
-	if svc.Config.OtelEnabled {
-		r.Use(otelmux.Middleware(svc.Config.OTServiceName))
+	r.StrictSlash(true).Path("/health").HandlerFunc(hc.Handler)
+	hc.Start(ctx)
+
+	if cfg.OtelEnabled {
+		r.Use(otelmux.Middleware(cfg.OTServiceName))
 		// TODO: Any middleware will require 'otelhttp.NewMiddleware(cfg.OTServiceName),' included for Open Telemetry
 	}
 
-	middleware := svc.createMiddleware()
-	svc.Server = svc.ServiceList.GetHTTPServer(svc.Config.BindAddr, middleware.Then(r))
+	middleware := createMiddleware(hc)
+	s := serviceList.GetHTTPServer(cfg.BindAddr, middleware.Then(r))
 
-	// Setup the API
-	svc.API = api.Setup(ctx, r, &datastore, svc.migrator)
-
-	svc.HealthCheck.Start(ctx)
+	// Set up the API
+	a := api.Setup(ctx, r, &datastore, migr)
 
 	// Run the http server in a new go-routine
 	go func() {
-		if err := svc.Server.ListenAndServe(); err != nil {
+		if err := s.ListenAndServe(); err != nil {
 			svcErrors <- errors.Wrap(err, "failure in http listen and serve")
 		}
 	}()
 
-	return nil
+	return &Service{
+		Config:      cfg,
+		Router:      r,
+		API:         a,
+		HealthCheck: hc,
+		ServiceList: serviceList,
+		Server:      s,
+		mongoDB:     mongoDB,
+		migrator:    migr,
+	}, nil
 }
 
 // Close gracefully shuts the service down in the required order, with timeout
@@ -161,9 +162,9 @@ func (svc *Service) Close(ctx context.Context) error {
 
 // CreateMiddleware creates an Alice middleware chain of handlers
 // to forward collectionID from cookie from header
-func (svc *Service) createMiddleware() alice.Chain {
+func createMiddleware(hc HealthChecker) alice.Chain {
 	// healthcheck
-	healthcheckHandler := healthcheckMiddleware(svc.HealthCheck.Handler, "/health")
+	healthcheckHandler := healthcheckMiddleware(hc.Handler, "/health")
 	middleware := alice.New(healthcheckHandler)
 
 	return middleware
@@ -183,10 +184,10 @@ func healthcheckMiddleware(healthcheckHandler func(http.ResponseWriter, *http.Re
 	}
 }
 
-func (svc *Service) registerCheckers(ctx context.Context) (err error) {
+func registerCheckers(ctx context.Context, hc HealthChecker, mongoCli store.MongoDB) (err error) {
 	hasErrors := false
 
-	if err = svc.HealthCheck.AddCheck("Mongo DB", svc.mongoDB.Checker); err != nil {
+	if err = hc.AddCheck("Mongo DB", mongoCli.Checker); err != nil {
 		hasErrors = true
 		log.Error(ctx, "error adding check for mongo db", err)
 	}
