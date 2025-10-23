@@ -16,7 +16,7 @@ import (
 
 var componentFlag = flag.Bool("component", false, "perform component tests")
 
-const mongoVersion = "4.4.8"
+const mongoVersion = "6.0.4"
 const databaseName = "testing"
 
 type ComponentTest struct {
