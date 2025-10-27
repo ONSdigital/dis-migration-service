@@ -69,7 +69,7 @@ func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg config.MongoCo
 	return mongodb, nil
 }
 
-// GetMongoDB returns a mongodb health client and dataset mongo object
+// GetMigrator returns the background migrator
 func (e *ExternalServiceList) GetMigrator(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
 	mig, err := e.Init.DoGetMigrator(ctx, datastore, clientList)
 	if err != nil {
@@ -80,7 +80,7 @@ func (e *ExternalServiceList) GetMigrator(ctx context.Context, datastore store.D
 	return mig, nil
 }
 
-// GetMongoDB returns a mongodb health client and dataset mongo object
+// GetAppClients gets the app clients for the service
 func (e *ExternalServiceList) GetAppClients(ctx context.Context, cfg *config.Config) *clients.ClientList {
 	return e.Init.DoGetAppClients(ctx, cfg)
 }
