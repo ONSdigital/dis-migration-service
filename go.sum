@@ -1,5 +1,5 @@
-github.com/ONSdigital/dis-redirect-api v0.37.0 h1:EnOGY1mM3GkacdAj67ckgg5hNUjTlUuXL2Tj7OLPudI=
-github.com/ONSdigital/dis-redirect-api v0.37.0/go.mod h1:26DZFPmtLG55Hr7VU3+RBpYu8kHQ6hKPdeWUrLurNrk=
+github.com/ONSdigital/dis-redirect-api v0.3.8 h1:2DusxFW4iNZLsOHuWehqPFtfkD/ZIMJFNozTd4W+Evw=
+github.com/ONSdigital/dis-redirect-api v0.3.8/go.mod h1:3WDOU92pqZP5ohbkP2shBNsS+/mbioyhcXqZq1pWMy4=
 github.com/ONSdigital/dis-redis v0.3.0 h1:aI0d3MsXPmRbe+okYAbrwEGBibhoCw+gfbgtJ3mA11c=
 github.com/ONSdigital/dis-redis v0.3.0/go.mod h1:CLbCwaEfJhifBM7PufwNi0mymys+xM6xNgwhihhSIHQ=
 github.com/ONSdigital/dp-api-clients-go/v2 v2.269.0 h1:13QGPBu/NmIwmPhSP0yTlPEp/U1u22dEdyi8lN5guhA=
