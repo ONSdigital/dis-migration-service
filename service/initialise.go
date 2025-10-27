@@ -148,6 +148,7 @@ func (e *Init) DoGetMigrator(ctx context.Context, datastore store.Datastore, cli
 // DoGetAppClients returns a set of app clients for the migration service
 func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients.ClientList {
 	if cfg.EnableMockClients {
+		log.Info(ctx, "returning mock app clients")
 		return &clients.ClientList{
 			DatasetAPI:    &clientMocks.DatasetAPIClientMock{},
 			FilesAPI:      &clientMocks.FilesAPIClientMock{},
@@ -156,6 +157,8 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 			Zebedee:       &clientMocks.ZebedeeClientMock{},
 		}
 	}
+
+	log.Info(ctx, "initialising app clients")
 
 	return &clients.ClientList{
 		DatasetAPI:    datasetAPI.New(cfg.DatasetAPIURL),
