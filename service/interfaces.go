@@ -4,10 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ONSdigital/dis-migration-service/store"
-
+	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
+	"github.com/ONSdigital/dis-migration-service/store"
+
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
@@ -19,8 +20,9 @@ import (
 type Initialiser interface {
 	DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
-	DoGetMigrator(ctx context.Context) (migrator.Migrator, error)
+	DoGetMigrator(ctx context.Context, store store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error)
 	DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error)
+	DoGetAppClients(ctx context.Context, cfg *config.Config) *clients.ClientList
 }
 
 // HTTPServer defines the required methods from the HTTP server

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/api"
+	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/dis-migration-service/store"
@@ -25,79 +26,100 @@ type Service struct {
 	ServiceList *ExternalServiceList
 	mongoDB     store.MongoDB
 	migrator    migrator.Migrator
+	clients     *clients.ClientList
 }
 
 type MigrationServiceStore struct {
 	store.MongoDB
 }
 
+func New(cfg *config.Config, serviceList *ExternalServiceList) *Service {
+	svc := &Service{
+		Config:      cfg,
+		ServiceList: serviceList,
+	}
+	return svc
+}
+
 // Run the service
-func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
+func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version string, svcErrors chan error) (err error) {
 	log.Info(ctx, "running service")
-	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
+	log.Info(ctx, "using service configuration", log.Data{"config": svc.Config})
 
 	// Get MongoDB client
-	mongoDB, err := serviceList.GetMongoDB(ctx, cfg.MongoConfig)
+	//mongoDB, err := serviceList.GetMongoDB(ctx, cfg.MongoConfig)
+	//if err != nil {
+	//	log.Fatal(ctx, "failed to initialise mongo DB", err)
+	//	return nil, err
+	//}
+
+	// Get MongoDB client
+	svc.mongoDB, err = svc.ServiceList.GetMongoDB(ctx, svc.Config.MongoConfig)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise mongo DB", err)
-		return nil, err
+		return err
 	}
 
 	// Get Datastore
-	datastore := store.Datastore{Backend: MigrationServiceStore{mongoDB}}
+	datastore := store.Datastore{Backend: MigrationServiceStore{svc.mongoDB}}
+
+	// Get app clients
+	svc.clients = svc.ServiceList.GetAppClients(ctx, svc.Config)
 
 	// Get Migrator
-	migr, err := serviceList.GetMigrator(ctx)
+	//migr, err := serviceList.GetMigrator(ctx)
+	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, datastore, svc.clients)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise migrator", err)
-		return nil, err
+		return err
 	}
 
 	// Setup healthcheck
-	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
+	svc.HealthCheck, err = svc.ServiceList.GetHealthCheck(svc.Config, buildTime, gitCommit, version)
 	if err != nil {
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
-		return nil, err
+		return err
 	}
 
-	if err := registerCheckers(ctx, hc, mongoDB); err != nil {
-		return nil, errors.Wrap(err, "unable to register checkers")
+	if err := registerCheckers(ctx, svc.HealthCheck, svc.mongoDB); err != nil {
+		return errors.Wrap(err, "unable to register checkers")
 	}
 
 	// Initialise the router
 	r := mux.NewRouter()
 
-	r.StrictSlash(true).Path("/health").HandlerFunc(hc.Handler)
-	hc.Start(ctx)
+	r.StrictSlash(true).Path("/health").HandlerFunc(svc.HealthCheck.Handler)
+	svc.HealthCheck.Start(ctx)
 
-	if cfg.OtelEnabled {
-		r.Use(otelmux.Middleware(cfg.OTServiceName))
+	if svc.Config.OtelEnabled {
+		r.Use(otelmux.Middleware(svc.Config.OTServiceName))
 		// TODO: Any middleware will require 'otelhttp.NewMiddleware(cfg.OTServiceName),' included for Open Telemetry
 	}
 
-	middleware := createMiddleware(hc)
-	s := serviceList.GetHTTPServer(cfg.BindAddr, middleware.Then(r))
+	middleware := createMiddleware(svc.HealthCheck)
+	svc.Server = svc.ServiceList.GetHTTPServer(svc.Config.BindAddr, middleware.Then(r))
 
 	// Set up the API
-	a := api.Setup(ctx, r, &datastore, migr)
+	svc.API = api.Setup(ctx, r, &datastore, svc.migrator)
 
 	// Run the http server in a new go-routine
 	go func() {
-		if err := s.ListenAndServe(); err != nil {
+		if err := svc.Server.ListenAndServe(); err != nil {
 			svcErrors <- errors.Wrap(err, "failure in http listen and serve")
 		}
 	}()
 
-	return &Service{
-		Config:      cfg,
-		Router:      r,
-		API:         a,
-		HealthCheck: hc,
-		ServiceList: serviceList,
-		Server:      s,
-		mongoDB:     mongoDB,
-		migrator:    migr,
-	}, nil
+	//return &Service{
+	//	Config:      cfg,
+	//	Router:      r,
+	//	API:         a,
+	//	HealthCheck: hc,
+	//	ServiceList: serviceList,
+	//	Server:      s,
+	//	mongoDB:     mongoDB,
+	//	migrator:    migr,
+	//}, nil
+	return nil
 }
 
 // Close gracefully shuts the service down in the required order, with timeout

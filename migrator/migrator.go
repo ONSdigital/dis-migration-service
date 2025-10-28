@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -16,13 +18,15 @@ type Migrator interface {
 }
 
 type migrator struct {
-	executor TaskExecutor
-	wg       sync.WaitGroup
+	Store   store.Datastore
+	Clients *clients.ClientList
+	wg      sync.WaitGroup
 }
 
-func NewDefaultMigrator() Migrator {
+func NewDefaultMigrator(datastore store.Datastore, appClients *clients.ClientList) Migrator {
 	return &migrator{
-		executor: &defaultExecutor{},
+		Store:   datastore,
+		Clients: appClients,
 	}
 }
 
@@ -30,7 +34,8 @@ func (mig *migrator) Migrate(ctx context.Context, job *domain.Job) {
 	mig.wg.Add(1)
 	go func() {
 		defer mig.wg.Done()
-		err := mig.executor.Migrate(ctx, job)
+		// TODO: account for job type here.
+		err := mig.migrateStaticDataset(ctx, job)
 		if err != nil {
 			log.Error(ctx, "error executing job migration", err, log.Data{"jobID": job.ID})
 		}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 
+	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
@@ -84,12 +85,21 @@ func TestRun(t *testing.T) {
 			return failingServerMock
 		}
 
+<<<<<<< HEAD
 		funcDoGetMongoDBOk := func(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
 			return mongoMock, nil
+=======
+		funcDoGetMigrator := func(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
+			return &migratorMock.MigratorMock{}, nil
+>>>>>>> main
 		}
 
 		funcDoGetMigrator := func(ctx context.Context) (migrator.Migrator, error) {
 			return migrMock, nil
+		}
+
+		funcDoGetAppClientsOk := func(context.Context, *config.Config) *clients.ClientList {
+			return &clients.ClientList{}
 		}
 
 		Convey("Given that initialising healthcheck returns an error", func() {
@@ -99,6 +109,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc: funcDoGetHealthcheckErr,
 				DoGetMigratorFunc:    funcDoGetMigrator,
 				DoGetMongoDBFunc:     funcDoGetMongoDBOk,
+				DoGetAppClientsFunc:  funcDoGetAppClientsOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -122,6 +133,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc: funcDoGetHealthcheckOk,
 				DoGetMigratorFunc:    funcDoGetMigrator,
 				DoGetMongoDBFunc:     funcDoGetMongoDBOk,
+				DoGetAppClientsFunc:  funcDoGetAppClientsOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -188,6 +200,7 @@ func TestRun(t *testing.T) {
 				DoGetHTTPServerFunc:  funcDoGetFailingHTTPServer,
 				DoGetMigratorFunc:    funcDoGetMigrator,
 				DoGetMongoDBFunc:     funcDoGetMongoDBOk,
+				DoGetAppClientsFunc:  funcDoGetAppClientsOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -247,7 +260,7 @@ func TestClose(t *testing.T) {
 			return nil
 		}
 
-		funcDoGetMigrator := func(ctx context.Context) (migrator.Migrator, error) {
+		funcDoGetMigrator := func(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
 			return &migratorMock.MigratorMock{
 				ShutdownFunc: funcClose,
 			}, nil
@@ -259,14 +272,19 @@ func TestClose(t *testing.T) {
 			}, nil
 		}
 
+		funcDoGetAppClientsOk := func(context.Context, *config.Config) *clients.ClientList {
+			return &clients.ClientList{}
+		}
+
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 			initMock := &mock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetMigratorFunc: funcDoGetMigrator,
-				DoGetMongoDBFunc:  funcDoGetMongoDBOk,
+				DoGetMigratorFunc:   funcDoGetMigrator,
+				DoGetMongoDBFunc:    funcDoGetMongoDBOk,
+				DoGetAppClientsFunc: funcDoGetAppClientsOk,
 			}
 
 			svcErrors := make(chan error, 1)
@@ -295,8 +313,9 @@ func TestClose(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetMigratorFunc: funcDoGetMigrator,
-				DoGetMongoDBFunc:  funcDoGetMongoDBOk,
+				DoGetMigratorFunc:   funcDoGetMigrator,
+				DoGetMongoDBFunc:    funcDoGetMongoDBOk,
+				DoGetAppClientsFunc: funcDoGetAppClientsOk,
 			}
 
 			svcErrors := make(chan error, 1)

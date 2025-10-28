@@ -26,6 +26,9 @@ func TestConfig(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(configuration, ShouldResemble, &Config{
 					BindAddr:                   "localhost:30100",
+					DatasetAPIURL:              "http://localhost:22000",
+					EnableMockClients:          false,
+					FilesAPIURL:                "http://localhost:26900",
 					GracefulShutdownTimeout:    5 * time.Second,
 					HealthCheckInterval:        30 * time.Second,
 					HealthCheckCriticalTimeout: 90 * time.Second,
@@ -50,6 +53,9 @@ func TestConfig(t *testing.T) {
 							},
 						},
 					},
+					RedirectAPIURL:   "http://localhost:29900",
+					UploadServiceURL: "http://localhost:25100",
+					ZebedeeURL:       "http://localhost:8082",
 				})
 			})
 

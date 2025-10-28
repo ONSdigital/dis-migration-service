@@ -15,17 +15,17 @@ import (
 
 // MigrationAPI provides a struct to wrap the api around
 type MigrationAPI struct {
+	Migrator migrator.Migrator
 	Router   *mux.Router
 	Store    *store.Datastore
-	Migrator migrator.Migrator
 }
 
 // Setup function sets up the api and returns an api
 func Setup(ctx context.Context, router *mux.Router, dataStore *store.Datastore, dataMigrator migrator.Migrator) *MigrationAPI {
 	api := &MigrationAPI{
+		Migrator: dataMigrator,
 		Router:   router,
 		Store:    dataStore,
-		Migrator: dataMigrator,
 	}
 
 	api.post(
