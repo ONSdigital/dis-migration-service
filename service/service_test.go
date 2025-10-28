@@ -69,10 +69,6 @@ func TestRun(t *testing.T) {
 			},
 		}
 
-		mongoMock := &storeMock.MongoDBMock{}
-
-		migrMock := &migratorMock.MigratorMock{}
-
 		funcDoGetHealthcheckOk := func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 			return hcMock, nil
 		}
@@ -85,17 +81,12 @@ func TestRun(t *testing.T) {
 			return failingServerMock
 		}
 
-<<<<<<< HEAD
 		funcDoGetMongoDBOk := func(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
-			return mongoMock, nil
-=======
-		funcDoGetMigrator := func(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
-			return &migratorMock.MigratorMock{}, nil
->>>>>>> main
+			return &storeMock.MongoDBMock{}, nil
 		}
 
-		funcDoGetMigrator := func(ctx context.Context) (migrator.Migrator, error) {
-			return migrMock, nil
+		funcDoGetMigrator := func(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
+			return &migratorMock.MigratorMock{}, nil
 		}
 
 		funcDoGetAppClientsOk := func(context.Context, *config.Config) *clients.ClientList {
@@ -114,7 +105,8 @@ func TestRun(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			svc := service.New(cfg, svcList)
+			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			Convey("Then service Run fails with the same error and the flag is not set", func() {
 				So(err, ShouldResemble, errHealthcheck)
@@ -139,7 +131,8 @@ func TestRun(t *testing.T) {
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
 
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			svc := service.New(cfg, svcList)
+			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			Convey("Then service Run succeeds and all the flags are set", func() {
 				So(err, ShouldBeNil)
@@ -174,12 +167,14 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
-				DoGetMongoDBFunc:  funcDoGetMongoDBOk,
-				DoGetMigratorFunc: funcDoGetMigrator,
+				DoGetMongoDBFunc:    funcDoGetMongoDBOk,
+				DoGetMigratorFunc:   funcDoGetMigrator,
+				DoGetAppClientsFunc: funcDoGetAppClientsOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			svc := service.New(cfg, svcList)
+			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			Convey("Then service Run fails, but all checks try to register", func() {
 				So(err, ShouldNotBeNil)
@@ -206,7 +201,8 @@ func TestRun(t *testing.T) {
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
 
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			svc := service.New(cfg, svcList)
+			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			So(err, ShouldBeNil)
 
@@ -290,7 +286,8 @@ func TestClose(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 
-			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			svc := service.New(cfg, svcList)
+			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			So(err, ShouldBeNil)
 
@@ -321,7 +318,8 @@ func TestClose(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 
-			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+			svc := service.New(cfg, svcList)
+			err := svc.Run(ctx, testBuildTime, testGitCommit, testVersion, svcErrors)
 
 			So(err, ShouldBeNil)
 

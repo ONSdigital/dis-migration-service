@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ONSdigital/dis-migration-service/clients"
+	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
+
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
@@ -82,6 +85,7 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
 		DoGetMongoDBFunc:     c.DoGetMongoDB,
 		DoGetMigratorFunc:    c.DoGetMigrator,
+		DoGetAppClientsFunc:  c.DoGetAppClients,
 	}
 
 	c.Config.HealthCheckInterval = 1 * time.Second
@@ -90,7 +94,8 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 	c.StartTime = time.Now()
 	c.svcList = service.NewServiceList(initMock)
 	c.HTTPServer = &http.Server{ReadHeaderTimeout: 3 * time.Second}
-	c.serviceSvc, err = service.Run(context.Background(), c.Config, c.svcList, "1", "", "", c.errorChan)
+	c.serviceSvc = service.New(c.Config, c.svcList)
+	err = c.serviceSvc.Run(context.Background(), "1", "", "", c.errorChan)
 	if err != nil {
 		return &MigrationComponent{}, err
 	}
@@ -150,10 +155,20 @@ func (c *MigrationComponent) DoGetMongoDB(ctx context.Context, cfg config.MongoC
 	return c.MongoClient, nil
 }
 
-func (c *MigrationComponent) DoGetMigrator(ctx context.Context) (migrator.Migrator, error) {
+func (c *MigrationComponent) DoGetMigrator(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
 	mig := &migratorMock.MigratorMock{
 		MigrateFunc: func(ctx context.Context, job *domain.Job) {},
 	}
 
 	return mig, nil
+}
+
+func (c *MigrationComponent) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients.ClientList {
+	return &clients.ClientList{
+		DatasetAPI:    &clientMocks.DatasetAPIClientMock{},
+		FilesAPI:      &clientMocks.FilesAPIClientMock{},
+		RedirectAPI:   &clientMocks.RedirectAPIClientMock{},
+		UploadService: &clientMocks.UploadServiceClientMock{},
+		Zebedee:       &clientMocks.ZebedeeClientMock{},
+	}
 }

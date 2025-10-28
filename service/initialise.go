@@ -91,16 +91,6 @@ func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer 
 	return s
 }
 
-//// DoGetHealthCheck creates a healthcheck with versionInfo
-//func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error) {
-//	versionInfo, err := healthcheck.NewVersionInfo(buildTime, gitCommit, version)
-//	if err != nil {
-//		return nil, err
-//	}
-//	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
-//	return &hc, nil
-//}
-
 // DoGetHealthCheck creates a healthcheck with versionInfo
 func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error) {
 	versionInfo, err := healthcheck.NewVersionInfo(buildTime, gitCommit, version)

@@ -47,13 +47,6 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	log.Info(ctx, "using service configuration", log.Data{"config": svc.Config})
 
 	// Get MongoDB client
-	//mongoDB, err := serviceList.GetMongoDB(ctx, cfg.MongoConfig)
-	//if err != nil {
-	//	log.Fatal(ctx, "failed to initialise mongo DB", err)
-	//	return nil, err
-	//}
-
-	// Get MongoDB client
 	svc.mongoDB, err = svc.ServiceList.GetMongoDB(ctx, svc.Config.MongoConfig)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise mongo DB", err)
@@ -67,7 +60,6 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	svc.clients = svc.ServiceList.GetAppClients(ctx, svc.Config)
 
 	// Get Migrator
-	//migr, err := serviceList.GetMigrator(ctx)
 	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, datastore, svc.clients)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise migrator", err)
@@ -109,16 +101,6 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 		}
 	}()
 
-	//return &Service{
-	//	Config:      cfg,
-	//	Router:      r,
-	//	API:         a,
-	//	HealthCheck: hc,
-	//	ServiceList: serviceList,
-	//	Server:      s,
-	//	mongoDB:     mongoDB,
-	//	migrator:    migr,
-	//}, nil
 	return nil
 }
 
@@ -128,7 +110,7 @@ func (svc *Service) Close(ctx context.Context) error {
 	log.Info(ctx, "commencing graceful shutdown", log.Data{"graceful_shutdown_timeout": timeout})
 	shutdownContext, cancel := context.WithTimeout(ctx, timeout)
 
-	// track shutown gracefully closes up
+	// track shutdown gracefully closes up
 	var hasShutdownError bool
 
 	go func() {
