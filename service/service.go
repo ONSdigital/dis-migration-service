@@ -38,7 +38,6 @@ func New(cfg *config.Config, serviceList *ExternalServiceList) *Service {
 		Config:      cfg,
 		ServiceList: serviceList,
 	}
-
 	return svc
 }
 
@@ -167,7 +166,6 @@ func (svc *Service) Close(ctx context.Context) error {
 
 // CreateMiddleware creates an Alice middleware chain of handlers
 // to forward collectionID from cookie from header
-
 func createMiddleware(hc HealthChecker) alice.Chain {
 	// healthcheck
 	healthcheckHandler := healthcheckMiddleware(hc.Handler, "/health")

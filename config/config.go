@@ -7,10 +7,6 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-const (
-	JobsCollection = "JobsCollection"
-)
-
 type MongoConfig struct {
 	dpMongo.MongoDriverConfig
 }
