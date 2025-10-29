@@ -7,10 +7,9 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/config"
-	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/migrator"
+	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dis-migration-service/store"
-	"github.com/ONSdigital/dis-migration-service/store/mock"
 	redirectAPI "github.com/ONSdigital/dis-redirect-api/sdk/go"
 	"github.com/ONSdigital/dp-api-clients-go/v2/files"
 	"github.com/ONSdigital/dp-api-clients-go/v2/upload"
@@ -104,38 +103,14 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 
 // DoGetMongoDB returns a MongoDB
 func (e *Init) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
-	// TODO: put in non-mocked MongoDB here
-	// nolint:gocritic // helpful for non-mock implementation
-	// mongodb := &mongo.Mongo{
-	// 	MongoConfig: cfg,
-	// }
-	// if err := mongodb.Init(ctx); err != nil {
-	// 	return nil, err
-	// }
-	log.Info(ctx, "listening to mongo db session")
-	return &mock.MongoDBMock{
-		GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-			return &domain.Job{
-				ID:          jobID,
-				LastUpdated: "test-time",
-				State:       "submitted",
-				Config: &domain.JobConfig{
-					SourceID: "test-source-id",
-					TargetID: "test-target-id",
-					Type:     "test-type",
-				},
-			}, nil
-		},
-		CreateJobFunc: func(ctx context.Context, job *domain.Job) (*domain.Job, error) {
-			return &domain.Job{
-				ID:          "test-id",
-				LastUpdated: "test-time",
-				Config:      job.Config,
-				State:       job.State,
-			}, nil
-		},
-		CloseFunc: func(ctx context.Context) error { return nil },
-	}, nil
+	mongodb := &mongo.Mongo{
+		MongoConfig: cfg,
+	}
+	if err := mongodb.Init(ctx); err != nil {
+		return nil, err
+	}
+	log.Info(ctx, "listening to mongo db session", log.Data{"URI": mongodb.ClusterEndpoint})
+	return mongodb, nil
 }
 
 // DoGetMigrator returns a Migrator

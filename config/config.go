@@ -3,16 +3,12 @@ package config
 import (
 	"time"
 
-	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
+	dpMongo "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"github.com/kelseyhightower/envconfig"
 )
 
-const (
-	JobsCollection = "JobsCollection"
-)
-
 type MongoConfig struct {
-	mongodriver.MongoDriverConfig
+	dpMongo.MongoDriverConfig
 }
 
 // Config represents service configuration for dis-migration-service
@@ -37,6 +33,15 @@ type Config struct {
 
 var cfg *Config
 
+const (
+	JobsCollectionTitle   = "MigrationsJobsCollection"
+	JobsCollectionName    = "jobs"
+	EventsCollectionTitle = "MigrationsEventsCollection"
+	EventsCollectionName  = "events"
+	TasksCollectionTitle  = "MigrationsTasksCollection"
+	TasksCollectionName   = "tasks"
+)
+
 // Get returns the default config with any modifications through environment
 // variables
 func Get() (*Config, error) {
@@ -56,9 +61,26 @@ func Get() (*Config, error) {
 		OTExporterOTLPEndpoint:     "localhost:4317",
 		OTServiceName:              "dis-migration-service",
 		OtelEnabled:                false,
-		RedirectAPIURL:             "http://localhost:29900",
-		UploadServiceURL:           "http://localhost:25100",
-		ZebedeeURL:                 "http://localhost:8082",
+		MongoConfig: MongoConfig{
+			MongoDriverConfig: dpMongo.MongoDriverConfig{
+				ClusterEndpoint:               "localhost:27017",
+				Username:                      "",
+				Password:                      "",
+				Database:                      "migrations",
+				Collections:                   map[string]string{JobsCollectionTitle: JobsCollectionName, EventsCollectionTitle: EventsCollectionName, TasksCollectionTitle: TasksCollectionName},
+				ReplicaSet:                    "",
+				IsStrongReadConcernEnabled:    false,
+				IsWriteConcernMajorityEnabled: true,
+				ConnectTimeout:                5 * time.Second,
+				QueryTimeout:                  15 * time.Second,
+				TLSConnectionConfig: dpMongo.TLSConnectionConfig{
+					IsSSL: false,
+				},
+			},
+		},
+		RedirectAPIURL:   "http://localhost:29900",
+		UploadServiceURL: "http://localhost:25100",
+		ZebedeeURL:       "http://localhost:8082",
 	}
 
 	return cfg, envconfig.Process("", cfg)
