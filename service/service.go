@@ -70,29 +70,30 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	// Setup healthcheck
 	svc.HealthCheck, err = svc.ServiceList.GetHealthCheck(svc.Config, buildTime, gitCommit, version)
 	if err != nil {
-		log.Error(ctx, "could not instantiate healthcheck", err)
+		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return err
 	}
 
-	if err := svc.registerCheckers(ctx); err != nil {
+	if err := registerCheckers(ctx, svc.HealthCheck, svc.mongoDB); err != nil {
 		return errors.Wrap(err, "unable to register checkers")
 	}
 
 	// Initialise the router
 	r := mux.NewRouter()
 
+	r.StrictSlash(true).Path("/health").HandlerFunc(svc.HealthCheck.Handler)
+	svc.HealthCheck.Start(ctx)
+
 	if svc.Config.OtelEnabled {
 		r.Use(otelmux.Middleware(svc.Config.OTServiceName))
 		// TODO: Any middleware will require 'otelhttp.NewMiddleware(cfg.OTServiceName),' included for Open Telemetry
 	}
 
-	middleware := svc.createMiddleware()
+	middleware := createMiddleware(svc.HealthCheck)
 	svc.Server = svc.ServiceList.GetHTTPServer(svc.Config.BindAddr, middleware.Then(r))
 
-	// Setup the API
+	// Set up the API
 	svc.API = api.Setup(ctx, r, &datastore, svc.migrator)
-
-	svc.HealthCheck.Start(ctx)
 
 	// Run the http server in a new go-routine
 	go func() {
@@ -110,7 +111,7 @@ func (svc *Service) Close(ctx context.Context) error {
 	log.Info(ctx, "commencing graceful shutdown", log.Data{"graceful_shutdown_timeout": timeout})
 	shutdownContext, cancel := context.WithTimeout(ctx, timeout)
 
-	// track shutown gracefully closes up
+	// track shutdown gracefully closes up
 	var hasShutdownError bool
 
 	go func() {
@@ -166,9 +167,10 @@ func (svc *Service) Close(ctx context.Context) error {
 
 // CreateMiddleware creates an Alice middleware chain of handlers
 // to forward collectionID from cookie from header
-func (svc *Service) createMiddleware() alice.Chain {
+
+func createMiddleware(hc HealthChecker) alice.Chain {
 	// healthcheck
-	healthcheckHandler := healthcheckMiddleware(svc.HealthCheck.Handler, "/health")
+	healthcheckHandler := healthcheckMiddleware(hc.Handler, "/health")
 	middleware := alice.New(healthcheckHandler)
 
 	return middleware
@@ -188,8 +190,16 @@ func healthcheckMiddleware(healthcheckHandler func(http.ResponseWriter, *http.Re
 	}
 }
 
-func (svc *Service) registerCheckers(ctx context.Context) (err error) {
-	// TODO: add other health checks here, as per dp-upload-service
+func registerCheckers(ctx context.Context, hc HealthChecker, mongoCli store.MongoDB) (err error) {
+	hasErrors := false
 
+	if err = hc.AddCheck("Mongo DB", mongoCli.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for mongo db", err)
+	}
+
+	if hasErrors {
+		return errors.New("Error(s) registering checkers for healthcheck")
+	}
 	return nil
 }

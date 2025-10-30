@@ -64,7 +64,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Run Go unit tests
+      - name: Run Go component tests
         run: make test-component
 
   dis-migration-service-lint:

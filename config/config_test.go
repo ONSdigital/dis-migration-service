@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	dpMongo "github.com/ONSdigital/dp-mongodb/v3/mongodb"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -34,9 +36,26 @@ func TestConfig(t *testing.T) {
 					OTExporterOTLPEndpoint:     "localhost:4317",
 					OTServiceName:              "dis-migration-service",
 					OtelEnabled:                false,
-					RedirectAPIURL:             "http://localhost:29900",
-					UploadServiceURL:           "http://localhost:25100",
-					ZebedeeURL:                 "http://localhost:8082",
+					MongoConfig: MongoConfig{
+						MongoDriverConfig: dpMongo.MongoDriverConfig{
+							ClusterEndpoint:               "localhost:27017",
+							Username:                      "",
+							Password:                      "",
+							Database:                      "migrations",
+							Collections:                   map[string]string{JobsCollectionTitle: JobsCollectionName, EventsCollectionTitle: EventsCollectionName, TasksCollectionTitle: TasksCollectionName},
+							ReplicaSet:                    "",
+							IsStrongReadConcernEnabled:    false,
+							IsWriteConcernMajorityEnabled: true,
+							ConnectTimeout:                5 * time.Second,
+							QueryTimeout:                  15 * time.Second,
+							TLSConnectionConfig: dpMongo.TLSConnectionConfig{
+								IsSSL: false,
+							},
+						},
+					},
+					RedirectAPIURL:   "http://localhost:29900",
+					UploadServiceURL: "http://localhost:25100",
+					ZebedeeURL:       "http://localhost:8082",
 				})
 			})
 
