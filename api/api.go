@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	apiErrors "github.com/ONSdigital/dis-migration-service/api/errors"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -64,25 +64,28 @@ func (api *MigrationAPI) delete(path string, handler http.HandlerFunc) {
 }
 
 // handleError deals with all errors from the API layer
-func handleError(ctx context.Context, w http.ResponseWriter, r *http.Request, errors ...apiErrors.APIError) {
-	var errList apiErrors.ErrorList
+func handleError(ctx context.Context, w http.ResponseWriter, r *http.Request, errors ...error) {
+	var errList appErrors.ErrorList
 	var statusCode = 0
 
 	for i := range errors {
-		if errors[i].Code > statusCode {
-			statusCode = errors[i].Code
+		redactedErr := appErrors.New(errors[i])
+
+		if redactedErr.Code > statusCode {
+			statusCode = redactedErr.Code
 		}
-		redactedError := apiErrors.Error{
-			Code:        errors[i].Code,
-			Description: errors[i].Error(),
+
+		if redactedErr.Code > 499 {
+			log.Error(ctx, "handling server error", errors[i])
 		}
-		errList.Errors = append(errList.Errors, redactedError)
+
+		errList.Errors = append(errList.Errors, redactedErr)
 	}
 
 	responseBody, err := json.Marshal(errList)
 	if err != nil {
 		log.Error(ctx, "failed to encode error list", err)
-		http.Error(w, apiErrors.ErrInternalServerError.Error(), http.StatusInternalServerError)
+		http.Error(w, appErrors.ErrInternalServerError.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -91,7 +94,7 @@ func handleError(ctx context.Context, w http.ResponseWriter, r *http.Request, er
 
 	if _, err := w.Write(responseBody); err != nil {
 		log.Error(ctx, "failed to write response body", err)
-		http.Error(w, apiErrors.ErrInternalServerError.Error(), http.StatusInternalServerError)
+		http.Error(w, appErrors.ErrInternalServerError.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -102,7 +105,7 @@ func handleSuccess(ctx context.Context, w http.ResponseWriter, r *http.Request, 
 	if body != nil {
 		if _, err := w.Write(body); err != nil {
 			log.Error(ctx, "failed to encode response body", err)
-			handleError(ctx, w, r, apiErrors.ErrInternalServerError)
+			handleError(ctx, w, r, appErrors.ErrInternalServerError)
 			return
 		}
 	}

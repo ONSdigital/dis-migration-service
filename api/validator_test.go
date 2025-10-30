@@ -3,8 +3,8 @@ package api
 import (
 	"testing"
 
-	apiErrors "github.com/ONSdigital/dis-migration-service/api/errors"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -36,7 +36,7 @@ func TestValidateJobConfig(t *testing.T) {
 
 			Convey("Then an error should be returend", func() {
 				So(errs, ShouldHaveLength, 1)
-				So(errs, ShouldContain, apiErrors.ErrSourceIDNotProvided)
+				So(errs, ShouldContain, appErrors.ErrSourceIDNotProvided)
 			})
 		})
 	})
@@ -49,9 +49,9 @@ func TestValidateJobConfig(t *testing.T) {
 
 			Convey("Then an error should be returend", func() {
 				So(errs, ShouldHaveLength, 3)
-				So(errs, ShouldContain, apiErrors.ErrSourceIDNotProvided)
-				So(errs, ShouldContain, apiErrors.ErrTargetIDNotProvided)
-				So(errs, ShouldContain, apiErrors.ErrJobTypeNotProvided)
+				So(errs, ShouldContain, appErrors.ErrSourceIDNotProvided)
+				So(errs, ShouldContain, appErrors.ErrTargetIDNotProvided)
+				So(errs, ShouldContain, appErrors.ErrJobTypeNotProvided)
 			})
 		})
 	})

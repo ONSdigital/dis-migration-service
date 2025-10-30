@@ -6,9 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	apiErrors "github.com/ONSdigital/dis-migration-service/api/errors"
 	"github.com/ONSdigital/dis-migration-service/domain"
-	storeErrors "github.com/ONSdigital/dis-migration-service/store/errors"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
@@ -20,19 +19,17 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 
 	job, err := api.Store.GetJob(ctx, jobID)
 	if err != nil {
-		if err == storeErrors.ErrJobNotFound {
-			handleError(ctx, w, r, apiErrors.ErrJobNotFound)
-		} else {
+		if err != appErrors.ErrJobNotFound {
 			log.Error(ctx, "failed to get job", err)
-			handleError(ctx, w, r, apiErrors.ErrInternalServerError)
 		}
+		handleError(ctx, w, r, err)
 		return
 	}
 
 	bytes, err := json.Marshal(job)
 	if err != nil {
 		log.Error(ctx, "failed to marshal response", err)
-		handleError(ctx, w, r, apiErrors.ErrInternalServerError)
+		handleError(ctx, w, r, err)
 		return
 	}
 
@@ -45,7 +42,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	jobConfigBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Info(ctx, "unable to read body")
-		handleError(ctx, w, r, apiErrors.ErrUnableToParseBody)
+		handleError(ctx, w, r, appErrors.ErrUnableToParseBody)
 		return
 	}
 
@@ -54,7 +51,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(jobConfigBytes, &jobConfig)
 	if err != nil {
 		log.Info(ctx, "failed to unmarshal job config")
-		handleError(ctx, w, r, apiErrors.ErrUnableToParseBody)
+		handleError(ctx, w, r, appErrors.ErrUnableToParseBody)
 		return
 	}
 
@@ -70,14 +67,14 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	storedJob, err := api.Store.CreateJob(ctx, &job)
 	if err != nil {
 		log.Error(ctx, "failed to create job", err)
-		handleError(ctx, w, r, apiErrors.ErrInternalServerError)
+		handleError(ctx, w, r, err)
 		return
 	}
 
 	bytes, err := json.Marshal(storedJob)
 	if err != nil {
 		log.Error(ctx, "failed to marshal response", err)
-		handleError(ctx, w, r, apiErrors.ErrInternalServerError)
+		handleError(ctx, w, r, err)
 		return
 	}
 

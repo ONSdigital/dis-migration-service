@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	apiErrors "github.com/ONSdigital/dis-migration-service/api/errors"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 
 	"github.com/ONSdigital/dis-migration-service/store/mock"
@@ -121,7 +121,7 @@ func TestCreateJob(t *testing.T) {
 				bodyString := resp.Body.String()
 
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
-				So(bodyString, ShouldContainSubstring, apiErrors.ErrUnableToParseBody.Error())
+				So(bodyString, ShouldContainSubstring, appErrors.ErrUnableToParseBody.Error())
 
 				Convey("And the Migrator is not called to start", func() {
 					So(len(mockMigrator.MigrateCalls()), ShouldEqual, 0)
@@ -147,7 +147,7 @@ func TestCreateJob(t *testing.T) {
 				bodyString := resp.Body.String()
 
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
-				So(bodyString, ShouldContainSubstring, apiErrors.ErrJobTypeNotProvided.Error())
+				So(bodyString, ShouldContainSubstring, appErrors.ErrJobTypeNotProvided.Error())
 
 				Convey("And the Migrator is not called to start", func() {
 					So(len(mockMigrator.MigrateCalls()), ShouldEqual, 0)
@@ -172,8 +172,8 @@ func TestCreateJob(t *testing.T) {
 				bodyString := resp.Body.String()
 
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
-				So(bodyString, ShouldContainSubstring, apiErrors.ErrJobTypeNotProvided.Error())
-				So(bodyString, ShouldContainSubstring, apiErrors.ErrTargetIDNotProvided.Error())
+				So(bodyString, ShouldContainSubstring, appErrors.ErrJobTypeNotProvided.Error())
+				So(bodyString, ShouldContainSubstring, appErrors.ErrTargetIDNotProvided.Error())
 
 				Convey("And the Migrator is not called to start", func() {
 					So(len(mockMigrator.MigrateCalls()), ShouldEqual, 0)
