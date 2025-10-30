@@ -53,7 +53,7 @@ func Get() (*Config, error) {
 	cfg = &Config{
 		BindAddr:                   "localhost:30100",
 		DatasetAPIURL:              "http://localhost:22000",
-		EnableMockClients:          true,
+		EnableMockClients:          false,
 		FilesAPIURL:                "http://localhost:26900",
 		GracefulShutdownTimeout:    5 * time.Second,
 		HealthCheckInterval:        30 * time.Second,

@@ -1,5 +1,7 @@
 package domain
 
+import appErrors "github.com/ONSdigital/dis-migration-service/errors"
+
 type JobType string
 
 const (
@@ -13,4 +15,15 @@ func IsValidJobType(state JobType) bool {
 	default:
 		return false
 	}
+}
+
+func (jt JobType) Validate() error {
+	if jt == "" {
+		return appErrors.ErrJobTypeNotProvided
+	}
+
+	if !IsValidJobType(jt) {
+		return appErrors.ErrJobTypeInvalid
+	}
+	return nil
 }

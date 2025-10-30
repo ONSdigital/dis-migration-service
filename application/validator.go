@@ -3,17 +3,17 @@ package application
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
-	datasetErrors "github.com/ONSdigital/dp-dataset-api/apierrors"
 	"github.com/ONSdigital/dp-dataset-api/sdk"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
-// JobValidator defines the contract for validating job configurations
+// JobValidator defines the contract for validating job configurations against external systems
 type JobValidator interface {
 	ValidateSourceID(ctx context.Context, sourceID string, appClients *clients.ClientList) error
 	ValidateTargetID(ctx context.Context, targetID string, appClients *clients.ClientList) error
@@ -43,27 +43,30 @@ func (v *StaticDatasetValidator) ValidateTargetID(ctx context.Context, targetID 
 }
 
 func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, uri string) error {
-	_, err := client.GetPageData(ctx, "", "", "en", uri)
 	var e zebedee.ErrInvalidZebedeeResponse
 
+	_, err := client.GetPageData(ctx, "", "", "en", uri)
 	if err != nil {
 		if errors.As(err, &e) {
 			if e.ActualCode == http.StatusNotFound {
-				return ErrSourceIDNotFound
+				return appErrors.ErrSourceIDInvalid
 			}
 		}
-		return fmt.Errorf("%w: %v", ErrSourceIDValidation, err)
+		log.Error(ctx, "failed to validate source ID with zebedee", err)
+		return appErrors.ErrSourceIDValidation
 	}
 	return nil
 }
 
 func checkDatasetIDDoesNotExist(ctx context.Context, client clients.DatasetAPIClient, id string) error {
 	_, err := client.GetDataset(ctx, sdk.Headers{}, "", id)
-	if err != nil {
-		if err == datasetErrors.ErrDatasetNotFound {
-			return ErrTargetIDFound
+	if clientErr, ok := err.(clients.ClientError); ok {
+		if clientErr.Code() == http.StatusNotFound {
+			return nil
+		} else {
+			log.Error(ctx, "failed to validate target ID with dataset API", err)
+			return appErrors.ErrTargetIDValidation
 		}
-		return fmt.Errorf("%w: %v", ErrTargetIDValidation, err)
 	}
-	return nil
+	return appErrors.ErrTargetIDInvalid
 }

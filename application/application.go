@@ -3,6 +3,8 @@ package application
 import (
 	"context"
 
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
+
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/store"
@@ -40,22 +42,11 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 		return nil, err
 	}
 
-	// Validate the jobConfig using the validator
 	if err := validator.ValidateSourceID(ctx, jobConfig.SourceID, js.clients); err != nil {
-		if err != ErrSourceIDNotFound {
-			log.Error(ctx, "jobConfig sourceID validation failed", err, log.Data{
-				"jobConfig": jobConfig,
-			})
-		}
 		return nil, err
 	}
 
 	if err := validator.ValidateTargetID(ctx, jobConfig.TargetID, js.clients); err != nil {
-		if err != ErrTargetIDFound {
-			log.Error(ctx, "jobConfig targetID validation failed", err, log.Data{
-				"jobConfig": jobConfig,
-			})
-		}
 		return nil, err
 	}
 
@@ -71,7 +62,7 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 		log.Error(ctx, "found running jobs with this config", err, log.Data{
 			"job_config": job.Config,
 		})
-		return &domain.Job{}, ErrJobAlreadyRunning
+		return &domain.Job{}, appErrors.ErrJobAlreadyRunning
 	}
 
 	err = js.store.CreateJob(ctx, &job)

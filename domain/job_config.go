@@ -1,19 +1,29 @@
-package api
+package domain
 
 import (
 	"errors"
 	"regexp"
 
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
-
-	"github.com/ONSdigital/dis-migration-service/domain"
 )
 
-func validateJobConfig(jc *domain.JobConfig) []error {
+type JobConfig struct {
+	SourceID string  `json:"source_id" bson:"source_id"`
+	TargetID string  `json:"target_id" bson:"target_id"`
+	Type     JobType `json:"type" bson:"type"`
+}
+
+// validateJobConfig only validates whether
+func (jc *JobConfig) Validate() []error {
 	var errs []error
 
 	if jc == nil {
 		return []error{appErrors.ErrUnableToParseBody}
+	}
+
+	err := jc.Type.Validate()
+	if err != nil {
+		errs = append(errs, err)
 	}
 
 	if jc.SourceID == "" {
@@ -24,14 +34,9 @@ func validateJobConfig(jc *domain.JobConfig) []error {
 		errs = append(errs, appErrors.ErrTargetIDNotProvided)
 	}
 
-	err := validateJobType(jc.Type)
-	if err != nil {
-		errs = append(errs, err)
-	}
-
 	//nolint:gocritic //This is a switch statement in anticipation of other types in future.
 	switch jc.Type {
-	case domain.JobTypeStaticDataset:
+	case JobTypeStaticDataset:
 		configValidationErrors := validateStaticDatasetJobConfig(jc)
 		errs = append(errs, configValidationErrors...)
 	}
@@ -43,28 +48,20 @@ func validateJobConfig(jc *domain.JobConfig) []error {
 	return nil
 }
 
-func validateJobType(jt domain.JobType) error {
-	if jt == "" {
-		return appErrors.ErrJobTypeNotProvided
-	}
-
-	if !domain.IsValidJobType(jt) {
-		return appErrors.ErrInvalidJobType
-	}
-	return nil
-}
-
-func validateStaticDatasetJobConfig(jc *domain.JobConfig) []error {
+func validateStaticDatasetJobConfig(jc *JobConfig) []error {
 	var errs []error
 
-	err := validateZebedeeURI(jc.SourceID)
-	if err != nil {
-		errs = append(errs, appErrors.ErrSourceIDNotValid)
+	if jc.SourceID != "" {
+		err := validateZebedeeURI(jc.SourceID)
+		if err != nil {
+			errs = append(errs, appErrors.ErrSourceIDInvalid)
+		}
 	}
-
-	err = validateDatasetID(jc.TargetID)
-	if err != nil {
-		errs = append(errs, appErrors.ErrTargetIDNotValid)
+	if jc.TargetID != "" {
+		err := validateDatasetID(jc.TargetID)
+		if err != nil {
+			errs = append(errs, appErrors.ErrTargetIDInvalid)
+		}
 	}
 
 	return errs

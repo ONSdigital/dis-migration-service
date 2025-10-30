@@ -19,6 +19,7 @@ import (
 //go:generate moq -out mock/redirect.go -pkg mock . RedirectAPIClient
 //go:generate moq -out mock/upload.go -pkg mock . UploadServiceClient
 //go:generate moq -out mock/zebedee.go -pkg mock . ZebedeeClient
+//go:generate moq -out mock/error.go -pkg mock . ClientError
 
 type DatasetAPIClient interface {
 	GetDataset(ctx context.Context, headers datasetSDK.Headers, collectionID, datasetID string) (dataset datasetModels.Dataset, err error)
@@ -38,4 +39,9 @@ type UploadServiceClient interface {
 
 type ZebedeeClient interface {
 	GetPageData(ctx context.Context, userAuthToken, collectionID, lang, path string) (m zebedee.PageData, err error)
+}
+
+type ClientError interface {
+	Error() string
+	Code() int
 }

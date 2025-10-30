@@ -23,17 +23,22 @@ import (
 )
 
 const (
-	testID       = "testID"
 	testSourceID = "/test-source-id"
 	testTargetID = "test-target-id"
 	testType     = domain.JobTypeStaticDataset
+)
+
+var (
+	testID = uuid.New().String()
 )
 
 func TestGetJob(t *testing.T) {
 	Convey("Given a test API instance and a mocked jobservice that returns a job", t, func() {
 		mockService := applicationMock.JobServiceMock{
 			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-				return &domain.Job{}, nil
+				return &domain.Job{
+					ID: jobID,
+				}, nil
 			},
 		}
 		mockMigrator := migratorMock.MigratorMock{}
@@ -63,7 +68,11 @@ func TestCreateJob(t *testing.T) {
 	Convey("Given an test API instance and a mocked jobservice that creates a job", t, func() {
 		mockService := applicationMock.JobServiceMock{
 			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error) {
-				return &domain.Job{}, nil
+				return &domain.Job{
+					Config:      jobConfig,
+					ID:          testID,
+					LastUpdated: time.Now().Format(time.RFC3339),
+				}, nil
 			},
 		}
 

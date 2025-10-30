@@ -55,7 +55,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	errs := validateJobConfig(jobConfig)
+	errs := jobConfig.Validate()
 	if errs != nil {
 		log.Info(ctx, "failed to validate job config")
 		handleError(ctx, w, r, errs...)
@@ -64,7 +64,6 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 
 	job, err := api.JobService.CreateJob(ctx, jobConfig)
 	if err != nil {
-		log.Error(ctx, "failed to create job", err)
 		handleError(ctx, w, r, err)
 		return
 	}

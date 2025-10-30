@@ -9,7 +9,7 @@ import (
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
-	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
+	"github.com/ONSdigital/dis-migration-service/service/mock"
 
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/migrator"
@@ -23,7 +23,6 @@ import (
 
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/service"
-	"github.com/ONSdigital/dis-migration-service/service/mock"
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
@@ -37,7 +36,7 @@ const (
 type MigrationComponent struct {
 	componenttest.ErrorFeature
 	svcList        *service.ExternalServiceList
-	serviceSvc     *service.Service
+	svc            *service.Service
 	errorChan      chan error
 	Config         *config.Config
 	HTTPServer     *http.Server
@@ -46,6 +45,7 @@ type MigrationComponent struct {
 	MongoClient    *mongo.Mongo
 	mongoFeature   *componenttest.MongoFeature
 	StartTime      time.Time
+	FakeAPIRouter  *FakeAPI
 }
 
 func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationComponent, error) {
@@ -81,6 +81,11 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 
 	c.MongoClient = mongodb
 
+	c.FakeAPIRouter = NewFakeAPI()
+	c.Config.DatasetAPIURL = c.FakeAPIRouter.fakeHTTP.ResolveURL("")
+	c.Config.ZebedeeURL = c.FakeAPIRouter.fakeHTTP.ResolveURL("")
+	//TODO add more URLs here
+
 	initMock := &mock.InitialiserMock{
 		DoGetHealthCheckFunc: c.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
@@ -94,9 +99,8 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 	c.Config.BindAddr = "localhost:0"
 	c.StartTime = time.Now()
 	c.svcList = service.NewServiceList(initMock)
-	c.HTTPServer = &http.Server{ReadHeaderTimeout: 3 * time.Second}
-	c.serviceSvc = service.New(c.Config, c.svcList)
-	err = c.serviceSvc.Run(context.Background(), "1", "", "", c.errorChan)
+	c.svc = service.New(c.Config, c.svcList)
+	err = c.svc.Run(context.Background(), "1", "", "", c.errorChan)
 	if err != nil {
 		return &MigrationComponent{}, err
 	}
@@ -119,8 +123,8 @@ func (c *MigrationComponent) Reset() error {
 }
 
 func (c *MigrationComponent) Close() error {
-	if c.serviceSvc != nil && c.ServiceRunning {
-		if err := c.serviceSvc.Close(context.Background()); err != nil {
+	if c.svc != nil && c.ServiceRunning {
+		if err := c.svc.Close(context.Background()); err != nil {
 			return err
 		}
 		c.ServiceRunning = false
@@ -165,11 +169,7 @@ func (c *MigrationComponent) DoGetMigrator(ctx context.Context, jobService appli
 }
 
 func (c *MigrationComponent) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients.ClientList {
-	return &clients.ClientList{
-		DatasetAPI:    &clientMocks.DatasetAPIClientMock{},
-		FilesAPI:      &clientMocks.FilesAPIClientMock{},
-		RedirectAPI:   &clientMocks.RedirectAPIClientMock{},
-		UploadService: &clientMocks.UploadServiceClientMock{},
-		Zebedee:       &clientMocks.ZebedeeClientMock{},
-	}
+	init := service.Init{}
+
+	return init.DoGetAppClients(ctx, cfg)
 }

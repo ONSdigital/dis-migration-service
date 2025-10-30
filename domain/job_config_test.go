@@ -1,23 +1,22 @@
-package api
+package domain
 
 import (
 	"testing"
 
-	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestValidateJobConfig(t *testing.T) {
 	Convey("Given a valid job config", t, func() {
-		jobConfig := domain.JobConfig{
+		jobConfig := JobConfig{
 			SourceID: "/source-id",
 			TargetID: "target-id",
 			Type:     "static_dataset",
 		}
 
 		Convey("When the config is validated", func() {
-			errs := validateJobConfig(&jobConfig)
+			errs := jobConfig.Validate()
 
 			Convey("Then no errors should be returend", func() {
 				So(errs, ShouldBeNil)
@@ -26,13 +25,13 @@ func TestValidateJobConfig(t *testing.T) {
 	})
 
 	Convey("Given a job config with a missing parameter", t, func() {
-		jobConfig := domain.JobConfig{
+		jobConfig := JobConfig{
 			TargetID: "target-id",
 			Type:     "static_dataset",
 		}
 
 		Convey("When the config is validated", func() {
-			errs := validateJobConfig(&jobConfig)
+			errs := jobConfig.Validate()
 
 			Convey("Then an error should be returend", func() {
 				So(errs, ShouldHaveLength, 1)
@@ -42,10 +41,10 @@ func TestValidateJobConfig(t *testing.T) {
 	})
 
 	Convey("Given a job config with a multiple missing parameters", t, func() {
-		jobConfig := domain.JobConfig{}
+		jobConfig := JobConfig{}
 
 		Convey("When the config is validated", func() {
-			errs := validateJobConfig(&jobConfig)
+			errs := jobConfig.Validate()
 
 			Convey("Then errors should be returend", func() {
 				So(errs, ShouldHaveLength, 3)
@@ -57,18 +56,18 @@ func TestValidateJobConfig(t *testing.T) {
 	})
 
 	Convey("Given a job config with an invalid job type", t, func() {
-		jobConfig := domain.JobConfig{
+		jobConfig := JobConfig{
 			SourceID: "/source-id",
 			TargetID: "target-id",
 			Type:     "fake job",
 		}
 
 		Convey("When the config is validated", func() {
-			errs := validateJobConfig(&jobConfig)
+			errs := jobConfig.Validate()
 
 			Convey("Then an error should be returend", func() {
 				So(errs, ShouldHaveLength, 1)
-				So(errs, ShouldContain, apiErrors.ErrInvalidJobType)
+				So(errs, ShouldContain, appErrors.ErrJobTypeInvalid)
 			})
 		})
 	})
