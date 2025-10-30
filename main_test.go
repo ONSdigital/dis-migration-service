@@ -80,6 +80,7 @@ func TestComponent(t *testing.T) {
 			Format: "pretty",
 			Paths:  flag.Args(),
 			Strict: true,
+			Tags:   "@Linden",
 		}
 
 		f := &ComponentTest{}

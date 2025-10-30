@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
-	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -18,15 +18,15 @@ type Migrator interface {
 }
 
 type migrator struct {
-	Store   store.Datastore
-	Clients *clients.ClientList
-	wg      sync.WaitGroup
+	JobService application.JobService
+	Clients    *clients.ClientList
+	wg         sync.WaitGroup
 }
 
-func NewDefaultMigrator(datastore store.Datastore, appClients *clients.ClientList) Migrator {
+func NewDefaultMigrator(jobService application.JobService, appClients *clients.ClientList) Migrator {
 	return &migrator{
-		Store:   datastore,
-		Clients: appClients,
+		JobService: jobService,
+		Clients:    appClients,
 	}
 }
 

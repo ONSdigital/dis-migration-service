@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ONSdigital/dis-migration-service/config"
-	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	mongoHealth "github.com/ONSdigital/dp-mongodb/v3/health"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
@@ -45,19 +44,4 @@ func (m *Mongo) Close(ctx context.Context) error {
 // Checker is called by the healthcheck library to check the health state of this mongoDB instance
 func (m *Mongo) Checker(ctx context.Context, state *healthcheck.CheckState) error {
 	return m.healthClient.Checker(ctx, state)
-}
-
-func (m *Mongo) CreateEvent(ctx context.Context, event *domain.Event) error {
-	// TODO: Implement this function
-	return nil
-}
-
-func (m *Mongo) CreateJob(ctx context.Context, job *domain.Job) (*domain.Job, error) {
-	// TODO: Implement this function
-	return &domain.Job{}, nil
-}
-
-func (m *Mongo) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
-	// TODO: Implement this function
-	return &domain.Job{}, nil
 }

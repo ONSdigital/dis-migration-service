@@ -19,8 +19,9 @@ type Datastore struct {
 type dataMongoDB interface {
 
 	// Jobs
-	CreateJob(ctx context.Context, job *domain.Job) (*domain.Job, error)
+	CreateJob(ctx context.Context, job *domain.Job) error
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
+	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset, limit int) ([]*domain.Job, error)
 
 	// TODO: Tasks
 
@@ -44,10 +45,14 @@ type Storer interface {
 	dataMongoDB
 }
 
-func (ds *Datastore) CreateJob(ctx context.Context, job *domain.Job) (*domain.Job, error) {
+func (ds *Datastore) CreateJob(ctx context.Context, job *domain.Job) error {
 	return ds.Backend.CreateJob(ctx, job)
 }
 
 func (ds *Datastore) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 	return ds.Backend.GetJob(ctx, jobID)
+}
+
+func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset, limit int) ([]*domain.Job, error) {
+	return ds.Backend.GetJobsByConfigAndState(ctx, jc, states, offset, limit)
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/api"
+	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
@@ -21,6 +22,7 @@ type Service struct {
 	API         *api.MigrationAPI
 	Config      *config.Config
 	HealthCheck HealthChecker
+	JobService  application.JobService
 	Router      *mux.Router
 	Server      HTTPServer
 	ServiceList *ExternalServiceList
@@ -38,7 +40,6 @@ func New(cfg *config.Config, serviceList *ExternalServiceList) *Service {
 		Config:      cfg,
 		ServiceList: serviceList,
 	}
-
 	return svc
 }
 
@@ -60,8 +61,11 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	// Get app clients
 	svc.clients = svc.ServiceList.GetAppClients(ctx, svc.Config)
 
+	// Get job service
+	svc.JobService = application.Setup(&datastore, svc.clients, svc.Config.MigrationServiceURL)
+
 	// Get Migrator
-	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, datastore, svc.clients)
+	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, svc.JobService, svc.clients)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise migrator", err)
 		return err
@@ -93,7 +97,7 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	svc.Server = svc.ServiceList.GetHTTPServer(svc.Config.BindAddr, middleware.Then(r))
 
 	// Set up the API
-	svc.API = api.Setup(ctx, r, &datastore, svc.migrator)
+	svc.API = api.Setup(ctx, r, svc.JobService, svc.migrator)
 
 	// Run the http server in a new go-routine
 	go func() {
@@ -167,7 +171,6 @@ func (svc *Service) Close(ctx context.Context) error {
 
 // CreateMiddleware creates an Alice middleware chain of handlers
 // to forward collectionID from cookie from header
-
 func createMiddleware(hc HealthChecker) alice.Chain {
 	// healthcheck
 	healthcheckHandler := healthcheckMiddleware(hc.Handler, "/health")
