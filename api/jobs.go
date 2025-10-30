@@ -17,7 +17,7 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobID := vars[PathParameterJobID]
 
-	job, err := api.Store.GetJob(ctx, jobID)
+	job, err := api.JobService.GetJob(ctx, jobID)
 	if err != nil {
 		if err != appErrors.ErrJobNotFound {
 			log.Error(ctx, "failed to get job", err)
@@ -62,16 +62,14 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	job := domain.NewJob(jobConfig)
-
-	storedJob, err := api.Store.CreateJob(ctx, &job)
+	job, err := api.JobService.CreateJob(ctx, jobConfig)
 	if err != nil {
 		log.Error(ctx, "failed to create job", err)
 		handleError(ctx, w, r, err)
 		return
 	}
 
-	bytes, err := json.Marshal(storedJob)
+	bytes, err := json.Marshal(job)
 	if err != nil {
 		log.Error(ctx, "failed to marshal response", err)
 		handleError(ctx, w, r, err)
@@ -80,5 +78,5 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 
 	handleSuccess(ctx, w, r, http.StatusAccepted, bytes)
 
-	api.Migrator.Migrate(context.Background(), storedJob)
+	api.Migrator.Migrate(context.Background(), job)
 }

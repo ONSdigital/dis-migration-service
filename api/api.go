@@ -6,26 +6,29 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/config"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/migrator"
-	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
 
 // MigrationAPI provides a struct to wrap the api around
 type MigrationAPI struct {
-	Migrator migrator.Migrator
-	Router   *mux.Router
-	Store    *store.Datastore
+	host       string
+	JobService application.JobService
+	Migrator   migrator.Migrator
+	Router     *mux.Router
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, dataStore *store.Datastore, dataMigrator migrator.Migrator) *MigrationAPI {
+func Setup(ctx context.Context, cfg *config.Config, router *mux.Router, jobService application.JobService, dataMigrator migrator.Migrator) *MigrationAPI {
 	api := &MigrationAPI{
-		Migrator: dataMigrator,
-		Router:   router,
-		Store:    dataStore,
+		Migrator:   dataMigrator,
+		Router:     router,
+		JobService: jobService,
+		host:       cfg.MigrationServiceURL,
 	}
 
 	api.post(

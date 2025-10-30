@@ -20,6 +20,7 @@ type Config struct {
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
+	MigrationServiceURL        string        `envconfig:"MIGRATION_SERVICE_URL"`
 	OTBatchTimeout             time.Duration `encconfig:"OTEL_BATCH_TIMEOUT"`
 	OTExporterOTLPEndpoint     string        `envconfig:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 	OTServiceName              string        `envconfig:"OTEL_SERVICE_NAME"`
@@ -52,7 +53,7 @@ func Get() (*Config, error) {
 	cfg = &Config{
 		BindAddr:                   "localhost:30100",
 		DatasetAPIURL:              "http://localhost:22000",
-		EnableMockClients:          false,
+		EnableMockClients:          true,
 		FilesAPIURL:                "http://localhost:26900",
 		GracefulShutdownTimeout:    5 * time.Second,
 		HealthCheckInterval:        30 * time.Second,
@@ -61,6 +62,7 @@ func Get() (*Config, error) {
 		OTExporterOTLPEndpoint:     "localhost:4317",
 		OTServiceName:              "dis-migration-service",
 		OtelEnabled:                false,
+		MigrationServiceURL:        "http://localhost:30100",
 		MongoConfig: MongoConfig{
 			MongoDriverConfig: dpMongo.MongoDriverConfig{
 				ClusterEndpoint:               "localhost:27017",

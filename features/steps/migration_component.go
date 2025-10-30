@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 
@@ -155,7 +156,7 @@ func (c *MigrationComponent) DoGetMongoDB(ctx context.Context, cfg config.MongoC
 	return c.MongoClient, nil
 }
 
-func (c *MigrationComponent) DoGetMigrator(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
+func (c *MigrationComponent) DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
 	mig := &migratorMock.MigratorMock{
 		MigrateFunc: func(ctx context.Context, job *domain.Job) {},
 	}

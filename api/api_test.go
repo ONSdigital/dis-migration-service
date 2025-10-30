@@ -6,23 +6,25 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	applicationMock "github.com/ONSdigital/dis-migration-service/application/mock"
+	"github.com/ONSdigital/dis-migration-service/config"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
-	storeMock "github.com/ONSdigital/dis-migration-service/store/mock"
-
-	"github.com/ONSdigital/dis-migration-service/store"
 
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestSetup(t *testing.T) {
-	mockDatastore := store.Datastore{Backend: &storeMock.MongoDBMock{}}
+	mockService := applicationMock.JobServiceMock{}
 	mockMigrator := migratorMock.MigratorMock{}
 
 	Convey("Given an API instance", t, func() {
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r, &mockDatastore, &mockMigrator)
+		cfg, err := config.Get()
+		So(err, ShouldBeNil)
+
+		api := Setup(ctx, cfg, r, &mockService, &mockMigrator)
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/v1/migration-jobs", "POST"), ShouldBeTrue)
