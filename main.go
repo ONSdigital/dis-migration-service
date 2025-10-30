@@ -25,12 +25,10 @@ var (
 	// Version represents the version of the service that is running
 	Version string
 
-// TODO: remove below explainer before commiting
-/* NOTE: replace the above with the below to run code with for example vscode debugger.
-BuildTime string = "1601119818"
-GitCommit string = "6584b786caac36b6214ffe04bf62f058d4021538"
-Version   string = "v0.1.0"
-*/
+	// NOTE: replace the above with the below to run code with for example vscode debugger.
+	// BuildTime string = "1601119818"
+	// GitCommit string = "6584b786caac36b6214ffe04bf62f058d4021538"
+	// Version   string = "v0.1.0"
 )
 
 func main() {
@@ -79,7 +77,8 @@ func run(ctx context.Context) error {
 
 	// Start service
 	svc := service.New(cfg, svcList)
-	if err := svc.Run(ctx, BuildTime, GitCommit, Version, svcErrors); err != nil {
+	err = svc.Run(ctx, BuildTime, GitCommit, Version, svcErrors)
+	if err != nil {
 		return errors.Wrap(err, "running service failed")
 	}
 

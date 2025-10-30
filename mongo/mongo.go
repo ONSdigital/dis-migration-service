@@ -6,8 +6,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-
-	mongohealth "github.com/ONSdigital/dp-mongodb/v3/health"
+	mongoHealth "github.com/ONSdigital/dp-mongodb/v3/health"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 )
 
@@ -15,23 +14,25 @@ type Mongo struct {
 	config.MongoConfig
 
 	Connection   *mongodriver.MongoConnection
-	healthClient *mongohealth.CheckMongoClient
+	healthClient *mongoHealth.CheckMongoClient
 }
 
 // Init returns an initialised Mongo object encapsulating a connection to the mongo server/cluster with the given configuration,
-// a health client to check the health of the mongo server/cluster, and a lock client
+// and a health client to check the health of the mongo server/cluster
 func (m *Mongo) Init(ctx context.Context) (err error) {
 	m.Connection, err = mongodriver.Open(&m.MongoDriverConfig)
 	if err != nil {
 		return err
 	}
 
-	databaseCollectionBuilder := map[mongohealth.Database][]mongohealth.Collection{
-		mongohealth.Database(m.Database): {
-			mongohealth.Collection(m.ActualCollectionName(config.JobsCollection)),
+	databaseCollectionBuilder := map[mongoHealth.Database][]mongoHealth.Collection{
+		mongoHealth.Database(m.Database): {
+			mongoHealth.Collection(m.ActualCollectionName(config.JobsCollectionTitle)),
+			mongoHealth.Collection(m.ActualCollectionName(config.EventsCollectionTitle)),
+			mongoHealth.Collection(m.ActualCollectionName(config.TasksCollectionTitle)),
 		},
 	}
-	m.healthClient = mongohealth.NewClientWithCollections(m.Connection, databaseCollectionBuilder)
+	m.healthClient = mongoHealth.NewClientWithCollections(m.Connection, databaseCollectionBuilder)
 
 	return nil
 }
