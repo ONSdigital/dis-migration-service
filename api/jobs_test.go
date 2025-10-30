@@ -11,7 +11,6 @@ import (
 	"time"
 
 	applicationMock "github.com/ONSdigital/dis-migration-service/application/mock"
-	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
@@ -45,10 +44,7 @@ func TestGetJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
-		cfg, err := config.Get()
-		So(err, ShouldBeNil)
-
-		api := Setup(ctx, cfg, r, &mockService, &mockMigrator)
+		api := Setup(ctx, r, &mockService, &mockMigrator)
 
 		Convey("When a valid request is made", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
@@ -82,10 +78,8 @@ func TestCreateJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
-		cfg, err := config.Get()
-		So(err, ShouldBeNil)
 
-		api := Setup(ctx, cfg, r, &mockService, &mockMigrator)
+		api := Setup(ctx, r, &mockService, &mockMigrator)
 
 		Convey("When a valid request is made", func() {
 			body := domain.JobConfig{

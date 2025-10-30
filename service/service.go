@@ -97,7 +97,7 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	svc.Server = svc.ServiceList.GetHTTPServer(svc.Config.BindAddr, middleware.Then(r))
 
 	// Set up the API
-	svc.API = api.Setup(ctx, svc.Config, r, svc.JobService, svc.migrator)
+	svc.API = api.Setup(ctx, r, svc.JobService, svc.migrator)
 
 	// Run the http server in a new go-routine
 	go func() {

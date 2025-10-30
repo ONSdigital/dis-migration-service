@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	applicationMock "github.com/ONSdigital/dis-migration-service/application/mock"
-	"github.com/ONSdigital/dis-migration-service/config"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 
 	"github.com/gorilla/mux"
@@ -21,10 +20,8 @@ func TestSetup(t *testing.T) {
 	Convey("Given an API instance", t, func() {
 		r := mux.NewRouter()
 		ctx := context.Background()
-		cfg, err := config.Get()
-		So(err, ShouldBeNil)
 
-		api := Setup(ctx, cfg, r, &mockService, &mockMigrator)
+		api := Setup(ctx, r, &mockService, &mockMigrator)
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/v1/migration-jobs", "POST"), ShouldBeTrue)

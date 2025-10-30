@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -71,7 +70,6 @@ func TestStaticDatasetValidator(t *testing.T) {
 
 		Convey("When the source is validated", func() {
 			err := validator.ValidateSourceID(ctx, zebedeeValidPath, &mockClientlist)
-			fmt.Println(err)
 			Convey("Then no error should be returend", func() {
 				So(err, ShouldBeNil)
 			})

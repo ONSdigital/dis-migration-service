@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/application"
-	"github.com/ONSdigital/dis-migration-service/config"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -16,19 +15,17 @@ import (
 
 // MigrationAPI provides a struct to wrap the api around
 type MigrationAPI struct {
-	host       string
 	JobService application.JobService
 	Migrator   migrator.Migrator
 	Router     *mux.Router
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, cfg *config.Config, router *mux.Router, jobService application.JobService, dataMigrator migrator.Migrator) *MigrationAPI {
+func Setup(ctx context.Context, router *mux.Router, jobService application.JobService, dataMigrator migrator.Migrator) *MigrationAPI {
 	api := &MigrationAPI{
 		Migrator:   dataMigrator,
 		Router:     router,
 		JobService: jobService,
-		host:       cfg.MigrationServiceURL,
 	}
 
 	api.post(
