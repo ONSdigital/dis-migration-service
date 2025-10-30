@@ -17,31 +17,31 @@ var _ store.Storer = &StorerMock{}
 
 // StorerMock is a mock implementation of store.Storer.
 //
-//	func TestSomethingThatUsesStorer(t *testing.T) {
+// 	func TestSomethingThatUsesStorer(t *testing.T) {
 //
-//		// make and configure a mocked store.Storer
-//		mockedStorer := &StorerMock{
-//			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
-//				panic("mock out the Checker method")
-//			},
-//			CloseFunc: func(ctx context.Context) error {
-//				panic("mock out the Close method")
-//			},
-//			CreateEventFunc: func(ctx context.Context, event *domain.Event) error {
-//				panic("mock out the CreateEvent method")
-//			},
-//			CreateJobFunc: func(ctx context.Context, job *domain.Job) (*domain.Job, error) {
-//				panic("mock out the CreateJob method")
-//			},
-//			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-//				panic("mock out the GetJob method")
-//			},
-//		}
+// 		// make and configure a mocked store.Storer
+// 		mockedStorer := &StorerMock{
+// 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
+// 				panic("mock out the Checker method")
+// 			},
+// 			CloseFunc: func(ctx context.Context) error {
+// 				panic("mock out the Close method")
+// 			},
+// 			CreateEventFunc: func(ctx context.Context, event *domain.Event) error {
+// 				panic("mock out the CreateEvent method")
+// 			},
+// 			CreateJobFunc: func(ctx context.Context, job *domain.Job) (*domain.Job, error) {
+// 				panic("mock out the CreateJob method")
+// 			},
+// 			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+// 				panic("mock out the GetJob method")
+// 			},
+// 		}
 //
-//		// use mockedStorer in code that requires store.Storer
-//		// and then make assertions.
+// 		// use mockedStorer in code that requires store.Storer
+// 		// and then make assertions.
 //
-//	}
+// 	}
 type StorerMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
@@ -121,8 +121,7 @@ func (mock *StorerMock) Checker(ctx context.Context, state *healthcheck.CheckSta
 
 // CheckerCalls gets all the calls that were made to Checker.
 // Check the length with:
-//
-//	len(mockedStorer.CheckerCalls())
+//     len(mockedStorer.CheckerCalls())
 func (mock *StorerMock) CheckerCalls() []struct {
 	Ctx   context.Context
 	State *healthcheck.CheckState
@@ -155,8 +154,7 @@ func (mock *StorerMock) Close(ctx context.Context) error {
 
 // CloseCalls gets all the calls that were made to Close.
 // Check the length with:
-//
-//	len(mockedStorer.CloseCalls())
+//     len(mockedStorer.CloseCalls())
 func (mock *StorerMock) CloseCalls() []struct {
 	Ctx context.Context
 } {
@@ -189,8 +187,7 @@ func (mock *StorerMock) CreateEvent(ctx context.Context, event *domain.Event) er
 
 // CreateEventCalls gets all the calls that were made to CreateEvent.
 // Check the length with:
-//
-//	len(mockedStorer.CreateEventCalls())
+//     len(mockedStorer.CreateEventCalls())
 func (mock *StorerMock) CreateEventCalls() []struct {
 	Ctx   context.Context
 	Event *domain.Event
@@ -225,8 +222,7 @@ func (mock *StorerMock) CreateJob(ctx context.Context, job *domain.Job) (*domain
 
 // CreateJobCalls gets all the calls that were made to CreateJob.
 // Check the length with:
-//
-//	len(mockedStorer.CreateJobCalls())
+//     len(mockedStorer.CreateJobCalls())
 func (mock *StorerMock) CreateJobCalls() []struct {
 	Ctx context.Context
 	Job *domain.Job
@@ -261,8 +257,7 @@ func (mock *StorerMock) GetJob(ctx context.Context, jobID string) (*domain.Job, 
 
 // GetJobCalls gets all the calls that were made to GetJob.
 // Check the length with:
-//
-//	len(mockedStorer.GetJobCalls())
+//     len(mockedStorer.GetJobCalls())
 func (mock *StorerMock) GetJobCalls() []struct {
 	Ctx   context.Context
 	JobID string
