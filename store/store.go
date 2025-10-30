@@ -17,11 +17,14 @@ type Datastore struct {
 }
 
 type dataMongoDB interface {
+
 	// Jobs
+
 	CreateJob(ctx context.Context, job *domain.Job) (*domain.Job, error)
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
 
 	// TODO: Tasks
+
 	// TODO: Events
 	CreateEvent(ctx context.Context, event *domain.Event) error
 

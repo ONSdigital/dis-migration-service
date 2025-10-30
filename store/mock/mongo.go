@@ -17,31 +17,31 @@ var _ store.MongoDB = &MongoDBMock{}
 
 // MongoDBMock is a mock implementation of store.MongoDB.
 //
-//	func TestSomethingThatUsesMongoDB(t *testing.T) {
+// 	func TestSomethingThatUsesMongoDB(t *testing.T) {
 //
-//		// make and configure a mocked store.MongoDB
-//		mockedMongoDB := &MongoDBMock{
-//			CheckerFunc: func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error {
-//				panic("mock out the Checker method")
-//			},
-//			CloseFunc: func(contextMoqParam context.Context) error {
-//				panic("mock out the Close method")
-//			},
-//			CreateEventFunc: func(ctx context.Context, event *domain.Event) error {
-//				panic("mock out the CreateEvent method")
-//			},
-//			CreateJobFunc: func(ctx context.Context, job *domain.Job) (*domain.Job, error) {
-//				panic("mock out the CreateJob method")
-//			},
-//			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-//				panic("mock out the GetJob method")
-//			},
-//		}
+// 		// make and configure a mocked store.MongoDB
+// 		mockedMongoDB := &MongoDBMock{
+// 			CheckerFunc: func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error {
+// 				panic("mock out the Checker method")
+// 			},
+// 			CloseFunc: func(contextMoqParam context.Context) error {
+// 				panic("mock out the Close method")
+// 			},
+// 			CreateEventFunc: func(ctx context.Context, event *domain.Event) error {
+// 				panic("mock out the CreateEvent method")
+// 			},
+// 			CreateJobFunc: func(ctx context.Context, job *domain.Job) (*domain.Job, error) {
+// 				panic("mock out the CreateJob method")
+// 			},
+// 			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+// 				panic("mock out the GetJob method")
+// 			},
+// 		}
 //
-//		// use mockedMongoDB in code that requires store.MongoDB
-//		// and then make assertions.
+// 		// use mockedMongoDB in code that requires store.MongoDB
+// 		// and then make assertions.
 //
-//	}
+// 	}
 type MongoDBMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(contextMoqParam context.Context, checkState *healthcheck.CheckState) error
@@ -121,8 +121,7 @@ func (mock *MongoDBMock) Checker(contextMoqParam context.Context, checkState *he
 
 // CheckerCalls gets all the calls that were made to Checker.
 // Check the length with:
-//
-//	len(mockedMongoDB.CheckerCalls())
+//     len(mockedMongoDB.CheckerCalls())
 func (mock *MongoDBMock) CheckerCalls() []struct {
 	ContextMoqParam context.Context
 	CheckState      *healthcheck.CheckState
@@ -155,8 +154,7 @@ func (mock *MongoDBMock) Close(contextMoqParam context.Context) error {
 
 // CloseCalls gets all the calls that were made to Close.
 // Check the length with:
-//
-//	len(mockedMongoDB.CloseCalls())
+//     len(mockedMongoDB.CloseCalls())
 func (mock *MongoDBMock) CloseCalls() []struct {
 	ContextMoqParam context.Context
 } {
@@ -189,8 +187,7 @@ func (mock *MongoDBMock) CreateEvent(ctx context.Context, event *domain.Event) e
 
 // CreateEventCalls gets all the calls that were made to CreateEvent.
 // Check the length with:
-//
-//	len(mockedMongoDB.CreateEventCalls())
+//     len(mockedMongoDB.CreateEventCalls())
 func (mock *MongoDBMock) CreateEventCalls() []struct {
 	Ctx   context.Context
 	Event *domain.Event
@@ -225,8 +222,7 @@ func (mock *MongoDBMock) CreateJob(ctx context.Context, job *domain.Job) (*domai
 
 // CreateJobCalls gets all the calls that were made to CreateJob.
 // Check the length with:
-//
-//	len(mockedMongoDB.CreateJobCalls())
+//     len(mockedMongoDB.CreateJobCalls())
 func (mock *MongoDBMock) CreateJobCalls() []struct {
 	Ctx context.Context
 	Job *domain.Job
@@ -261,8 +257,7 @@ func (mock *MongoDBMock) GetJob(ctx context.Context, jobID string) (*domain.Job,
 
 // GetJobCalls gets all the calls that were made to GetJob.
 // Check the length with:
-//
-//	len(mockedMongoDB.GetJobCalls())
+//     len(mockedMongoDB.GetJobCalls())
 func (mock *MongoDBMock) GetJobCalls() []struct {
 	Ctx   context.Context
 	JobID string

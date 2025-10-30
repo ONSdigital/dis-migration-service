@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/ONSdigital/dis-redirect-api v0.3.8
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.269.0
-	github.com/ONSdigital/dp-component-test v0.25.0
+	github.com/ONSdigital/dp-component-test v0.26.0
 	github.com/ONSdigital/dp-dataset-api v1.86.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-mongodb/v3 v3.8.0
