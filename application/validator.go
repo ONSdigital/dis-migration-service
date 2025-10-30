@@ -9,6 +9,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	datasetError "github.com/ONSdigital/dp-dataset-api/apierrors"
 	"github.com/ONSdigital/dp-dataset-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -35,38 +36,47 @@ func GetValidator(jobType domain.JobType) (JobValidator, error) {
 type StaticDatasetValidator struct{}
 
 func (v *StaticDatasetValidator) ValidateSourceID(ctx context.Context, sourceID string, appClients *clients.ClientList) error {
-	return checkZebedeeURIExists(ctx, appClients.Zebedee, sourceID)
+	data, err := checkZebedeeURIExists(ctx, appClients.Zebedee, sourceID)
+	if err != nil {
+		return err
+	}
+
+	if data.Type != zebedee.PageTypeDatasetLandingPage {
+		return appErrors.ErrSourceIDInvalid
+	}
+
+	return nil
 }
 
 func (v *StaticDatasetValidator) ValidateTargetID(ctx context.Context, targetID string, appClients *clients.ClientList) error {
 	return checkDatasetIDDoesNotExist(ctx, appClients.DatasetAPI, targetID)
 }
 
-func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, uri string) error {
+func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, uri string) (zebedee.PageData, error) {
 	var e zebedee.ErrInvalidZebedeeResponse
 
-	_, err := client.GetPageData(ctx, "", "", "en", uri)
+	zebedeeData, err := client.GetPageData(ctx, "", "", "en", uri)
 	if err != nil {
 		if errors.As(err, &e) {
 			if e.ActualCode == http.StatusNotFound {
-				return appErrors.ErrSourceIDInvalid
+				return zebedee.PageData{}, appErrors.ErrSourceIDInvalid
 			}
 		}
 		log.Error(ctx, "failed to validate source ID with zebedee", err)
-		return appErrors.ErrSourceIDValidation
+		return zebedee.PageData{}, appErrors.ErrSourceIDValidation
 	}
-	return nil
+	return zebedeeData, nil
 }
 
 func checkDatasetIDDoesNotExist(ctx context.Context, client clients.DatasetAPIClient, id string) error {
 	_, err := client.GetDataset(ctx, sdk.Headers{}, "", id)
-	if clientErr, ok := err.(clients.ClientError); ok {
-		if clientErr.Code() == http.StatusNotFound {
+	if err != nil {
+		if err == datasetError.ErrDatasetNotFound {
 			return nil
-		} else {
-			log.Error(ctx, "failed to validate target ID with dataset API", err)
-			return appErrors.ErrTargetIDValidation
 		}
+		log.Error(ctx, "failed to validate target ID with dataset API", err)
+		return appErrors.ErrTargetIDValidation
 	}
+
 	return appErrors.ErrTargetIDInvalid
 }

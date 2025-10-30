@@ -1,4 +1,4 @@
-@Job
+@Job @GetJob
 Feature: Get a Job
 
 #  TODO Add this test when the GET job endpoint has been implemented

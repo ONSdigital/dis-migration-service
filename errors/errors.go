@@ -55,5 +55,6 @@ var (
 		ErrJobAlreadyRunning:   http.StatusConflict,
 		ErrSourceIDInvalid:     http.StatusBadRequest,
 		ErrTargetIDInvalid:     http.StatusBadRequest,
+		ErrJobTypeInvalid:      http.StatusBadRequest,
 	}
 )

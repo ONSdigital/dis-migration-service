@@ -3,12 +3,14 @@ package application
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	datasetError "github.com/ONSdigital/dp-dataset-api/apierrors"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	"github.com/ONSdigital/dp-dataset-api/sdk"
 
@@ -18,6 +20,7 @@ import (
 const (
 	zebedeeErrorPath    = "/error"
 	zebedeeNotFoundPath = "/not-found"
+	zebedeeWrongType    = "/wrong-type"
 	zebedeeValidPath    = "/found"
 
 	datasetErrorID    = "error"
@@ -32,7 +35,9 @@ func TestStaticDatasetValidator(t *testing.T) {
 			case zebedeeErrorPath:
 				return zebedee.PageData{}, errors.New("unexpected error")
 			case zebedeeValidPath:
-				return zebedee.PageData{}, nil
+				return zebedee.PageData{Type: zebedee.PageTypeDatasetLandingPage}, nil
+			case zebedeeWrongType:
+				return zebedee.PageData{Type: zebedee.PageTypeBulletin}, nil
 			case zebedeeNotFoundPath:
 				return zebedee.PageData{}, zebedee.ErrInvalidZebedeeResponse{ActualCode: http.StatusNotFound}
 			}
@@ -48,9 +53,7 @@ func TestStaticDatasetValidator(t *testing.T) {
 			case datasetValidID:
 				return datasetModels.Dataset{}, nil
 			case datasetNotFoundID:
-				return datasetModels.Dataset{}, &clientMocks.ClientErrorMock{
-					CodeFunc: func() int { return http.StatusNotFound },
-				}
+				return datasetModels.Dataset{}, datasetError.ErrDatasetNotFound
 			}
 			return datasetModels.Dataset{}, errors.New("unexpected mock id")
 		},
@@ -68,7 +71,7 @@ func TestStaticDatasetValidator(t *testing.T) {
 
 		Convey("When the source is validated", func() {
 			err := validator.ValidateSourceID(ctx, zebedeeValidPath, &mockClientlist)
-
+			fmt.Println(err)
 			Convey("Then no error should be returend", func() {
 				So(err, ShouldBeNil)
 			})
@@ -92,6 +95,18 @@ func TestStaticDatasetValidator(t *testing.T) {
 
 		Convey("When the source is validated", func() {
 			err := validator.ValidateSourceID(ctx, zebedeeNotFoundPath, &mockClientlist)
+
+			Convey("Then an error should be returend", func() {
+				So(err, ShouldNotBeNil)
+			})
+		})
+	})
+
+	Convey("Given a zebedee source ID that returns the wrong type", t, func() {
+		validator := StaticDatasetValidator{}
+
+		Convey("When the source is validated", func() {
+			err := validator.ValidateSourceID(ctx, zebedeeWrongType, &mockClientlist)
 
 			Convey("Then an error should be returend", func() {
 				So(err, ShouldNotBeNil)

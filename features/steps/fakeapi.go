@@ -1,12 +1,14 @@
 package steps
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 
+	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
+
 	datasetError "github.com/ONSdigital/dp-dataset-api/apierrors"
-	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/maxcnunes/httpfake"
 )
 
@@ -40,10 +42,17 @@ func (f *FakeAPI) setJSONResponseForGetPageData(url, pageType string, statusCode
 }
 
 func (f *FakeAPI) setJSONResponseForGetDataset(id string, statusCode int) {
+	var body []byte
 	path := fmt.Sprintf("/datasets/%s", id)
-	err := datasetError.ErrDatasetNotFound.Error()
-	log.Info(context.TODO(), "err issued", log.Data{
-		"err": err,
-	})
-	f.fakeHTTP.NewHandler().Get(path).Reply(statusCode).BodyString(err)
+
+	switch statusCode {
+	case http.StatusNotFound:
+		body = []byte(datasetError.ErrDatasetNotFound.Error())
+	case http.StatusOK:
+		body, _ = json.Marshal(datasetModels.Dataset{
+			ID: id,
+		})
+	}
+
+	f.fakeHTTP.NewHandler().Get(path).Reply(statusCode).Body(body)
 }
