@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -104,7 +105,7 @@ func (c *Component) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (s
 		GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
 			return &domain.Job{
 				ID:          jobID,
-				LastUpdated: "test-time",
+				LastUpdated: time.Now(),
 				State:       "submitted",
 				Config: &domain.JobConfig{
 					SourceID: "test-source-id",
@@ -113,19 +114,14 @@ func (c *Component) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (s
 				},
 			}, nil
 		},
-		CreateJobFunc: func(ctx context.Context, job *domain.Job) (*domain.Job, error) {
-			return &domain.Job{
-				ID:          "test-id",
-				LastUpdated: "test-time",
-				Config:      job.Config,
-				State:       job.State,
-			}, nil
+		CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
+			return nil
 		},
 		CloseFunc: func(ctx context.Context) error { return nil },
 	}, nil
 }
 
-func (c *Component) DoGetMigrator(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
+func (c *Component) DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
 	mig := &migratorMock.MigratorMock{
 		MigrateFunc: func(ctx context.Context, job *domain.Job) {},
 	}

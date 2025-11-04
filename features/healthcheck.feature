@@ -1,3 +1,4 @@
+@Healthcheck
 Feature: Health endpoint
 
     Background: Service setup

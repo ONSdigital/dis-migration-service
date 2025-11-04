@@ -8,43 +8,43 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	applicationMock "github.com/ONSdigital/dis-migration-service/application/mock"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 
-	"github.com/ONSdigital/dis-migration-service/store/mock"
-
-	"github.com/ONSdigital/dis-migration-service/store"
+	"github.com/google/uuid"
 
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 const (
-	testID       = "testID"
-	testSourceID = "test-source-id"
+	testSourceID = "/test-source-id"
 	testTargetID = "test-target-id"
-	testType     = "test-type"
+	testType     = domain.JobTypeStaticDataset
+)
+
+var (
+	testID = uuid.New().String()
 )
 
 func TestGetJob(t *testing.T) {
-	Convey("Given a test API instance and a mocked datastore that returns a job", t, func() {
-		mockDatastore := store.Datastore{
-			Backend: &mock.MongoDBMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-					return &domain.Job{
-						ID: jobID,
-					}, nil
-				},
-				CloseFunc: func(ctx context.Context) error { return nil },
+	Convey("Given a test API instance and a mocked jobservice that returns a job", t, func() {
+		mockService := applicationMock.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				return &domain.Job{
+					ID: jobID,
+				}, nil
 			},
 		}
 		mockMigrator := migratorMock.MigratorMock{}
 
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r, &mockDatastore, &mockMigrator)
+		api := Setup(ctx, r, &mockService, &mockMigrator)
 
 		Convey("When a valid request is made", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
@@ -61,13 +61,22 @@ func TestGetJob(t *testing.T) {
 }
 
 func TestCreateJob(t *testing.T) {
-	Convey("Given an test API instance and a mocked datastore that creates a job", t, func() {
-		mockDatastore := store.Datastore{
-			Backend: &mock.MongoDBMock{
-				CreateJobFunc: func(ctx context.Context, job *domain.Job) (*domain.Job, error) {
-					return job, nil
-				},
-				CloseFunc: func(ctx context.Context) error { return nil },
+	Convey("Given an test API instance and a mocked jobservice that creates a job", t, func() {
+		testConfig := domain.JobConfig{
+			SourceID: testSourceID,
+			TargetID: testTargetID,
+			Type:     testType,
+		}
+
+		createdJob := &domain.Job{
+			Config:      &testConfig,
+			ID:          testID,
+			LastUpdated: time.Now().UTC(),
+		}
+
+		mockService := applicationMock.JobServiceMock{
+			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error) {
+				return createdJob, nil
 			},
 		}
 
@@ -77,16 +86,11 @@ func TestCreateJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r, &mockDatastore, &mockMigrator)
+
+		api := Setup(ctx, r, &mockService, &mockMigrator)
 
 		Convey("When a valid request is made", func() {
-			body := domain.JobConfig{
-				SourceID: testSourceID,
-				TargetID: testTargetID,
-				Type:     testType,
-			}
-
-			bodyBytes, err := json.Marshal(body)
+			bodyBytes, err := json.Marshal(testConfig)
 			So(err, ShouldBeNil)
 
 			req := httptest.NewRequest(http.MethodPost, "http://localhost:30100/v1/migration-jobs", bytes.NewBuffer(bodyBytes))
@@ -97,11 +101,14 @@ func TestCreateJob(t *testing.T) {
 			Convey("Then a created job is returned", func() {
 				So(resp.Code, ShouldEqual, http.StatusAccepted)
 
-				bodyString := resp.Body.String()
+				bodyString := resp.Body.Bytes()
 
-				So(bodyString, ShouldContainSubstring, testSourceID)
-				So(bodyString, ShouldContainSubstring, testTargetID)
-				So(bodyString, ShouldContainSubstring, testType)
+				var job domain.Job
+
+				err := json.Unmarshal(bodyString, &job)
+				So(err, ShouldBeNil)
+
+				So(&job, ShouldEqual, createdJob)
 
 				Convey("And the Migrator is called to start", func() {
 					So(len(mockMigrator.MigrateCalls()), ShouldEqual, 1)

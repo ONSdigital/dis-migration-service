@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -16,6 +17,7 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/v2/upload"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetAPI "github.com/ONSdigital/dp-dataset-api/sdk"
+	"github.com/pkg/errors"
 
 	"github.com/ONSdigital/log.go/v2/log"
 
@@ -70,8 +72,8 @@ func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg config.MongoCo
 }
 
 // GetMigrator returns the background migrator
-func (e *ExternalServiceList) GetMigrator(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig, err := e.Init.DoGetMigrator(ctx, datastore, clientList)
+func (e *ExternalServiceList) GetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+	mig, err := e.Init.DoGetMigrator(ctx, jobService, clientList)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +117,8 @@ func (e *Init) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.
 }
 
 // DoGetMigrator returns a Migrator
-func (e *Init) DoGetMigrator(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig := migrator.NewDefaultMigrator(datastore, clientList)
+func (e *Init) DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+	mig := migrator.NewDefaultMigrator(jobService, clientList)
 	log.Info(ctx, "migrator initialised")
 	return mig, nil
 }
@@ -130,7 +132,19 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 			FilesAPI:      &clientMocks.FilesAPIClientMock{},
 			RedirectAPI:   &clientMocks.RedirectAPIClientMock{},
 			UploadService: &clientMocks.UploadServiceClientMock{},
-			Zebedee:       &clientMocks.ZebedeeClientMock{},
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				GetPageDataFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (zebedee.PageData, error) {
+					switch path {
+					case "/error":
+						return zebedee.PageData{}, errors.New("unexpected error")
+					case "/found":
+						return zebedee.PageData{}, nil
+					case "/not-found":
+						return zebedee.PageData{}, zebedee.ErrInvalidZebedeeResponse{ActualCode: http.StatusNotFound}
+					}
+					return zebedee.PageData{}, errors.New("unexpected path")
+				},
+			},
 		}
 	}
 

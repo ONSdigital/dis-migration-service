@@ -49,6 +49,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	})
 
 	apiFeature.RegisterSteps(godogCtx)
+	f.Mongo.RegisterSteps(godogCtx)
 	migrationComponent.RegisterSteps(godogCtx)
 }
 

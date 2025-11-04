@@ -35,14 +35,31 @@ var (
 	ErrSourceIDNotProvided = errors.New("source ID not provided")
 	ErrTargetIDNotProvided = errors.New("target ID not provided")
 	ErrJobTypeNotProvided  = errors.New("job type not provided")
+	ErrSourceIDInvalid     = errors.New("source ID is invalid")
+	ErrTargetIDInvalid     = errors.New("target ID is invalid")
+	ErrJobTypeInvalid      = errors.New("job type is invalid")
 	ErrInternalServerError = errors.New("an unexpected error occurred")
+	ErrSourceIDValidation  = errors.New("source ID failed to validate")
+	ErrTargetIDValidation  = errors.New("target ID failed to validate")
+	ErrJobAlreadyRunning   = errors.New("job already running")
+
+	ErrSourceIDZebedeeURIInvalid = errors.New("source ID URI path must start with '/', not end with '/', not contain query strings or hashbangs")
+	ErrTargetIDDatasetIDInvalid  = errors.New("target id must be lowercase alphanumeric with optional hyphen separators")
 
 	StatusCodeMap = map[error]int{
-		ErrJobNotFound:         http.StatusNotFound,
-		ErrUnableToParseBody:   http.StatusBadRequest,
-		ErrSourceIDNotProvided: http.StatusBadRequest,
-		ErrTargetIDNotProvided: http.StatusBadRequest,
-		ErrJobTypeNotProvided:  http.StatusBadRequest,
-		ErrInternalServerError: http.StatusInternalServerError,
+		ErrJobNotFound:               http.StatusNotFound,
+		ErrUnableToParseBody:         http.StatusBadRequest,
+		ErrSourceIDNotProvided:       http.StatusBadRequest,
+		ErrTargetIDNotProvided:       http.StatusBadRequest,
+		ErrJobTypeNotProvided:        http.StatusBadRequest,
+		ErrInternalServerError:       http.StatusInternalServerError,
+		ErrSourceIDValidation:        http.StatusInternalServerError,
+		ErrTargetIDValidation:        http.StatusInternalServerError,
+		ErrJobAlreadyRunning:         http.StatusConflict,
+		ErrSourceIDInvalid:           http.StatusBadRequest,
+		ErrTargetIDInvalid:           http.StatusBadRequest,
+		ErrJobTypeInvalid:            http.StatusBadRequest,
+		ErrSourceIDZebedeeURIInvalid: http.StatusBadRequest,
+		ErrTargetIDDatasetIDInvalid:  http.StatusBadRequest,
 	}
 )
