@@ -5,11 +5,16 @@ A Go API for data migration.
 ## Getting started
 
 * Run `make debug` to run application on <http://localhost:30100>
+* Run `make debug-watch` to have your changes [rebuild the application](#watch-for-changes) that is running
 * Run `make help` to see full list of make targets
 
 ## Tools
 
 To run some of our tests you will need additional tooling:
+
+### Watch for changes
+
+We use `reflex` to do rebuilds, which you will [need to install](https://github.com/cespare/reflex).
 
 ### Audit
 
