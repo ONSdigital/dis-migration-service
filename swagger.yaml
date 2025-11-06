@@ -75,6 +75,10 @@ paths:
           $ref: "#/responses/Unauthenticated"
         403: 
           $ref: "#/responses/Forbidden"
+        409:
+          description: "Already running job with these parameters"
+          schema:
+            $ref: "#/definitions/ErrorList"
         500: 
           $ref: "#/responses/Error"
 
