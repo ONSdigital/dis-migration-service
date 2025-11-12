@@ -455,14 +455,23 @@ definitions:
                 description: "A fully qualified URL to the migration job's tasks API response"
                 type: string
                 example: "https://api.beta.ons.gov.uk/v1/migration-jobs/1/tasks"
-      source_id:
-        type: string
-        description: >
-         "Source ID to start job from - in practice, ths current example is a uri
-         as it only fetches from Zebedee"
-        example: "/economy/inflationandpriceindices/datasets/consumerpriceinflation/data"
+      config:
+        description: "Config for the job"
+        $ref: "#/definitions/MigrationJobConfig"
       state:
         $ref: "#/definitions/MigrationState"
+      type:
+        $ref: "#/definitions/MigrationJobType"
+
+  MigrationJobConfig:
+    type: object
+    properties:
+      source_id: 
+        type: string
+        example: "/economy/inflationandpriceindices"
+      target_id:
+        type: string
+        example: "migration-series-id"
       type:
         $ref: "#/definitions/MigrationJobType"
 
