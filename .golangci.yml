@@ -13,6 +13,7 @@ linters:
     - goconst
     - gocritic
     - gocyclo
+    - godoclint
     - gosec
     - govet
     - ineffassign
@@ -46,6 +47,13 @@ linters:
         - style
     gocyclo:
       min-complexity: 20
+    godoclint:
+      enable:
+        - start-with-name
+        - require-doc
+        - deprecated
+        - max-len
+        - no-unused-link
     lll:
       line-length: 140
     misspell:
@@ -68,7 +76,11 @@ linters:
           - errcheck
           - gocyclo
           - gosec
+          - godoclint
         path: _test\.go
+      - linters:
+          - godoclint
+        path: features/
       - linters:
           - revive
         path: _test.go

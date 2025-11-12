@@ -7,10 +7,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-const (
-	JobsCollection = "JobsCollection"
-)
-
+// MongoConfig holds MongoDB configuration settings.
 type MongoConfig struct {
 	dpMongo.MongoDriverConfig
 }
@@ -24,6 +21,7 @@ type Config struct {
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
+	MigrationServiceURL        string        `envconfig:"MIGRATION_SERVICE_URL"`
 	OTBatchTimeout             time.Duration `encconfig:"OTEL_BATCH_TIMEOUT"`
 	OTExporterOTLPEndpoint     string        `envconfig:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 	OTServiceName              string        `envconfig:"OTEL_SERVICE_NAME"`
@@ -38,12 +36,24 @@ type Config struct {
 var cfg *Config
 
 const (
-	JobsCollectionTitle   = "MigrationsJobsCollection"
-	JobsCollectionName    = "jobs"
+	// JobsCollectionTitle is the well known name of the MongoDB collection for
+	// migration jobs.
+	JobsCollectionTitle = "MigrationsJobsCollection"
+	// JobsCollectionName is the actual name of the MongoDB collection for
+	// migration jobs.
+	JobsCollectionName = "jobs"
+	// EventsCollectionTitle is the well known name of the MongoDB collection
+	// for migration events.
 	EventsCollectionTitle = "MigrationsEventsCollection"
-	EventsCollectionName  = "events"
-	TasksCollectionTitle  = "MigrationsTasksCollection"
-	TasksCollectionName   = "tasks"
+	// EventsCollectionName is the actual name of the MongoDB collection for
+	// migration events.
+	EventsCollectionName = "events"
+	// TasksCollectionTitle is the well known name of the MongoDB collection
+	// for migration tasks.
+	TasksCollectionTitle = "MigrationsTasksCollection"
+	// TasksCollectionName is the actual name of the MongoDB collection for
+	// migration tasks.
+	TasksCollectionName = "tasks"
 )
 
 // Get returns the default config with any modifications through environment
@@ -65,6 +75,7 @@ func Get() (*Config, error) {
 		OTExporterOTLPEndpoint:     "localhost:4317",
 		OTServiceName:              "dis-migration-service",
 		OtelEnabled:                false,
+		MigrationServiceURL:        "http://localhost:30100",
 		MongoConfig: MongoConfig{
 			MongoDriverConfig: dpMongo.MongoDriverConfig{
 				ClusterEndpoint:               "localhost:27017",

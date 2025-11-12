@@ -7,11 +7,11 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
-// Datastore provides a datastore.Storer interface used to store, retrieve, remove or update bundles
-//
 //go:generate moq -out mock/mongo.go -pkg mock . MongoDB
 //go:generate moq -out mock/datastore.go -pkg mock . Storer
 
+// Datastore provides a datastore.Storer interface used to store,
+// retrieve, remove or update bundles
 type Datastore struct {
 	Backend Storer
 }
@@ -19,8 +19,9 @@ type Datastore struct {
 type dataMongoDB interface {
 
 	// Jobs
-	CreateJob(ctx context.Context, job *domain.Job) (*domain.Job, error)
+	CreateJob(ctx context.Context, job *domain.Job) error
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
+	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset, limit int) ([]*domain.Job, error)
 
 	// TODO: Tasks
 
@@ -32,22 +33,31 @@ type dataMongoDB interface {
 	Close(ctx context.Context) error
 }
 
-// MongoDB represents all the required methods from mongo DB
+// MongoDB represents all the required methods from mongoDB
 type MongoDB interface {
 	dataMongoDB
 	Close(context.Context) error
 	Checker(context.Context, *healthcheck.CheckState) error
 }
 
-// Storer represents basic data access via Get, Remove and Upsert methods, abstracting it from mongoDB or graphDB
+// Storer represents basic data access via Get, Remove and Upsert methods,
+// abstracting it from mongoDB or graphDB
 type Storer interface {
 	dataMongoDB
 }
 
-func (ds *Datastore) CreateJob(ctx context.Context, job *domain.Job) (*domain.Job, error) {
+// CreateJob creates a new migration job.
+func (ds *Datastore) CreateJob(ctx context.Context, job *domain.Job) error {
 	return ds.Backend.CreateJob(ctx, job)
 }
 
+// GetJob retrieves a job by its ID.
 func (ds *Datastore) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 	return ds.Backend.GetJob(ctx, jobID)
+}
+
+// GetJobsByConfigAndState retrieves jobs based on the provided job
+// configuration and states.
+func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset, limit int) ([]*domain.Job, error) {
+	return ds.Backend.GetJobsByConfigAndState(ctx, jc, states, offset, limit)
 }

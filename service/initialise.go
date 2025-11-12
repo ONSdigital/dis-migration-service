@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -16,6 +17,7 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/v2/upload"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetAPI "github.com/ONSdigital/dp-dataset-api/sdk"
+	"github.com/pkg/errors"
 
 	"github.com/ONSdigital/log.go/v2/log"
 
@@ -23,7 +25,8 @@ import (
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
 )
 
-// ExternalServiceList holds the initialiser and initialisation state of external services.
+// ExternalServiceList holds the initialiser and initialisation
+// state of external services.
 type ExternalServiceList struct {
 	HealthCheck bool
 	Init        Initialiser
@@ -48,7 +51,8 @@ func (e *ExternalServiceList) GetHTTPServer(bindAddr string, router http.Handler
 	return s
 }
 
-// GetHealthCheck creates a healthcheck with versionInfo and sets teh HealthCheck flag to true
+// GetHealthCheck creates a healthcheck with versionInfo and sets the
+// HealthCheck flag to true
 func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error) {
 	hc, err := e.Init.DoGetHealthCheck(cfg, buildTime, gitCommit, version)
 	if err != nil {
@@ -70,8 +74,8 @@ func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg config.MongoCo
 }
 
 // GetMigrator returns the background migrator
-func (e *ExternalServiceList) GetMigrator(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig, err := e.Init.DoGetMigrator(ctx, datastore, clientList)
+func (e *ExternalServiceList) GetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+	mig, err := e.Init.DoGetMigrator(ctx, jobService, clientList)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +89,8 @@ func (e *ExternalServiceList) GetAppClients(ctx context.Context, cfg *config.Con
 	return e.Init.DoGetAppClients(ctx, cfg)
 }
 
-// DoGetHTTPServer creates an HTTP Server with the provided bind address and router
+// DoGetHTTPServer creates an HTTP Server with the provided
+// bind address and router
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
 	s := dphttp.NewServer(bindAddr, router)
 	s.HandleOSSignals = false
@@ -115,8 +120,8 @@ func (e *Init) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.
 }
 
 // DoGetMigrator returns a Migrator
-func (e *Init) DoGetMigrator(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig := migrator.NewDefaultMigrator(datastore, clientList)
+func (e *Init) DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+	mig := migrator.NewDefaultMigrator(jobService, clientList)
 	log.Info(ctx, "migrator initialised")
 	return mig, nil
 }
@@ -130,7 +135,19 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 			FilesAPI:      &clientMocks.FilesAPIClientMock{},
 			RedirectAPI:   &clientMocks.RedirectAPIClientMock{},
 			UploadService: &clientMocks.UploadServiceClientMock{},
-			Zebedee:       &clientMocks.ZebedeeClientMock{},
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				GetPageDataFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (zebedee.PageData, error) {
+					switch path {
+					case "/error":
+						return zebedee.PageData{}, errors.New("unexpected error")
+					case "/found":
+						return zebedee.PageData{}, nil
+					case "/not-found":
+						return zebedee.PageData{}, zebedee.ErrInvalidZebedeeResponse{ActualCode: http.StatusNotFound}
+					}
+					return zebedee.PageData{}, errors.New("unexpected path")
+				},
+			},
 		}
 	}
 

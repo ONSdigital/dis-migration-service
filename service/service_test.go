@@ -10,6 +10,7 @@ import (
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 
+	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
@@ -85,7 +86,7 @@ func TestRun(t *testing.T) {
 			return &storeMock.MongoDBMock{}, nil
 		}
 
-		funcDoGetMigrator := func(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
+		funcDoGetMigrator := func(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
 			return &migratorMock.MigratorMock{}, nil
 		}
 
@@ -256,7 +257,7 @@ func TestClose(t *testing.T) {
 			return nil
 		}
 
-		funcDoGetMigrator := func(ctx context.Context, datastore store.Datastore, clientList *clients.ClientList) (migrator.Migrator, error) {
+		funcDoGetMigrator := func(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
 			return &migratorMock.MigratorMock{
 				ShutdownFunc: funcClose,
 			}, nil

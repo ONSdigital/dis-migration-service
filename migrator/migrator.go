@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
-	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
+// Migrator defines the contract for migration operations
+//
 //go:generate moq -out mock/migrator.go -pkg mock . Migrator
 type Migrator interface {
 	Migrate(ctx context.Context, job *domain.Job)
@@ -18,18 +20,21 @@ type Migrator interface {
 }
 
 type migrator struct {
-	Store   store.Datastore
-	Clients *clients.ClientList
-	wg      sync.WaitGroup
+	JobService application.JobService
+	Clients    *clients.ClientList
+	wg         sync.WaitGroup
 }
 
-func NewDefaultMigrator(datastore store.Datastore, appClients *clients.ClientList) Migrator {
+// NewDefaultMigrator creates a new default migrator with the
+// provided job service and clients
+func NewDefaultMigrator(jobService application.JobService, appClients *clients.ClientList) Migrator {
 	return &migrator{
-		Store:   datastore,
-		Clients: appClients,
+		JobService: jobService,
+		Clients:    appClients,
 	}
 }
 
+// Migrate starts the migration process for the given job
 func (mig *migrator) Migrate(ctx context.Context, job *domain.Job) {
 	mig.wg.Add(1)
 	go func() {
@@ -42,6 +47,7 @@ func (mig *migrator) Migrate(ctx context.Context, job *domain.Job) {
 	}()
 }
 
+// Shutdown waits for all ongoing migrations to complete or times out
 func (mig *migrator) Shutdown(ctx context.Context) error {
 	done := make(chan struct{})
 	go func() {

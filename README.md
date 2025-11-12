@@ -5,11 +5,16 @@ A Go API for data migration.
 ## Getting started
 
 * Run `make debug` to run application on <http://localhost:30100>
+* Run `make debug-watch` to have your changes [rebuild the application](#watch-for-changes) that is running
 * Run `make help` to see full list of make targets
 
 ## Tools
 
 To run some of our tests you will need additional tooling:
+
+### Watch for changes
+
+We use `reflex` to do rebuilds, which you will [need to install](https://github.com/cespare/reflex).
 
 ### Audit
 
@@ -39,22 +44,23 @@ npm install -g @redocly/cli
 
 ## Configuration
 
-| Environment variable         | Default               | Description                                                                                                        |
-|------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------|
-| BIND_ADDR                    | :30100                | The host and port to bind to                                                                                       |
-| DATASET_API_URL              | localhost:20000       | Address for Dataset API                                                                                            |
-| ENABLE_MOCK_CLIENTS          | false                 | Boolean to inject mock clients to allow for faster development                                                     |
-| FILES_API_URL                | localhost:26900       | Address for File API                                                                                               |
-| GRACEFUL_SHUTDOWN_TIMEOUT    | 5s                    | The graceful shutdown timeout in seconds (`time.Duration` format)                                                  |
-| HEALTHCHECK_INTERVAL         | 30s                   | Time between self-healthchecks (`time.Duration` format)                                                            |
-| HEALTHCHECK_CRITICAL_TIMEOUT | 90s                   | Time to wait until an unhealthy dependent propagates its state to make this app unhealthy (`time.Duration` format) |
-| OTEL_EXPORTER_OTLP_ENDPOINT  | localhost:4317        | Endpoint for OpenTelemetry service                                                                                 |
-| OTEL_SERVICE_NAME            | dis-migration-service | Label of service for OpenTelemetry service                                                                         |
-| OTEL_BATCH_TIMEOUT           | 5s                    | Timeout for OpenTelemetry                                                                                          |
-| OTEL_ENABLED                 | false                 | Feature flag to enable OpenTelemetry                                                                               |
-| REDIRECT_API_URL             | localhost:29900       | Address for the Redirect API                                                                                       |
-| UPLOAD_SERVICE_URL           | localhost:25100       | Address for Upload Service                                                                                         |
-| ZEBEDEE_URL                  | localhost:8082        | Address for Zebedee                                                                                                |
+| Environment variable         | Default                | Description                                                                                                        |
+|------------------------------|------------------------|--------------------------------------------------------------------------------------------------------------------|
+| BIND_ADDR                    | :30100                 | The host and port to bind to                                                                                       |
+| DATASET_API_URL              | localhost:20000        | Address for Dataset API                                                                                            |
+| ENABLE_MOCK_CLIENTS          | false                  | Boolean to inject mock clients to allow for faster development                                                     |
+| FILES_API_URL                | localhost:26900        | Address for File API                                                                                               |
+| GRACEFUL_SHUTDOWN_TIMEOUT    | 5s                     | The graceful shutdown timeout in seconds (`time.Duration` format)                                                  |
+| HEALTHCHECK_INTERVAL         | 30s                    | Time between self-healthchecks (`time.Duration` format)                                                            |
+| HEALTHCHECK_CRITICAL_TIMEOUT | 90s                    | Time to wait until an unhealthy dependent propagates its state to make this app unhealthy (`time.Duration` format) |
+| MIGRATION_SERVICE_URL        | http://localhost:30100 | Host address used for deriving HATEOS link defaults                                                                |
+| OTEL_EXPORTER_OTLP_ENDPOINT  | localhost:4317         | Endpoint for OpenTelemetry service                                                                                 |
+| OTEL_SERVICE_NAME            | dis-migration-service  | Label of service for OpenTelemetry service                                                                         |
+| OTEL_BATCH_TIMEOUT           | 5s                     | Timeout for OpenTelemetry                                                                                          |
+| OTEL_ENABLED                 | false                  | Feature flag to enable OpenTelemetry                                                                               |
+| REDIRECT_API_URL             | localhost:29900        | Address for the Redirect API                                                                                       |
+| UPLOAD_SERVICE_URL           | localhost:25100        | Address for Upload Service                                                                                         |
+| ZEBEDEE_URL                  | localhost:8082         | Address for Zebedee                                                                                                |
 
 ## Contributing
 
