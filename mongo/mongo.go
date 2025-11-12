@@ -9,6 +9,7 @@ import (
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 )
 
+// Mongo represents a mongo connection and health client
 type Mongo struct {
 	config.MongoConfig
 
@@ -16,7 +17,8 @@ type Mongo struct {
 	healthClient *mongoHealth.CheckMongoClient
 }
 
-// Init returns an initialised Mongo object encapsulating a connection to the mongo server/cluster with the given configuration,
+// Init returns an initialised Mongo object encapsulating a connection
+// to the mongo server/cluster with the given configuration,
 // and a health client to check the health of the mongo server/cluster
 func (m *Mongo) Init(ctx context.Context) (err error) {
 	m.Connection, err = mongodriver.Open(&m.MongoDriverConfig)
@@ -41,7 +43,8 @@ func (m *Mongo) Close(ctx context.Context) error {
 	return m.Connection.Close(ctx)
 }
 
-// Checker is called by the healthcheck library to check the health state of this mongoDB instance
+// Checker is called by the healthcheck library to check the health
+// state of this mongoDB instance
 func (m *Mongo) Checker(ctx context.Context, state *healthcheck.CheckState) error {
 	return m.healthClient.Checker(ctx, state)
 }

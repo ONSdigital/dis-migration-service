@@ -7,10 +7,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-const (
-	JobsCollection = "JobsCollection"
-)
-
+// MongoConfig holds MongoDB configuration settings.
 type MongoConfig struct {
 	dpMongo.MongoDriverConfig
 }
@@ -39,12 +36,24 @@ type Config struct {
 var cfg *Config
 
 const (
-	JobsCollectionTitle   = "MigrationsJobsCollection"
-	JobsCollectionName    = "jobs"
+	// JobsCollectionTitle is the well known name of the MongoDB collection for
+	// migration jobs.
+	JobsCollectionTitle = "MigrationsJobsCollection"
+	// JobsCollectionName is the actual name of the MongoDB collection for
+	// migration jobs.
+	JobsCollectionName = "jobs"
+	// EventsCollectionTitle is the well known name of the MongoDB collection
+	// for migration events.
 	EventsCollectionTitle = "MigrationsEventsCollection"
-	EventsCollectionName  = "events"
-	TasksCollectionTitle  = "MigrationsTasksCollection"
-	TasksCollectionName   = "tasks"
+	// EventsCollectionName is the actual name of the MongoDB collection for
+	// migration events.
+	EventsCollectionName = "events"
+	// TasksCollectionTitle is the well known name of the MongoDB collection
+	// for migration tasks.
+	TasksCollectionTitle = "MigrationsTasksCollection"
+	// TasksCollectionName is the actual name of the MongoDB collection for
+	// migration tasks.
+	TasksCollectionName = "tasks"
 )
 
 // Get returns the default config with any modifications through environment

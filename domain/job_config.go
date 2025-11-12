@@ -7,6 +7,7 @@ import (
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 )
 
+// JobConfig represents the configuration for a migration job
 type JobConfig struct {
 	SourceID  string       `json:"source_id" bson:"source_id"`
 	TargetID  string       `json:"target_id" bson:"target_id"`
@@ -14,6 +15,7 @@ type JobConfig struct {
 	Validator JobValidator `json:"-" bson:"-"`
 }
 
+// ValidateInternal performs internal validation of the JobConfig fields
 func (jc *JobConfig) ValidateInternal() []error {
 	var errs []error
 
@@ -61,6 +63,8 @@ func (jc *JobConfig) ValidateInternal() []error {
 	return nil
 }
 
+// ValidateExternal performs validation of the JobConfig fields
+// against external systems
 func (jc *JobConfig) ValidateExternal(ctx context.Context, appClients clients.ClientList) error {
 	var err error
 

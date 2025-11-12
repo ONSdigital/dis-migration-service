@@ -5,15 +5,18 @@ import (
 	"net/http"
 )
 
+// ErrorList represents a list of errors.
 type ErrorList struct {
 	Errors []Error `json:"errors"`
 }
 
+// Error represents a single error with a status code and description.
 type Error struct {
 	Code        int    `json:"code"`
 	Description string `json:"description"`
 }
 
+// New creates a new redacted Error based on the provided error.
 func New(err error) Error {
 	var redactedError Error
 	code, exists := StatusCodeMap[err]

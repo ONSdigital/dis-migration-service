@@ -25,7 +25,8 @@ import (
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
 )
 
-// ExternalServiceList holds the initialiser and initialisation state of external services.
+// ExternalServiceList holds the initialiser and initialisation
+// state of external services.
 type ExternalServiceList struct {
 	HealthCheck bool
 	Init        Initialiser
@@ -50,7 +51,8 @@ func (e *ExternalServiceList) GetHTTPServer(bindAddr string, router http.Handler
 	return s
 }
 
-// GetHealthCheck creates a healthcheck with versionInfo and sets teh HealthCheck flag to true
+// GetHealthCheck creates a healthcheck with versionInfo and sets the
+// HealthCheck flag to true
 func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error) {
 	hc, err := e.Init.DoGetHealthCheck(cfg, buildTime, gitCommit, version)
 	if err != nil {
@@ -87,7 +89,8 @@ func (e *ExternalServiceList) GetAppClients(ctx context.Context, cfg *config.Con
 	return e.Init.DoGetAppClients(ctx, cfg)
 }
 
-// DoGetHTTPServer creates an HTTP Server with the provided bind address and router
+// DoGetHTTPServer creates an HTTP Server with the provided
+// bind address and router
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
 	s := dphttp.NewServer(bindAddr, router)
 	s.HandleOSSignals = false

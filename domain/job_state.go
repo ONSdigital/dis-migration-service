@@ -1,7 +1,9 @@
 package domain
 
+// JobState represents the various states a migration job can be in.
 type JobState string
 
+//nolint:godoclint // Documentation for these constants is provided in the JobState type comment.
 const (
 	JobStateSubmitted         JobState = "submitted"
 	JobStateInReview          JobState = "in_review"
@@ -18,6 +20,7 @@ const (
 	JobStateCancelled         JobState = "cancelled"
 )
 
+// IsValidJobState checks if the provided state is a valid JobState.
 func IsValidJobState(state JobState) bool {
 	switch state {
 	case JobStateSubmitted, JobStateInReview, JobStateApproved, JobStatePublished,
@@ -30,6 +33,8 @@ func IsValidJobState(state JobState) bool {
 	}
 }
 
+// GetNonCancelledStates returns a slice of JobStates excluding the
+// 'cancelled' state.
 func GetNonCancelledStates() []JobState {
 	return []JobState{
 		JobStateSubmitted, JobStateInReview, JobStateApproved, JobStatePublished,

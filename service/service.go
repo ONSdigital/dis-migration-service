@@ -31,10 +31,13 @@ type Service struct {
 	clients     *clients.ClientList
 }
 
+// MigrationServiceStore wraps the MongoDB client to implement
+// the Storer interface
 type MigrationServiceStore struct {
 	store.MongoDB
 }
 
+// New creates a new service
 func New(cfg *config.Config, serviceList *ExternalServiceList) *Service {
 	svc := &Service{
 		Config:      cfg,
@@ -44,7 +47,7 @@ func New(cfg *config.Config, serviceList *ExternalServiceList) *Service {
 	return svc
 }
 
-// Run the service
+// Run runs the service
 func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version string, svcErrors chan error) (err error) {
 	log.Info(ctx, "running service")
 	log.Info(ctx, "using service configuration", log.Data{"config": svc.Config})
@@ -181,7 +184,8 @@ func createMiddleware(hc HealthChecker) alice.Chain {
 	return middleware
 }
 
-// healthcheckMiddleware creates a new http.Handler to intercept /health requests.
+// healthcheckMiddleware creates a new http.Handler to intercept
+// /health requests.
 func healthcheckMiddleware(healthcheckHandler func(http.ResponseWriter, *http.Request), path string) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

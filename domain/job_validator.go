@@ -15,7 +15,8 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
-// JobValidator defines the contract for validating job configurations against external systems
+// JobValidator defines the contract for validating job configurations
+// against external systems
 //
 //go:generate moq -out mock/job_validator.go -pkg mock . JobValidator
 type JobValidator interface {
@@ -38,12 +39,18 @@ func GetValidator(jobType JobType) (JobValidator, error) {
 	return validator, nil
 }
 
+// StaticDatasetValidator implements JobValidator for static dataset
+// migration jobs
 type StaticDatasetValidator struct{}
 
+// ValidateSourceID validates if the given source ID is a valid
+// Zebedee URI
 func (v *StaticDatasetValidator) ValidateSourceID(sourceID string) error {
 	return ValidateZebedeeURI(sourceID)
 }
 
+// ValidateSourceIDWithExternal validates if the given source ID exists in
+// Zebedee and is of the correct type
 func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList) error {
 	data, err := checkZebedeeURIExists(ctx, appClients.Zebedee, sourceID)
 	if err != nil {
@@ -57,10 +64,13 @@ func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Contex
 	return nil
 }
 
+// ValidateTargetID validates if the given id is a valid dataset ID
 func (v *StaticDatasetValidator) ValidateTargetID(targetID string) error {
 	return ValidateDatasetID(targetID)
 }
 
+// ValidateTargetIDWithExternal validates that the target dataset
+// ID does not already exist
 func (v *StaticDatasetValidator) ValidateTargetIDWithExternal(ctx context.Context, targetID string, appClients *clients.ClientList) error {
 	return checkDatasetIDDoesNotExist(ctx, appClients.DatasetAPI, targetID)
 }
@@ -94,7 +104,8 @@ func checkDatasetIDDoesNotExist(ctx context.Context, client clients.DatasetAPICl
 	return appErrors.ErrTargetIDInvalid
 }
 
-// validateURIPath validates if the given path is a valid URI path
+// ValidateZebedeeURI validates if the given path is a valid URI
+// path
 func ValidateZebedeeURI(path string) error {
 	pattern := `^(\/[^\?\/\#\s]+)+$` // Ensures the path starts with '/' and does not contain query strings or hashbangs
 	re := regexp.MustCompile(pattern)
@@ -107,7 +118,7 @@ func ValidateZebedeeURI(path string) error {
 	return nil
 }
 
-// validateURIPath validates if the given path is a valid URI path
+// ValidateDatasetID validates if the given id is a valid dataset ID
 func ValidateDatasetID(id string) error {
 	// Define the regex pattern
 	pattern := `^[a-z0-9]+(-[a-z0-9]+)*$`

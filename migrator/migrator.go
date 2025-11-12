@@ -11,6 +11,8 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
+// Migrator defines the contract for migration operations
+//
 //go:generate moq -out mock/migrator.go -pkg mock . Migrator
 type Migrator interface {
 	Migrate(ctx context.Context, job *domain.Job)
@@ -23,6 +25,8 @@ type migrator struct {
 	wg         sync.WaitGroup
 }
 
+// NewDefaultMigrator creates a new default migrator with the
+// provided job service and clients
 func NewDefaultMigrator(jobService application.JobService, appClients *clients.ClientList) Migrator {
 	return &migrator{
 		JobService: jobService,
@@ -30,6 +34,7 @@ func NewDefaultMigrator(jobService application.JobService, appClients *clients.C
 	}
 }
 
+// Migrate starts the migration process for the given job
 func (mig *migrator) Migrate(ctx context.Context, job *domain.Job) {
 	mig.wg.Add(1)
 	go func() {
@@ -42,6 +47,7 @@ func (mig *migrator) Migrate(ctx context.Context, job *domain.Job) {
 	}()
 }
 
+// Shutdown waits for all ongoing migrations to complete or times out
 func (mig *migrator) Shutdown(ctx context.Context) error {
 	done := make(chan struct{})
 	go func() {

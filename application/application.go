@@ -25,6 +25,8 @@ type jobService struct {
 	clients *clients.ClientList
 }
 
+// Setup initializes a new JobService with the provided
+// dependencies.
 func Setup(datastore *store.Datastore, appClients *clients.ClientList, host string) JobService {
 	return &jobService{
 		store:   datastore,
@@ -33,6 +35,8 @@ func Setup(datastore *store.Datastore, appClients *clients.ClientList, host stri
 	}
 }
 
+// CreateJob creates a new migration job based on the
+// provided job configuration.
 func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error) {
 	err := jobConfig.ValidateExternal(ctx, *js.clients)
 	if err != nil {
@@ -62,6 +66,7 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 	return &job, nil
 }
 
+// GetJob retrieves a migration job by its ID.
 func (js *jobService) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 	return js.store.GetJob(ctx, jobID)
 }

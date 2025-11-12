@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// CreateJob creates a new migration job.
 func (m *Mongo) CreateJob(ctx context.Context, job *domain.Job) error {
 	_, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).InsertOne(ctx, job)
 	if err != nil {
@@ -18,6 +19,7 @@ func (m *Mongo) CreateJob(ctx context.Context, job *domain.Job) error {
 	return nil
 }
 
+// GetJob retrieves a job by its ID.
 func (m *Mongo) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 	var job domain.Job
 	// TODO: Implement this function
@@ -26,6 +28,8 @@ func (m *Mongo) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 	return &job, err
 }
 
+// GetJobsByConfigAndState retrieves jobs based on the provided job
+// configuration and states.
 func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, stateFilter []domain.JobState, offset, limit int) ([]*domain.Job, error) {
 	var results []*domain.Job
 
@@ -43,6 +47,7 @@ func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfi
 	return results, err
 }
 
+// GetJobsByConfig retrieves jobs based on the provided job configuration.
 func (m *Mongo) GetJobsByConfig(ctx context.Context, jc *domain.JobConfig, offset, limit int) ([]*domain.Job, error) {
 	return m.GetJobsByConfigAndState(ctx, jc, []domain.JobState{}, offset, limit)
 }
