@@ -48,6 +48,9 @@ npm install -g @redocly/cli
 |-------------------------------------------|------------------------|--------------------------------------------------------------------------------------------------------------------|
 | BIND_ADDR                                 | :30100                 | The host and port to bind to                                                                                       |
 | DATASET_API_URL                           | localhost:20000        | Address for Dataset API                                                                                            |
+| DEFAULT_LIMIT                             | 10                     | Default limit parameter for paginated endpoints                                                                    |
+| DEFAULT_MAX_LIMIT                         | 100                    | Default max limit for paginated endpoints                                                                          |
+| DEFAULT_OFFSET                            | 0                      | Default offset parameter for paginated endpoints                                                                   |
 | ENABLE_MOCK_CLIENTS                       | false                  | Boolean to inject mock clients to allow for faster development                                                     |
 | FILES_API_URL                             | localhost:26900        | Address for File API                                                                                               |
 | GRACEFUL_SHUTDOWN_TIMEOUT                 | 5s                     | The graceful shutdown timeout in seconds (`time.Duration` format)                                                  |

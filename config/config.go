@@ -17,6 +17,9 @@ type MongoConfig struct {
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
 	DatasetAPIURL              string        `envconfig:"DATASET_API_URL"`
+	DefaultLimit               int           `envconfig:"DEFAULT_LIMIT"`
+	DefaultOffset              int           `envconfig:"DEFAULT_OFFSET"`
+	DefaultMaxLimit            int           `envconfig:"DEFAULT_MAX_LIMIT"`
 	EnableMockClients          bool          `envconfig:"ENABLE_MOCK_CLIENTS"`
 	FilesAPIURL                string        `envconfig:"FILES_API_URL"`
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
@@ -68,6 +71,9 @@ func Get() (*Config, error) {
 	cfg = &Config{
 		BindAddr:                   "localhost:30100",
 		DatasetAPIURL:              "http://localhost:22000",
+		DefaultLimit:               10,
+		DefaultOffset:              0,
+		DefaultMaxLimit:            100,
 		EnableMockClients:          false,
 		FilesAPIURL:                "http://localhost:26900",
 		GracefulShutdownTimeout:    5 * time.Second,

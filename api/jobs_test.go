@@ -12,6 +12,7 @@ import (
 	"time"
 
 	applicationMock "github.com/ONSdigital/dis-migration-service/application/mock"
+	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
@@ -55,7 +56,9 @@ func TestGetJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r, &mockService, &mockMigrator, mockAuthMiddleware)
+
+		cfg := &config.Config{}
+		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When a valid request is made", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
@@ -89,7 +92,8 @@ func TestGetJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r, &mockService, &mockMigrator, mockAuthMiddleware)
+		cfg := &config.Config{}
+		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When a request is made for a missing job", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
@@ -123,7 +127,8 @@ func TestGetJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r, &mockService, &mockMigrator, mockAuthMiddleware)
+		cfg := &config.Config{}
+		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When a request is made and the service errors", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
@@ -174,8 +179,9 @@ func TestCreateJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
+		cfg := &config.Config{}
 
-		api := Setup(ctx, r, &mockService, &mockMigrator, mockAuthMiddleware)
+		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When a valid request is made", func() {
 			bodyBytes, err := json.Marshal(testConfig)
