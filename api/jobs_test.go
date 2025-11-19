@@ -44,7 +44,8 @@ func TestGetJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r, &mockService, &mockMigrator)
+		cfg := &config.Config{}
+		api := Setup(ctx, cfg, r, &mockService, &mockMigrator)
 
 		Convey("When a valid request is made", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
@@ -86,8 +87,9 @@ func TestCreateJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
+		cfg := &config.Config{}
 
-		api := Setup(ctx, r, &mockService, &mockMigrator)
+		api := Setup(ctx, cfg, r, &mockService, &mockMigrator)
 
 		Convey("When a valid request is made", func() {
 			bodyBytes, err := json.Marshal(testConfig)
