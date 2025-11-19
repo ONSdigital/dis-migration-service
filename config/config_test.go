@@ -28,6 +28,9 @@ func TestConfig(t *testing.T) {
 				So(configuration, ShouldResemble, &Config{
 					BindAddr:                   "localhost:30100",
 					DatasetAPIURL:              "http://localhost:22000",
+					DefaultLimit:               10,
+					DefaultOffset:              0,
+					DefaultMaxLimit:            100,
 					EnableMockClients:          false,
 					FilesAPIURL:                "http://localhost:26900",
 					GracefulShutdownTimeout:    5 * time.Second,

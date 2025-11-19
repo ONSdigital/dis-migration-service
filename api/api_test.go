@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	applicationMock "github.com/ONSdigital/dis-migration-service/application/mock"
+	"github.com/ONSdigital/dis-migration-service/config"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
 
@@ -30,8 +31,9 @@ func TestSetup(t *testing.T) {
 	Convey("Given an API instance", t, func() {
 		r := mux.NewRouter()
 		ctx := context.Background()
+		cfg := &config.Config{}
 
-		api := Setup(ctx, r, &mockService, &mockMigrator, mockAuthMiddleware)
+		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/v1/migration-jobs", "POST"), ShouldBeTrue)
