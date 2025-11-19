@@ -55,7 +55,7 @@ linters:
         - max-len
         - no-unused-link
     lll:
-      line-length: 180
+      line-length: 140
     misspell:
       locale: UK
     revive:
