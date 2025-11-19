@@ -178,7 +178,7 @@ func (c *MigrationComponent) DoGetAppClients(ctx context.Context, cfg *config.Co
 }
 
 func (c *MigrationComponent) DoGetAuthorisationMiddleware(ctx context.Context, cfg *authorisation.Config) (authorisation.Middleware, error) {
-	middleware, err := authorisation.NewMiddlewareFromConfig(ctx, cfg, cfg.JWTVerificationPublicKeys)
+	middleware, err := authorisation.NewFeatureFlaggedMiddleware(ctx, cfg, nil)
 	if err != nil {
 		return nil, err
 	}
