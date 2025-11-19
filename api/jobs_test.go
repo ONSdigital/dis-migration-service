@@ -57,7 +57,6 @@ func TestGetJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
-
 		cfg := &config.Config{}
 		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
@@ -319,7 +318,6 @@ func TestCreateJob(t *testing.T) {
 		r := mux.NewRouter()
 		ctx := context.Background()
 		cfg := &config.Config{}
-
 		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When a valid request is made", func() {
