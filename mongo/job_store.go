@@ -37,7 +37,7 @@ func (m *Mongo) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 
 // GetJobsByConfigAndState retrieves jobs based on the provided job
 // configuration and states.
-func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, stateFilter []domain.JobState, offset, limit int) ([]*domain.Job, error) {
+func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, stateFilter []domain.JobState, limit, offset int) ([]*domain.Job, error) {
 	var results []*domain.Job
 
 	_, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
@@ -48,13 +48,13 @@ func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfi
 				"state":  bson.M{"$in": stateFilter},
 			},
 			&results,
-			mongodriver.Offset(offset), mongodriver.Limit(limit),
+			mongodriver.Limit(limit), mongodriver.Offset(offset),
 		)
 
 	return results, err
 }
 
 // GetJobsByConfig retrieves jobs based on the provided job configuration.
-func (m *Mongo) GetJobsByConfig(ctx context.Context, jc *domain.JobConfig, offset, limit int) ([]*domain.Job, error) {
-	return m.GetJobsByConfigAndState(ctx, jc, []domain.JobState{}, offset, limit)
+func (m *Mongo) GetJobsByConfig(ctx context.Context, jc *domain.JobConfig, limit, offset int) ([]*domain.Job, error) {
+	return m.GetJobsByConfigAndState(ctx, jc, []domain.JobState{}, limit, offset)
 }

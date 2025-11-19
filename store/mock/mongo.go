@@ -36,7 +36,7 @@ var _ store.MongoDB = &MongoDBMock{}
 //			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
 //				panic("mock out the GetJob method")
 //			},
-//			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset int, limit int) ([]*domain.Job, error) {
+//			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit int, offset int) ([]*domain.Job, error) {
 //				panic("mock out the GetJobsByConfigAndState method")
 //			},
 //		}
@@ -62,7 +62,7 @@ type MongoDBMock struct {
 	GetJobFunc func(ctx context.Context, jobID string) (*domain.Job, error)
 
 	// GetJobsByConfigAndStateFunc mocks the GetJobsByConfigAndState method.
-	GetJobsByConfigAndStateFunc func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset int, limit int) ([]*domain.Job, error)
+	GetJobsByConfigAndStateFunc func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit int, offset int) ([]*domain.Job, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -107,10 +107,10 @@ type MongoDBMock struct {
 			Jc *domain.JobConfig
 			// States is the states argument value.
 			States []domain.JobState
-			// Offset is the offset argument value.
-			Offset int
 			// Limit is the limit argument value.
 			Limit int
+			// Offset is the offset argument value.
+			Offset int
 		}
 	}
 	lockChecker                 sync.RWMutex
@@ -298,7 +298,7 @@ func (mock *MongoDBMock) GetJobCalls() []struct {
 }
 
 // GetJobsByConfigAndState calls GetJobsByConfigAndStateFunc.
-func (mock *MongoDBMock) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset int, limit int) ([]*domain.Job, error) {
+func (mock *MongoDBMock) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit int, offset int) ([]*domain.Job, error) {
 	if mock.GetJobsByConfigAndStateFunc == nil {
 		panic("MongoDBMock.GetJobsByConfigAndStateFunc: method is nil but MongoDB.GetJobsByConfigAndState was just called")
 	}
@@ -306,19 +306,19 @@ func (mock *MongoDBMock) GetJobsByConfigAndState(ctx context.Context, jc *domain
 		Ctx    context.Context
 		Jc     *domain.JobConfig
 		States []domain.JobState
-		Offset int
 		Limit  int
+		Offset int
 	}{
 		Ctx:    ctx,
 		Jc:     jc,
 		States: states,
-		Offset: offset,
 		Limit:  limit,
+		Offset: offset,
 	}
 	mock.lockGetJobsByConfigAndState.Lock()
 	mock.calls.GetJobsByConfigAndState = append(mock.calls.GetJobsByConfigAndState, callInfo)
 	mock.lockGetJobsByConfigAndState.Unlock()
-	return mock.GetJobsByConfigAndStateFunc(ctx, jc, states, offset, limit)
+	return mock.GetJobsByConfigAndStateFunc(ctx, jc, states, limit, offset)
 }
 
 // GetJobsByConfigAndStateCalls gets all the calls that were made to GetJobsByConfigAndState.
@@ -329,15 +329,15 @@ func (mock *MongoDBMock) GetJobsByConfigAndStateCalls() []struct {
 	Ctx    context.Context
 	Jc     *domain.JobConfig
 	States []domain.JobState
-	Offset int
 	Limit  int
+	Offset int
 } {
 	var calls []struct {
 		Ctx    context.Context
 		Jc     *domain.JobConfig
 		States []domain.JobState
-		Offset int
 		Limit  int
+		Offset int
 	}
 	mock.lockGetJobsByConfigAndState.RLock()
 	calls = mock.calls.GetJobsByConfigAndState

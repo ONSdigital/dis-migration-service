@@ -22,7 +22,7 @@ const (
 func TestCreateJob(t *testing.T) {
 	Convey("Given a job service and store that has no stored jobs and a valid job config", t, func() {
 		mockMongo := &storeMocks.MongoDBMock{
-			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset, limit int) ([]*domain.Job, error) {
+			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error) {
 				return nil, nil
 			},
 			CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
@@ -81,7 +81,7 @@ func TestCreateJob(t *testing.T) {
 
 	Convey("Given a job service and store that has a matching stored job and a valid job config", t, func() {
 		mockMongo := &storeMocks.MongoDBMock{
-			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset, limit int) ([]*domain.Job, error) {
+			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error) {
 				return []*domain.Job{
 					{
 						Config: jc,
@@ -140,7 +140,7 @@ func TestCreateJob(t *testing.T) {
 
 	Convey("Given a job service and store that returns an error when checking jobs and a valid job config", t, func() {
 		mockMongo := &storeMocks.MongoDBMock{
-			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset, limit int) ([]*domain.Job, error) {
+			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error) {
 				return nil, errors.New("fake error for testing")
 			},
 			CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
@@ -196,7 +196,7 @@ func TestCreateJob(t *testing.T) {
 
 	Convey("Given a job service and store that returns an error when creating a job and a valid job config", t, func() {
 		mockMongo := &storeMocks.MongoDBMock{
-			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset, limit int) ([]*domain.Job, error) {
+			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error) {
 				return nil, nil
 			},
 			CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
