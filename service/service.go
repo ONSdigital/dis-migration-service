@@ -100,8 +100,15 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	middleware := createMiddleware(svc.HealthCheck)
 	svc.Server = svc.ServiceList.GetHTTPServer(svc.Config.BindAddr, middleware.Then(r))
 
+	// Get Permissions
+	authorisation, err := svc.ServiceList.Init.DoGetAuthorisationMiddleware(ctx, svc.Config.AuthConfig)
+	if err != nil {
+		log.Fatal(ctx, "could not instantiate authorisation middleware", err)
+		return err
+	}
+
 	// Set up the API
-	svc.API = api.Setup(ctx, r, svc.JobService, svc.migrator)
+	svc.API = api.Setup(ctx, r, svc.JobService, svc.migrator, authorisation)
 
 	// Run the http server in a new go-routine
 	go func() {

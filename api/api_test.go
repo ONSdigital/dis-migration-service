@@ -8,6 +8,7 @@ import (
 
 	applicationMock "github.com/ONSdigital/dis-migration-service/application/mock"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
+	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
 
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
@@ -17,11 +18,20 @@ func TestSetup(t *testing.T) {
 	mockService := applicationMock.JobServiceMock{}
 	mockMigrator := migratorMock.MigratorMock{}
 
+	mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+		RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+			return handlerFunc
+		},
+		CloseFunc: func(ctx context.Context) error {
+			return nil
+		},
+	}
+
 	Convey("Given an API instance", t, func() {
 		r := mux.NewRouter()
 		ctx := context.Background()
 
-		api := Setup(ctx, r, &mockService, &mockMigrator)
+		api := Setup(ctx, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/v1/migration-jobs", "POST"), ShouldBeTrue)

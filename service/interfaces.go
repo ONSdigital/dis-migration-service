@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -24,6 +26,7 @@ type Initialiser interface {
 	DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error)
 	DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error)
 	DoGetAppClients(ctx context.Context, cfg *config.Config) *clients.ClientList
+	DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error)
 }
 
 // HTTPServer defines the required methods from the HTTP server

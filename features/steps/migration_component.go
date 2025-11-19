@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/service/mock"
@@ -35,17 +37,18 @@ const (
 
 type MigrationComponent struct {
 	componenttest.ErrorFeature
-	svcList        *service.ExternalServiceList
-	svc            *service.Service
-	errorChan      chan error
-	Config         *config.Config
-	HTTPServer     *http.Server
-	ServiceRunning bool
-	apiFeature     *componenttest.APIFeature
-	MongoClient    *mongo.Mongo
-	mongoFeature   *componenttest.MongoFeature
-	StartTime      time.Time
-	FakeAPIRouter  *FakeAPI
+	svcList                 *service.ExternalServiceList
+	svc                     *service.Service
+	errorChan               chan error
+	Config                  *config.Config
+	HTTPServer              *http.Server
+	ServiceRunning          bool
+	apiFeature              *componenttest.APIFeature
+	MongoClient             *mongo.Mongo
+	mongoFeature            *componenttest.MongoFeature
+	StartTime               time.Time
+	FakeAPIRouter           *FakeAPI
+	AuthorisationMiddleware authorisation.Middleware
 }
 
 func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationComponent, error) {
@@ -86,11 +89,12 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 	c.Config.ZebedeeURL = c.FakeAPIRouter.fakeHTTP.ResolveURL("")
 
 	initMock := &mock.InitialiserMock{
-		DoGetHealthCheckFunc: c.DoGetHealthcheckOk,
-		DoGetHTTPServerFunc:  c.DoGetHTTPServer,
-		DoGetMongoDBFunc:     c.DoGetMongoDB,
-		DoGetMigratorFunc:    c.DoGetMigrator,
-		DoGetAppClientsFunc:  c.DoGetAppClients,
+		DoGetHealthCheckFunc:             c.DoGetHealthcheckOk,
+		DoGetHTTPServerFunc:              c.DoGetHTTPServer,
+		DoGetMongoDBFunc:                 c.DoGetMongoDB,
+		DoGetMigratorFunc:                c.DoGetMigrator,
+		DoGetAppClientsFunc:              c.DoGetAppClients,
+		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddleware,
 	}
 
 	c.Config.HealthCheckInterval = 1 * time.Second
@@ -171,4 +175,14 @@ func (c *MigrationComponent) DoGetAppClients(ctx context.Context, cfg *config.Co
 	init := service.Init{}
 
 	return init.DoGetAppClients(ctx, cfg)
+}
+
+func (c *MigrationComponent) DoGetAuthorisationMiddleware(ctx context.Context, cfg *authorisation.Config) (authorisation.Middleware, error) {
+	middleware, err := authorisation.NewMiddlewareFromConfig(ctx, cfg, cfg.JWTVerificationPublicKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	c.AuthorisationMiddleware = middleware
+	return c.AuthorisationMiddleware, nil
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
@@ -160,4 +162,15 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 		UploadService: upload.NewAPIClient(cfg.UploadServiceURL, cfg.ServiceAuthToken),
 		Zebedee:       zebedee.New(cfg.ZebedeeURL),
 	}
+}
+
+// DoGetAuthorisationMiddleware creates authorisation middleware for the given
+// config
+func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+	return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, nil)
+}
+
+// GetAuthorisationMiddleware gets the authorisation middleware for the service
+func (e *ExternalServiceList) GetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+	return e.Init.DoGetAuthorisationMiddleware(ctx, authorisationConfig)
 }

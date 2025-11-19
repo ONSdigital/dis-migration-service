@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/ONSdigital/dis-redirect-api v0.3.8
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.270.0
+	github.com/ONSdigital/dp-authorisation/v2 v2.32.3
 	github.com/ONSdigital/dp-component-test v0.28.0
 	github.com/ONSdigital/dp-dataset-api v1.88.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
@@ -26,7 +27,6 @@ require (
 
 require (
 	github.com/ONSdigital/dis-redis v0.3.0 // indirect
-	github.com/ONSdigital/dp-authorisation/v2 v2.32.3 // indirect
 	github.com/ONSdigital/dp-mongodb-in-memory v1.8.1 // indirect
 	github.com/ONSdigital/dp-net/v3 v3.5.0 // indirect
 	github.com/ONSdigital/dp-permissions-api v1.6.0 // indirect
@@ -49,6 +49,7 @@ require (
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect

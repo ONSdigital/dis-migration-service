@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
+
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 
 	"github.com/ONSdigital/dis-migration-service/application"
@@ -49,6 +52,15 @@ func TestRun(t *testing.T) {
 	Convey("Having a set of mocked dependencies", t, func() {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
+
+		authorisationMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
 
 		hcMock := &mock.HealthCheckerMock{
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
@@ -94,6 +106,10 @@ func TestRun(t *testing.T) {
 			return &clients.ClientList{}
 		}
 
+		funcDoGetAuthOk := func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+			return authorisationMiddleware, nil
+		}
+
 		Convey("Given that initialising healthcheck returns an error", func() {
 			// setup (run before each `Convey` at this scope / indentation):
 			initMock := &mock.InitialiserMock{
@@ -122,11 +138,12 @@ func TestRun(t *testing.T) {
 		Convey("Given that all dependencies are successfully initialised", func() {
 			// setup (run before each `Convey` at this scope / indentation):
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc:  funcDoGetHTTPServer,
-				DoGetHealthCheckFunc: funcDoGetHealthcheckOk,
-				DoGetMigratorFunc:    funcDoGetMigrator,
-				DoGetMongoDBFunc:     funcDoGetMongoDBOk,
-				DoGetAppClientsFunc:  funcDoGetAppClientsOk,
+				DoGetHTTPServerFunc:              funcDoGetHTTPServer,
+				DoGetHealthCheckFunc:             funcDoGetHealthcheckOk,
+				DoGetMigratorFunc:                funcDoGetMigrator,
+				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
+				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
+				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -168,9 +185,10 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
-				DoGetMongoDBFunc:    funcDoGetMongoDBOk,
-				DoGetMigratorFunc:   funcDoGetMigrator,
-				DoGetAppClientsFunc: funcDoGetAppClientsOk,
+				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
+				DoGetMigratorFunc:                funcDoGetMigrator,
+				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
+				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -192,11 +210,12 @@ func TestRun(t *testing.T) {
 		Convey("Given that all dependencies are successfully initialised but the http server fails", func() {
 			// setup (run before each `Convey` at this scope / indentation):
 			initMock := &mock.InitialiserMock{
-				DoGetHealthCheckFunc: funcDoGetHealthcheckOk,
-				DoGetHTTPServerFunc:  funcDoGetFailingHTTPServer,
-				DoGetMigratorFunc:    funcDoGetMigrator,
-				DoGetMongoDBFunc:     funcDoGetMongoDBOk,
-				DoGetAppClientsFunc:  funcDoGetAppClientsOk,
+				DoGetHealthCheckFunc:             funcDoGetHealthcheckOk,
+				DoGetHTTPServerFunc:              funcDoGetFailingHTTPServer,
+				DoGetMigratorFunc:                funcDoGetMigrator,
+				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
+				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
+				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -227,6 +246,15 @@ func TestClose(t *testing.T) {
 
 		hcStopped := false
 		serverStopped := false
+
+		authorisationMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
 
 		// healthcheck Stop does not depend on any other service being closed/stopped
 		hcMock := &mock.HealthCheckerMock{
@@ -273,15 +301,20 @@ func TestClose(t *testing.T) {
 			return &clients.ClientList{}
 		}
 
+		funcDoGetAuthOk := func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+			return authorisationMiddleware, nil
+		}
+
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 			initMock := &mock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetMigratorFunc:   funcDoGetMigrator,
-				DoGetMongoDBFunc:    funcDoGetMongoDBOk,
-				DoGetAppClientsFunc: funcDoGetAppClientsOk,
+				DoGetMigratorFunc:                funcDoGetMigrator,
+				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
+				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
+				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 
 			svcErrors := make(chan error, 1)
@@ -311,9 +344,10 @@ func TestClose(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
-				DoGetMigratorFunc:   funcDoGetMigrator,
-				DoGetMongoDBFunc:    funcDoGetMongoDBOk,
-				DoGetAppClientsFunc: funcDoGetAppClientsOk,
+				DoGetMigratorFunc:                funcDoGetMigrator,
+				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
+				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
+				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 
 			svcErrors := make(chan error, 1)

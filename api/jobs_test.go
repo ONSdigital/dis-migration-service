@@ -14,6 +14,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
+	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
 
 	"github.com/google/uuid"
 
@@ -42,9 +43,18 @@ func TestGetJob(t *testing.T) {
 		}
 		mockMigrator := migratorMock.MigratorMock{}
 
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r, &mockService, &mockMigrator)
+		api := Setup(ctx, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When a valid request is made", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
@@ -84,10 +94,19 @@ func TestCreateJob(t *testing.T) {
 			MigrateFunc: func(ctx context.Context, job *domain.Job) {},
 		}
 
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
 		r := mux.NewRouter()
 		ctx := context.Background()
 
-		api := Setup(ctx, r, &mockService, &mockMigrator)
+		api := Setup(ctx, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When a valid request is made", func() {
 			bodyBytes, err := json.Marshal(testConfig)

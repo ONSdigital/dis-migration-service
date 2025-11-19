@@ -9,6 +9,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/application"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/migrator"
+	auth "github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
@@ -21,7 +22,7 @@ type MigrationAPI struct {
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, jobService application.JobService, dataMigrator migrator.Migrator) *MigrationAPI {
+func Setup(ctx context.Context, router *mux.Router, jobService application.JobService, dataMigrator migrator.Migrator, authMiddleware auth.Middleware) *MigrationAPI {
 	api := &MigrationAPI{
 		Migrator:   dataMigrator,
 		Router:     router,
@@ -30,12 +31,12 @@ func Setup(ctx context.Context, router *mux.Router, jobService application.JobSe
 
 	api.post(
 		"/v1/migration-jobs",
-		api.createJob,
+		authMiddleware.Require("migrations:create", api.createJob),
 	)
 
 	api.get(
 		fmt.Sprintf("/v1/migration-jobs/{%s}", PathParameterJobID),
-		api.getJob,
+		authMiddleware.Require("migrations:read", api.getJob),
 	)
 
 	return api
