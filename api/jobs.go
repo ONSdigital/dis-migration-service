@@ -37,6 +37,11 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 	handleSuccess(ctx, w, r, http.StatusOK, bytes)
 }
 
+// getJobs is an implementation of PaginatedHandler for retrieving jobs.
+func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
+	return api.JobService.GetJobs(r.Context(), limit, offset)
+}
+
 func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
