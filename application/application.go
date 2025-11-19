@@ -45,7 +45,7 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 
 	job := domain.NewJob(jobConfig, js.host)
 
-	foundJobs, err := js.store.GetJobsByConfigAndState(ctx, job.Config, domain.GetNonCancelledStates(), 0, 1)
+	foundJobs, err := js.store.GetJobsByConfigAndState(ctx, job.Config, domain.GetNonCancelledStates(), 1, 0)
 	if err != nil {
 		log.Error(ctx, "failed to validate job creation", err)
 		return &domain.Job{}, appErrors.ErrInternalServerError

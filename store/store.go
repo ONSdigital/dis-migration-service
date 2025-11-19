@@ -21,7 +21,7 @@ type dataMongoDB interface {
 	// Jobs
 	CreateJob(ctx context.Context, job *domain.Job) error
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
-	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset, limit int) ([]*domain.Job, error)
+	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
 
 	// TODO: Tasks
 
@@ -58,6 +58,6 @@ func (ds *Datastore) GetJob(ctx context.Context, jobID string) (*domain.Job, err
 
 // GetJobsByConfigAndState retrieves jobs based on the provided job
 // configuration and states.
-func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, offset, limit int) ([]*domain.Job, error) {
-	return ds.Backend.GetJobsByConfigAndState(ctx, jc, states, offset, limit)
+func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error) {
+	return ds.Backend.GetJobsByConfigAndState(ctx, jc, states, limit, offset)
 }
