@@ -46,6 +46,10 @@ var (
 	ErrTargetIDValidation  = errors.New("target ID failed to validate")
 	ErrJobAlreadyRunning   = errors.New("job already running")
 
+	ErrOffsetInvalid = errors.New("offset parameter is invalid")
+	ErrLimitInvalid  = errors.New("limit parameter is invalid")
+	ErrLimitExceeded = errors.New("limit parameter exceeds maximum allowed")
+
 	ErrSourceIDZebedeeURIInvalid = errors.New("source ID URI path must start with '/', not end with '/', not contain query strings or hashbangs")
 	ErrTargetIDDatasetIDInvalid  = errors.New("target id must be lowercase alphanumeric with optional hyphen separators")
 
@@ -64,5 +68,8 @@ var (
 		ErrJobTypeInvalid:            http.StatusBadRequest,
 		ErrSourceIDZebedeeURIInvalid: http.StatusBadRequest,
 		ErrTargetIDDatasetIDInvalid:  http.StatusBadRequest,
+		ErrOffsetInvalid:             http.StatusBadRequest,
+		ErrLimitInvalid:              http.StatusBadRequest,
+		ErrLimitExceeded:             http.StatusBadRequest,
 	}
 )

@@ -140,6 +140,33 @@ func (c *MigrationComponent) InitialiseService() (http.Handler, error) {
 	return c.HTTPServer.Handler, nil
 }
 
+func (c *MigrationComponent) StartService() error {
+	if c.ServiceRunning {
+		return nil // already started
+	}
+
+	ctx := context.Background()
+	err := c.svc.Run(ctx, "1", "", "", c.errorChan)
+	if err != nil {
+		return fmt.Errorf("error occurred while starting the service: %w", err)
+	}
+	c.ServiceRunning = true
+	return nil
+}
+
+func (c *MigrationComponent) Restart() error {
+	err := c.Close()
+	if err != nil {
+		return fmt.Errorf("error occurred while closing the service: %w", err)
+	}
+
+	err = c.StartService()
+	if err != nil {
+		return fmt.Errorf("error occurred while starting the service: %w", err)
+	}
+	return nil
+}
+
 func (c *MigrationComponent) DoGetHealthcheckOk(cfg *config.Config, _, _, _ string) (service.HealthChecker, error) {
 	componentBuildTime := strconv.Itoa(int(time.Now().Unix()))
 	versionInfo, err := healthcheck.NewVersionInfo(componentBuildTime, gitCommitHash, appVersion)
@@ -165,7 +192,8 @@ func (c *MigrationComponent) DoGetMongoDB(ctx context.Context, cfg config.MongoC
 
 func (c *MigrationComponent) DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
 	mig := &migratorMock.MigratorMock{
-		MigrateFunc: func(ctx context.Context, job *domain.Job) {},
+		MigrateFunc:  func(ctx context.Context, job *domain.Job) {},
+		ShutdownFunc: func(ctx context.Context) error { return nil },
 	}
 
 	return mig, nil

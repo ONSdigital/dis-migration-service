@@ -34,6 +34,10 @@ func Setup(ctx context.Context, cfg *config.Config, router *mux.Router, jobServi
 		Paginator:  paginator,
 	}
 
+	api.get("/v1/migration-jobs",
+		paginator.Paginate(api.getJobs),
+	)
+
 	api.post(
 		"/v1/migration-jobs",
 		authMiddleware.Require("migrations:create", api.createJob),

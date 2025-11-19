@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -139,6 +140,144 @@ func TestGetJob(t *testing.T) {
 			Convey("Then a 500 is returned", func() {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				// you can assert on the body if your handleError writes a specific message
+			})
+		})
+	})
+}
+
+func TestGetJobs(t *testing.T) {
+	Convey("Given a test API instance and a mocked jobservice that returns multiple jobs", t, func() {
+		mockService := applicationMock.JobServiceMock{
+			GetJobsFunc: func(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
+				jobs := []*domain.Job{
+					{ID: "job1"},
+					{ID: "job2"},
+				}
+				return jobs, len(jobs), nil
+			},
+		}
+		mockMigrator := migratorMock.MigratorMock{}
+
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
+		r := mux.NewRouter()
+		ctx := context.Background()
+		cfg := &config.Config{}
+		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
+
+		Convey("When a valid request is made", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then multiple jobs are returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				bodyBytes, err := io.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+
+				var paginatedResponse struct {
+					Items []domain.Job `json:"items"`
+				}
+
+				err = json.Unmarshal(bodyBytes, &paginatedResponse)
+				So(err, ShouldBeNil)
+				So(len(paginatedResponse.Items), ShouldEqual, 2)
+			})
+		})
+
+		Convey("When an invalid request is made with a non-integer limit", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?limit=invalid", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a bad request is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrLimitInvalid.Error())
+			})
+		})
+		Convey("When an invalid request is made with a non-integer offset", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?offset=invalid", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a bad request is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrOffsetInvalid.Error())
+			})
+		})
+
+		Convey("When an invalid request is made with a limit exceeding max", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?limit=1000", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a bad request is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrLimitExceeded.Error())
+			})
+		})
+
+		Convey("When an invalid request is made with invalid limit and offset", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?limit=invalid&offset=invalid", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a bad request is returned with multiple errors", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrLimitInvalid.Error())
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrOffsetInvalid.Error())
+			})
+		})
+	})
+
+	Convey("Given a test API instance and a mocked jobservice that returns no jobs", t, func() {
+		mockService := applicationMock.JobServiceMock{
+			GetJobsFunc: func(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
+				return []*domain.Job{}, 0, nil
+			},
+		}
+		mockMigrator := migratorMock.MigratorMock{}
+
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
+		r := mux.NewRouter()
+		ctx := context.Background()
+		cfg := &config.Config{}
+		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
+
+		Convey("When a valid request is made", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then no jobs are returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				bodyBytes, err := io.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+
+				var paginatedResponse struct {
+					Items []domain.Job `json:"items"`
+				}
+
+				err = json.Unmarshal(bodyBytes, &paginatedResponse)
+				So(err, ShouldBeNil)
+				So(len(paginatedResponse.Items), ShouldEqual, 0)
 			})
 		})
 	})
