@@ -17,6 +17,7 @@ import (
 type JobService interface {
 	CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error)
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
+	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
 }
 
 type jobService struct {
@@ -69,4 +70,9 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 // GetJob retrieves a migration job by its ID.
 func (js *jobService) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 	return js.store.GetJob(ctx, jobID)
+}
+
+// GetJobs retrieves a list of migration jobs with pagination.
+func (js *jobService) GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
+	return js.store.GetJobs(ctx, limit, offset)
 }

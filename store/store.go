@@ -21,6 +21,7 @@ type dataMongoDB interface {
 	// Jobs
 	CreateJob(ctx context.Context, job *domain.Job) error
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
+	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
 
 	// TODO: Tasks
@@ -54,6 +55,11 @@ func (ds *Datastore) CreateJob(ctx context.Context, job *domain.Job) error {
 // GetJob retrieves a job by its ID.
 func (ds *Datastore) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 	return ds.Backend.GetJob(ctx, jobID)
+}
+
+// GetJobs retrieves a list of migration jobs with pagination.
+func (ds *Datastore) GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
+	return ds.Backend.GetJobs(ctx, limit, offset)
 }
 
 // GetJobsByConfigAndState retrieves jobs based on the provided job
