@@ -120,6 +120,11 @@ func ValidateZebedeeURI(path string) error {
 
 // ValidateDatasetID validates if the given id is a valid dataset ID
 func ValidateDatasetID(id string) error {
+	// Check length
+	if len(id) < 1 || len(id) > 100 {
+		return appErrors.ErrTargetIDDatasetIDInvalid
+	}
+
 	// Define the regex pattern
 	pattern := `^[a-z0-9]+(-[a-z0-9]+)*$`
 
