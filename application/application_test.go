@@ -245,3 +245,105 @@ func TestCreateJob(t *testing.T) {
 		})
 	})
 }
+
+func TestGetJob(t *testing.T) {
+	Convey("Given a job service and a store that has a job for the requested id", t, func() {
+		expectedJob := &domain.Job{
+			ID: "job-1",
+		}
+
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				return expectedJob, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients, testHost)
+
+		ctx := context.Background()
+
+		Convey("When GetJob is called", func() {
+			job, err := jobService.GetJob(ctx, expectedJob.ID)
+
+			Convey("Then the store GetJob should be called and the job returned", func() {
+				So(len(mockMongo.GetJobCalls()), ShouldEqual, 1)
+				So(mockMongo.GetJobCalls()[0].JobID, ShouldEqual, expectedJob.ID)
+
+				So(err, ShouldBeNil)
+				So(job, ShouldResemble, expectedJob)
+			})
+		})
+	})
+
+	Convey("Given a job service and a store that returns not found", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				return nil, appErrors.ErrJobNotFound
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients, testHost)
+
+		ctx := context.Background()
+		missingID := "missing-job"
+
+		Convey("When GetJob is called for a missing job", func() {
+			job, err := jobService.GetJob(ctx, missingID)
+
+			Convey("Then nil job and ErrJobNotFound should be returned", func() {
+				So(len(mockMongo.GetJobCalls()), ShouldEqual, 1)
+				So(mockMongo.GetJobCalls()[0].JobID, ShouldEqual, missingID)
+
+				So(job, ShouldBeNil)
+				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrJobNotFound)
+			})
+		})
+	})
+
+	Convey("Given a job service and a store that returns an internal error", t, func() {
+		fakeErr := errors.New("fake store error")
+
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				return nil, fakeErr
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients, testHost)
+
+		ctx := context.Background()
+		jobID := "job-error"
+
+		Convey("When GetJob is called and the store errors", func() {
+			job, err := jobService.GetJob(ctx, jobID)
+
+			Convey("Then nil job and the underlying error should be returned", func() {
+				So(len(mockMongo.GetJobCalls()), ShouldEqual, 1)
+				So(mockMongo.GetJobCalls()[0].JobID, ShouldEqual, jobID)
+
+				So(job, ShouldBeNil)
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, fakeErr.Error())
+			})
+		})
+	})
+}
