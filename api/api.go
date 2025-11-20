@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/config"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -17,16 +18,25 @@ import (
 type MigrationAPI struct {
 	JobService application.JobService
 	Migrator   migrator.Migrator
+	Paginator  *Paginator
 	Router     *mux.Router
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, jobService application.JobService, dataMigrator migrator.Migrator) *MigrationAPI {
+// context has been blanked here for now in anticipation of future use
+func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService application.JobService, dataMigrator migrator.Migrator) *MigrationAPI {
+	paginator := NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
+
 	api := &MigrationAPI{
 		Migrator:   dataMigrator,
 		Router:     router,
 		JobService: jobService,
+		Paginator:  paginator,
 	}
+
+	api.get("/v1/migration-jobs",
+		paginator.Paginate(api.getJobs),
+	)
 
 	api.post(
 		"/v1/migration-jobs",
