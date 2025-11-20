@@ -24,7 +24,8 @@ type MigrationAPI struct {
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, cfg *config.Config, router *mux.Router, jobService application.JobService, dataMigrator migrator.Migrator, authMiddleware auth.Middleware) *MigrationAPI {
+// context has been blanked here for now in anticipation of future use
+func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService application.JobService, dataMigrator migrator.Migrator, authMiddleware auth.Middleware) *MigrationAPI {
 	paginator := NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
 
 	api := &MigrationAPI{
