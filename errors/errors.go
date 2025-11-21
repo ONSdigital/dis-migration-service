@@ -35,6 +35,7 @@ func New(err error) Error {
 var (
 	ErrJobNotFound         = errors.New("job not found")
 	ErrUnableToParseBody   = errors.New("unable to read submitted body")
+	ErrJobIDNotProvided    = errors.New("job ID not provided")
 	ErrSourceIDNotProvided = errors.New("source ID not provided")
 	ErrTargetIDNotProvided = errors.New("target ID not provided")
 	ErrJobTypeNotProvided  = errors.New("job type not provided")
@@ -56,6 +57,7 @@ var (
 	StatusCodeMap = map[error]int{
 		ErrJobNotFound:               http.StatusNotFound,
 		ErrUnableToParseBody:         http.StatusBadRequest,
+		ErrJobIDNotProvided:          http.StatusBadRequest,
 		ErrSourceIDNotProvided:       http.StatusBadRequest,
 		ErrTargetIDNotProvided:       http.StatusBadRequest,
 		ErrJobTypeNotProvided:        http.StatusBadRequest,

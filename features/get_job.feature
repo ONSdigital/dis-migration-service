@@ -1,12 +1,11 @@
 @Job @GetJob
 Feature: Get a Job
 
-#  TODO Add this test when the GET job endpoint has been implemented
-#  Scenario: Get a job which exists
+#   Scenario: Get a job which exists
 #    Given the following document exists in the "jobs" collection:
 #    """
 #    {
-#        "id": "1",
+#        "_id": "1",
 #        "last_updated": "test-time",
 #        "state": "submitted",
 #        "config": {
