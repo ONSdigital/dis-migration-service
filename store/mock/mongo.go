@@ -27,6 +27,9 @@ var _ store.MongoDB = &MongoDBMock{}
 //			CloseFunc: func(contextMoqParam context.Context) error {
 //				panic("mock out the Close method")
 //			},
+//			CountEventsByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+//				panic("mock out the CountEventsByJobID method")
+//			},
 //			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
 //				panic("mock out the CountTasksByJobID method")
 //			},
@@ -36,8 +39,14 @@ var _ store.MongoDB = &MongoDBMock{}
 //			CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
 //				panic("mock out the CreateJob method")
 //			},
+//			CreateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+//				panic("mock out the CreateTask method")
+//			},
 //			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
 //				panic("mock out the GetJob method")
+//			},
+//			GetJobEventsFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error) {
+//				panic("mock out the GetJobEvents method")
 //			},
 //			GetJobTasksFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error) {
 //				panic("mock out the GetJobTasks method")
@@ -61,6 +70,9 @@ type MongoDBMock struct {
 	// CloseFunc mocks the Close method.
 	CloseFunc func(contextMoqParam context.Context) error
 
+	// CountEventsByJobIDFunc mocks the CountEventsByJobID method.
+	CountEventsByJobIDFunc func(ctx context.Context, jobID string) (int, error)
+
 	// CountTasksByJobIDFunc mocks the CountTasksByJobID method.
 	CountTasksByJobIDFunc func(ctx context.Context, jobID string) (int, error)
 
@@ -70,8 +82,14 @@ type MongoDBMock struct {
 	// CreateJobFunc mocks the CreateJob method.
 	CreateJobFunc func(ctx context.Context, job *domain.Job) error
 
+	// CreateTaskFunc mocks the CreateTask method.
+	CreateTaskFunc func(ctx context.Context, task *domain.Task) error
+
 	// GetJobFunc mocks the GetJob method.
 	GetJobFunc func(ctx context.Context, jobID string) (*domain.Job, error)
+
+	// GetJobEventsFunc mocks the GetJobEvents method.
+	GetJobEventsFunc func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error)
 
 	// GetJobTasksFunc mocks the GetJobTasks method.
 	GetJobTasksFunc func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error)
@@ -96,6 +114,13 @@ type MongoDBMock struct {
 			// ContextMoqParam is the contextMoqParam argument value.
 			ContextMoqParam context.Context
 		}
+		// CountEventsByJobID holds details about calls to the CountEventsByJobID method.
+		CountEventsByJobID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// JobID is the jobID argument value.
+			JobID string
+		}
 		// CountTasksByJobID holds details about calls to the CountTasksByJobID method.
 		CountTasksByJobID []struct {
 			// Ctx is the ctx argument value.
@@ -117,12 +142,30 @@ type MongoDBMock struct {
 			// Job is the job argument value.
 			Job *domain.Job
 		}
+		// CreateTask holds details about calls to the CreateTask method.
+		CreateTask []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Task is the task argument value.
+			Task *domain.Task
+		}
 		// GetJob holds details about calls to the GetJob method.
 		GetJob []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// JobID is the jobID argument value.
 			JobID string
+		}
+		// GetJobEvents holds details about calls to the GetJobEvents method.
+		GetJobEvents []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// JobID is the jobID argument value.
+			JobID string
+			// Limit is the limit argument value.
+			Limit int
+			// Offset is the offset argument value.
+			Offset int
 		}
 		// GetJobTasks holds details about calls to the GetJobTasks method.
 		GetJobTasks []struct {
@@ -160,10 +203,13 @@ type MongoDBMock struct {
 	}
 	lockChecker                 sync.RWMutex
 	lockClose                   sync.RWMutex
+	lockCountEventsByJobID      sync.RWMutex
 	lockCountTasksByJobID       sync.RWMutex
 	lockCreateEvent             sync.RWMutex
 	lockCreateJob               sync.RWMutex
+	lockCreateTask              sync.RWMutex
 	lockGetJob                  sync.RWMutex
+	lockGetJobEvents            sync.RWMutex
 	lockGetJobTasks             sync.RWMutex
 	lockGetJobs                 sync.RWMutex
 	lockGetJobsByConfigAndState sync.RWMutex
@@ -234,6 +280,42 @@ func (mock *MongoDBMock) CloseCalls() []struct {
 	mock.lockClose.RLock()
 	calls = mock.calls.Close
 	mock.lockClose.RUnlock()
+	return calls
+}
+
+// CountEventsByJobID calls CountEventsByJobIDFunc.
+func (mock *MongoDBMock) CountEventsByJobID(ctx context.Context, jobID string) (int, error) {
+	if mock.CountEventsByJobIDFunc == nil {
+		panic("MongoDBMock.CountEventsByJobIDFunc: method is nil but MongoDB.CountEventsByJobID was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		JobID string
+	}{
+		Ctx:   ctx,
+		JobID: jobID,
+	}
+	mock.lockCountEventsByJobID.Lock()
+	mock.calls.CountEventsByJobID = append(mock.calls.CountEventsByJobID, callInfo)
+	mock.lockCountEventsByJobID.Unlock()
+	return mock.CountEventsByJobIDFunc(ctx, jobID)
+}
+
+// CountEventsByJobIDCalls gets all the calls that were made to CountEventsByJobID.
+// Check the length with:
+//
+//	len(mockedMongoDB.CountEventsByJobIDCalls())
+func (mock *MongoDBMock) CountEventsByJobIDCalls() []struct {
+	Ctx   context.Context
+	JobID string
+} {
+	var calls []struct {
+		Ctx   context.Context
+		JobID string
+	}
+	mock.lockCountEventsByJobID.RLock()
+	calls = mock.calls.CountEventsByJobID
+	mock.lockCountEventsByJobID.RUnlock()
 	return calls
 }
 
@@ -345,6 +427,42 @@ func (mock *MongoDBMock) CreateJobCalls() []struct {
 	return calls
 }
 
+// CreateTask calls CreateTaskFunc.
+func (mock *MongoDBMock) CreateTask(ctx context.Context, task *domain.Task) error {
+	if mock.CreateTaskFunc == nil {
+		panic("MongoDBMock.CreateTaskFunc: method is nil but MongoDB.CreateTask was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Task *domain.Task
+	}{
+		Ctx:  ctx,
+		Task: task,
+	}
+	mock.lockCreateTask.Lock()
+	mock.calls.CreateTask = append(mock.calls.CreateTask, callInfo)
+	mock.lockCreateTask.Unlock()
+	return mock.CreateTaskFunc(ctx, task)
+}
+
+// CreateTaskCalls gets all the calls that were made to CreateTask.
+// Check the length with:
+//
+//	len(mockedMongoDB.CreateTaskCalls())
+func (mock *MongoDBMock) CreateTaskCalls() []struct {
+	Ctx  context.Context
+	Task *domain.Task
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Task *domain.Task
+	}
+	mock.lockCreateTask.RLock()
+	calls = mock.calls.CreateTask
+	mock.lockCreateTask.RUnlock()
+	return calls
+}
+
 // GetJob calls GetJobFunc.
 func (mock *MongoDBMock) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 	if mock.GetJobFunc == nil {
@@ -378,6 +496,50 @@ func (mock *MongoDBMock) GetJobCalls() []struct {
 	mock.lockGetJob.RLock()
 	calls = mock.calls.GetJob
 	mock.lockGetJob.RUnlock()
+	return calls
+}
+
+// GetJobEvents calls GetJobEventsFunc.
+func (mock *MongoDBMock) GetJobEvents(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error) {
+	if mock.GetJobEventsFunc == nil {
+		panic("MongoDBMock.GetJobEventsFunc: method is nil but MongoDB.GetJobEvents was just called")
+	}
+	callInfo := struct {
+		Ctx    context.Context
+		JobID  string
+		Limit  int
+		Offset int
+	}{
+		Ctx:    ctx,
+		JobID:  jobID,
+		Limit:  limit,
+		Offset: offset,
+	}
+	mock.lockGetJobEvents.Lock()
+	mock.calls.GetJobEvents = append(mock.calls.GetJobEvents, callInfo)
+	mock.lockGetJobEvents.Unlock()
+	return mock.GetJobEventsFunc(ctx, jobID, limit, offset)
+}
+
+// GetJobEventsCalls gets all the calls that were made to GetJobEvents.
+// Check the length with:
+//
+//	len(mockedMongoDB.GetJobEventsCalls())
+func (mock *MongoDBMock) GetJobEventsCalls() []struct {
+	Ctx    context.Context
+	JobID  string
+	Limit  int
+	Offset int
+} {
+	var calls []struct {
+		Ctx    context.Context
+		JobID  string
+		Limit  int
+		Offset int
+	}
+	mock.lockGetJobEvents.RLock()
+	calls = mock.calls.GetJobEvents
+	mock.lockGetJobEvents.RUnlock()
 	return calls
 }
 
