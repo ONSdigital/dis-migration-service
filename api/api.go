@@ -48,6 +48,10 @@ func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService
 		api.getJob,
 	)
 
+	api.get(fmt.Sprintf("/v1/migration-jobs/{%s}/tasks", PathParameterJobID),
+		paginator.Paginate(api.getJobTasks),
+	)
+
 	return api
 }
 

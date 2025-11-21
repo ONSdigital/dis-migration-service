@@ -25,6 +25,8 @@ type dataMongoDB interface {
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
 
 	// TODO: Tasks
+	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
+	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
 
 	// TODO: Events
 	CreateEvent(ctx context.Context, event *domain.Event) error
@@ -66,4 +68,14 @@ func (ds *Datastore) GetJobs(ctx context.Context, limit, offset int) ([]*domain.
 // configuration and states.
 func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error) {
 	return ds.Backend.GetJobsByConfigAndState(ctx, jc, states, limit, offset)
+}
+
+// GetJobTasks retrieves a list of migration tasks for a job with pagination.
+func (ds *Datastore) GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+	return ds.Backend.GetJobTasks(ctx, jobID, limit, offset)
+}
+
+// CountTasksByJobID returns the total count of tasks for a job.
+func (ds *Datastore) CountTasksByJobID(ctx context.Context, jobID string) (int, error) {
+	return ds.Backend.CountTasksByJobID(ctx, jobID)
 }
