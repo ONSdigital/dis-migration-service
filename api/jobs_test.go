@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -65,6 +66,56 @@ func TestGetJob(t *testing.T) {
 			Convey("Then a job is returned", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
 				So(resp.Body.String(), ShouldContainSubstring, testID)
+			})
+		})
+	})
+
+	Convey("Given a test API instance and a mocked jobservice that returns not found", t, func() {
+		mockService := applicationMock.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				return nil, appErrors.ErrJobNotFound
+			},
+		}
+		mockMigrator := migratorMock.MigratorMock{}
+
+		r := mux.NewRouter()
+		ctx := context.Background()
+		api := Setup(ctx, r, &mockService, &mockMigrator)
+
+		Convey("When a request is made for a missing job", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
+			resp := httptest.NewRecorder()
+
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 404 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusNotFound)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrJobNotFound.Error())
+			})
+		})
+	})
+
+	Convey("Given a test API instance and a mocked jobservice that returns an internal error", t, func() {
+		mockService := applicationMock.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				return nil, errors.New("database failure")
+			},
+		}
+		mockMigrator := migratorMock.MigratorMock{}
+
+		r := mux.NewRouter()
+		ctx := context.Background()
+		api := Setup(ctx, r, &mockService, &mockMigrator)
+
+		Convey("When a request is made and the service errors", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
+			resp := httptest.NewRecorder()
+
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 500 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				// you can assert on the body if your handleError writes a specific message
 			})
 		})
 	})

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 
@@ -19,7 +20,7 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 
 	job, err := api.JobService.GetJob(ctx, jobID)
 	if err != nil {
-		if err != appErrors.ErrJobNotFound {
+		if !errors.Is(err, appErrors.ErrJobNotFound) {
 			log.Error(ctx, "failed to get job", err)
 		}
 		handleError(ctx, w, r, err)
