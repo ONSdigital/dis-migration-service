@@ -7,14 +7,14 @@ import (
 
 // Task represents a migration task
 type Task struct {
-	ID          string            `json:"id" bson:"_id"`
-	JobID       string            `json:"job_id" bson:"job_id"`
-	LastUpdated time.Time         `json:"last_updated" bson:"last_updated"`
-	Source      *TaskMetadata     `json:"source" bson:"source"`
-	State       MigrationState    `json:"state" bson:"state"`
-	Target      *TaskMetadata     `json:"target" bson:"target"`
-	Type        MigrationTaskType `json:"type" bson:"type"`
-	Links       TaskLinks         `json:"links" bson:"links"`
+	ID          string        `json:"id" bson:"_id"`
+	JobID       string        `json:"job_id" bson:"job_id"`
+	LastUpdated time.Time     `json:"last_updated" bson:"last_updated"`
+	Source      *TaskMetadata `json:"source" bson:"source"`
+	State       JobState      `json:"state" bson:"state"`
+	Target      *TaskMetadata `json:"target" bson:"target"`
+	Type        TaskType      `json:"type" bson:"type"`
+	Links       TaskLinks     `json:"links" bson:"links"`
 }
 
 // TaskMetadata represents metadata about a task's source or target
@@ -24,54 +24,18 @@ type TaskMetadata struct {
 	URI   string `json:"uri" bson:"uri"`
 }
 
-// MigrationTaskType represents the type of migration task
-type MigrationTaskType string
+// TaskType represents the type of migration task
+type TaskType string
 
 const (
-	// MigrationTaskTypeDataset indicates a dataset task
-	MigrationTaskTypeDataset MigrationTaskType = "dataset"
-	// MigrationTaskTypeDatasetEdition indicates a dataset edition task
-	MigrationTaskTypeDatasetEdition MigrationTaskType = "dataset_edition"
-	// MigrationTaskTypeDatasetVersion indicates a dataset version task
-	MigrationTaskTypeDatasetVersion MigrationTaskType = "dataset_version"
-	// MigrationTaskTypeDatasetDownload indicates a dataset download task
-	MigrationTaskTypeDatasetDownload MigrationTaskType = "dataset_download"
-)
-
-// MigrationState represents the state of a migration job or task
-type MigrationState string
-
-const (
-	// MigrationStateSubmitted indicates a job or task has been submitted
-	MigrationStateSubmitted MigrationState = "submitted"
-	// MigrationStateInReview indicates a job or task is in review
-	MigrationStateInReview MigrationState = "in_review"
-	// MigrationStateApproved indicates a job or task has been approved
-	MigrationStateApproved MigrationState = "approved"
-	// MigrationStatePublished indicates a job or task has been published
-	MigrationStatePublished MigrationState = "published"
-	// MigrationStateCompleted indicates a job or task has completed successfully
-	MigrationStateCompleted MigrationState = "completed"
-
-	// MigrationStateMigrating indicates a job or task is currently migrating
-	MigrationStateMigrating MigrationState = "migrating"
-	// MigrationStatePublishing indicates a job or task is currently publishing
-	MigrationStatePublishing MigrationState = "publishing"
-	// MigrationStatePostPublishing indicates a job or task is
-	// in post-publishing phase
-	MigrationStatePostPublishing MigrationState = "post_publishing"
-	// MigrationStateReverting indicates a job or task is being reverted
-	MigrationStateReverting MigrationState = "reverting"
-
-	// MigrationStateFailedPostPublish indicates a job or task failed
-	// during post-publishing
-	MigrationStateFailedPostPublish MigrationState = "failed_post_publish"
-	// MigrationStateFailedPublish indicates a job or task failed during publishing
-	MigrationStateFailedPublish MigrationState = "failed_publish"
-	// MigrationStateFailedMigration indicates a job or task failed during migration
-	MigrationStateFailedMigration MigrationState = "failed_migration"
-	// MigrationStateCancelled indicates a job or task has been cancelled
-	MigrationStateCancelled MigrationState = "cancelled"
+	// TaskTypeDataset indicates a dataset task
+	TaskTypeDataset TaskType = "dataset"
+	// TaskTypeDatasetEdition indicates a dataset edition task
+	TaskTypeDatasetEdition TaskType = "dataset_edition"
+	// TaskTypeDatasetVersion indicates a dataset version task
+	TaskTypeDatasetVersion TaskType = "dataset_version"
+	// TaskTypeDatasetDownload indicates a dataset download task
+	TaskTypeDatasetDownload TaskType = "dataset_download"
 )
 
 // TaskLinks contains HATEOAS links for a migration task
