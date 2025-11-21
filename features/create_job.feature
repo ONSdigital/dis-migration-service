@@ -179,6 +179,7 @@ Feature: Create a Job
         }
       }
       """
+    And I wait 8 seconds while the job is added to the collection
     And a get page data request to zebedee for "/test-source-id" returns a page of type "dataset_landing_page" with status 200
     And a get dataset request to the dataset API for "test-target-id" returns with status 404
     When I POST "/v1/migration-jobs"
