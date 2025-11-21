@@ -78,9 +78,18 @@ func TestGetJob(t *testing.T) {
 		}
 		mockMigrator := migratorMock.MigratorMock{}
 
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r, &mockService, &mockMigrator)
+		api := Setup(ctx, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When a request is made for a missing job", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
@@ -103,9 +112,18 @@ func TestGetJob(t *testing.T) {
 		}
 		mockMigrator := migratorMock.MigratorMock{}
 
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r, &mockService, &mockMigrator)
+		api := Setup(ctx, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When a request is made and the service errors", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
