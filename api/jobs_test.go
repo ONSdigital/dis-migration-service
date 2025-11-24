@@ -57,7 +57,6 @@ func TestGetJob(t *testing.T) {
 
 		r := mux.NewRouter()
 		ctx := context.Background()
-
 		cfg := &config.Config{}
 		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
@@ -319,7 +318,6 @@ func TestCreateJob(t *testing.T) {
 		r := mux.NewRouter()
 		ctx := context.Background()
 		cfg := &config.Config{}
-
 		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
 		Convey("When a valid request is made", func() {
@@ -419,6 +417,135 @@ func TestCreateJob(t *testing.T) {
 					So(len(mockMigrator.MigrateCalls()), ShouldEqual, 0)
 				})
 			})
+		})
+	})
+}
+
+func TestGetJobTasks(t *testing.T) {
+	Convey("Given a test API instance and a mocked jobservice", t, func() {
+		mockMigrator := migratorMock.MigratorMock{}
+
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
+		r := mux.NewRouter()
+		ctx := context.Background()
+		cfg := &config.Config{}
+
+		Convey("missing job id should return ErrJobIDNotProvided", func() {
+			mockService := applicationMock.JobServiceMock{}
+			api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
+
+			// Build request and set empty mux var to simulate missing job id
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs//tasks", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: ""})
+			rr := httptest.NewRecorder()
+
+			items, total, err := api.getJobTasks(rr, req, 10, 0)
+			So(items, ShouldBeNil)
+			So(total, ShouldEqual, 0)
+			So(err, ShouldNotBeNil)
+			So(err, ShouldEqual, appErrors.ErrJobIDNotProvided)
+		})
+
+		Convey("job not found should return ErrJobNotFound", func() {
+			mockService := applicationMock.JobServiceMock{
+				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+					return nil, appErrors.ErrJobNotFound
+				},
+			}
+			api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: "job-123"})
+			rr := httptest.NewRecorder()
+
+			items, total, err := api.getJobTasks(rr, req, 10, 0)
+			So(items, ShouldBeNil)
+			So(total, ShouldEqual, 0)
+			So(err, ShouldNotBeNil)
+			So(err, ShouldEqual, appErrors.ErrJobNotFound)
+		})
+
+		Convey("GetJob returns unexpected error is propagated", func() {
+			testErr := fmt.Errorf("db failure")
+			mockService := applicationMock.JobServiceMock{
+				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+					return nil, testErr
+				},
+			}
+			api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: "job-123"})
+			rr := httptest.NewRecorder()
+
+			items, total, err := api.getJobTasks(rr, req, 10, 0)
+			So(items, ShouldBeNil)
+			So(total, ShouldEqual, 0)
+			So(err, ShouldBeError, testErr)
+		})
+
+		Convey("success returns tasks and total", func() {
+			testJobID := "job-123"
+			mockTasks := []*domain.Task{
+				{ID: "t1", JobID: testJobID},
+				{ID: "t2", JobID: testJobID},
+			}
+
+			mockService := applicationMock.JobServiceMock{
+				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+					return &domain.Job{ID: jobID}, nil
+				},
+				GetJobTasksFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error) {
+					// return tasks as interface{} to match service signature used in handler
+					return mockTasks, len(mockTasks), nil
+				},
+			}
+			api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: testJobID})
+			rr := httptest.NewRecorder()
+
+			items, total, err := api.getJobTasks(rr, req, 10, 0)
+			So(err, ShouldBeNil)
+			So(total, ShouldEqual, 2)
+
+			// items is returned as interface{}, assert underlying value
+			gotTasks, ok := items.([]*domain.Task)
+			So(ok, ShouldBeTrue)
+			So(len(gotTasks), ShouldEqual, 2)
+			So(gotTasks[0].ID, ShouldEqual, "t1")
+			So(gotTasks[1].ID, ShouldEqual, "t2")
+		})
+
+		Convey("GetJobTasks returns an error is propagated", func() {
+			testErr := fmt.Errorf("find failure")
+			mockService := applicationMock.JobServiceMock{
+				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+					return &domain.Job{ID: jobID}, nil
+				},
+				GetJobTasksFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error) {
+					return nil, 0, testErr
+				},
+			}
+			api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: "job-123"})
+			rr := httptest.NewRecorder()
+
+			items, total, err := api.getJobTasks(rr, req, 10, 0)
+			So(items, ShouldBeNil)
+			So(total, ShouldEqual, 0)
+			So(err, ShouldBeError, testErr)
 		})
 	})
 }

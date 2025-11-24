@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -16,7 +17,8 @@ import (
 )
 
 const (
-	testHost = "http://localhost:8080"
+	testHost  = "http://localhost:8080"
+	testJobID = "test-job-id"
 )
 
 func TestCreateJob(t *testing.T) {
@@ -416,6 +418,273 @@ func TestGetJobs(t *testing.T) {
 				Convey("Then an error should be returned", func() {
 					So(jobs, ShouldBeNil)
 					So(totalCount, ShouldEqual, 0)
+					So(err, ShouldNotBeNil)
+				})
+			})
+		})
+	})
+}
+
+func TestGetJobTasks(t *testing.T) {
+	Convey("Given a job service and store that has stored tasks for a job", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobTasksFunc: func(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+				return []*domain.Task{
+					{
+						ID:          "task1",
+						JobID:       testJobID,
+						LastUpdated: time.Now().UTC(),
+						Source: &domain.TaskMetadata{
+							ID:    "source-id-1",
+							Label: "Source Dataset 1",
+							URI:   "/data/source1",
+						},
+						Target: &domain.TaskMetadata{
+							ID:    "target-id-1",
+							Label: "Target Dataset 1",
+							URI:   "/data/target1",
+						},
+						State: domain.MigrationStateMigrating,
+						Type:  domain.MigrationTaskTypeDataset,
+						Links: domain.TaskLinks{
+							Self: &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id/tasks/task1"},
+							Job:  &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id"},
+						},
+					},
+					{
+						ID:          "task2",
+						JobID:       testJobID,
+						LastUpdated: time.Now().UTC(),
+						Source: &domain.TaskMetadata{
+							ID:    "source-id-2",
+							Label: "Source Dataset 2",
+							URI:   "/data/source2",
+						},
+						Target: &domain.TaskMetadata{
+							ID:    "target-id-2",
+							Label: "Target Dataset 2",
+							URI:   "/data/target2",
+						},
+						State: domain.MigrationStatePublishing,
+						Type:  domain.MigrationTaskTypeDatasetEdition,
+						Links: domain.TaskLinks{
+							Self: &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id/tasks/task2"},
+							Job:  &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id"},
+						},
+					},
+				}, 2, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients, testHost)
+
+		ctx := context.Background()
+		jobID := testJobID
+
+		Convey("When job tasks are retrieved", func() {
+			tasks, totalCount, err := jobService.GetJobTasks(ctx, jobID, 10, 0)
+
+			Convey("Then the store should be called to get job tasks", func() {
+				So(len(mockMongo.GetJobTasksCalls()), ShouldEqual, 1)
+				So(mockMongo.GetJobTasksCalls()[0].JobID, ShouldEqual, jobID)
+				So(mockMongo.GetJobTasksCalls()[0].Limit, ShouldEqual, 10)
+				So(mockMongo.GetJobTasksCalls()[0].Offset, ShouldEqual, 0)
+
+				Convey("Then no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And the tasks should be returned", func() {
+						So(len(tasks), ShouldEqual, 2)
+						So(totalCount, ShouldEqual, 2)
+						So(tasks[0].ID, ShouldEqual, "task1")
+						So(tasks[0].Source.ID, ShouldEqual, "source-id-1")
+						So(tasks[0].Target.ID, ShouldEqual, "target-id-1")
+						So(tasks[0].State, ShouldEqual, domain.MigrationStateMigrating)
+						So(tasks[0].Type, ShouldEqual, domain.MigrationTaskTypeDataset)
+						So(tasks[1].ID, ShouldEqual, "task2")
+						So(tasks[1].State, ShouldEqual, domain.MigrationStatePublishing)
+						So(tasks[1].Type, ShouldEqual, domain.MigrationTaskTypeDatasetEdition)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service and store that has no tasks for a job", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobTasksFunc: func(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+				return []*domain.Task{}, 0, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients, testHost)
+
+		ctx := context.Background()
+		jobID := testJobID
+
+		Convey("When job tasks are retrieved", func() {
+			tasks, totalCount, err := jobService.GetJobTasks(ctx, jobID, 10, 0)
+
+			Convey("Then the store should be called to get job tasks", func() {
+				So(len(mockMongo.GetJobTasksCalls()), ShouldEqual, 1)
+				So(mockMongo.GetJobTasksCalls()[0].JobID, ShouldEqual, jobID)
+
+				Convey("Then no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And an empty task list should be returned", func() {
+						So(len(tasks), ShouldEqual, 0)
+						So(totalCount, ShouldEqual, 0)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service and store that returns an error when getting job tasks", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobTasksFunc: func(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+				return nil, 0, errors.New("fake error for testing")
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients, testHost)
+
+		ctx := context.Background()
+		jobID := testJobID
+
+		Convey("When job tasks are retrieved", func() {
+			tasks, totalCount, err := jobService.GetJobTasks(ctx, jobID, 10, 0)
+
+			Convey("Then the store should be called to get job tasks", func() {
+				So(len(mockMongo.GetJobTasksCalls()), ShouldEqual, 1)
+
+				Convey("Then an error should be returned", func() {
+					So(tasks, ShouldBeNil)
+					So(totalCount, ShouldEqual, 0)
+					So(err, ShouldNotBeNil)
+				})
+			})
+		})
+	})
+}
+
+func TestCountTasksByJobID(t *testing.T) {
+	Convey("Given a job service and store that has tasks for a job", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+				return 5, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients, testHost)
+
+		ctx := context.Background()
+		jobID := testJobID
+
+		Convey("When task count is retrieved", func() {
+			count, err := jobService.CountTasksByJobID(ctx, jobID)
+
+			Convey("Then the store should be called to count tasks", func() {
+				So(len(mockMongo.CountTasksByJobIDCalls()), ShouldEqual, 1)
+				So(mockMongo.CountTasksByJobIDCalls()[0].JobID, ShouldEqual, jobID)
+
+				Convey("Then no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And the task count should be returned", func() {
+						So(count, ShouldEqual, 5)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service and store that has no tasks for a job", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+				return 0, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients, testHost)
+
+		ctx := context.Background()
+		jobID := testJobID
+
+		Convey("When task count is retrieved", func() {
+			count, err := jobService.CountTasksByJobID(ctx, jobID)
+
+			Convey("Then the store should be called to count tasks", func() {
+				So(len(mockMongo.CountTasksByJobIDCalls()), ShouldEqual, 1)
+
+				Convey("Then no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And zero count should be returned", func() {
+						So(count, ShouldEqual, 0)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service and store that returns an error when counting tasks", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+				return 0, errors.New("fake error for testing")
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients, testHost)
+
+		ctx := context.Background()
+		jobID := testJobID
+
+		Convey("When task count is retrieved", func() {
+			count, err := jobService.CountTasksByJobID(ctx, jobID)
+
+			Convey("Then the store should be called to count tasks", func() {
+				So(len(mockMongo.CountTasksByJobIDCalls()), ShouldEqual, 1)
+
+				Convey("Then an error should be returned", func() {
+					So(count, ShouldEqual, 0)
 					So(err, ShouldNotBeNil)
 				})
 			})

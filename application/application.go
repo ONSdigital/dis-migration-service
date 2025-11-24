@@ -3,10 +3,9 @@ package application
 import (
 	"context"
 
-	appErrors "github.com/ONSdigital/dis-migration-service/errors"
-
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -18,6 +17,8 @@ type JobService interface {
 	CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error)
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
 	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
+	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
+	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
 }
 
 type jobService struct {
@@ -75,4 +76,14 @@ func (js *jobService) GetJob(ctx context.Context, jobID string) (*domain.Job, er
 // GetJobs retrieves a list of migration jobs with pagination.
 func (js *jobService) GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
 	return js.store.GetJobs(ctx, limit, offset)
+}
+
+// GetJobTasks retrieves a list of migration tasks for a job with pagination.
+func (js *jobService) GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+	return js.store.GetJobTasks(ctx, jobID, limit, offset)
+}
+
+// CountTasksByJobID returns the total count of tasks for a job.
+func (js *jobService) CountTasksByJobID(ctx context.Context, jobID string) (int, error) {
+	return js.store.CountTasksByJobID(ctx, jobID)
 }

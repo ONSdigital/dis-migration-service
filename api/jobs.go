@@ -42,6 +42,31 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, 
 	return api.JobService.GetJobs(r.Context(), limit, offset)
 }
 
+// getJobTasks is an implementation of PaginatedHandler for retrieving
+// job tasks.
+func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
+	ctx := r.Context()
+	vars := mux.Vars(r)
+	jobID := vars[PathParameterJobID]
+
+	if jobID == "" {
+		return nil, 0, appErrors.ErrJobIDNotProvided
+	}
+
+	// Ensure job exists -> return 404 if not found
+	if _, err := api.JobService.GetJob(ctx, jobID); err != nil {
+		return nil, 0, err // This will return 404 if job not found
+	}
+
+	// Fetch tasks for the job
+	tasks, totalCount, err := api.JobService.GetJobTasks(ctx, jobID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return tasks, totalCount, nil
+}
+
 func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
