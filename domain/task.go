@@ -11,7 +11,7 @@ type Task struct {
 	JobID       string            `json:"job_id" bson:"job_id"`
 	LastUpdated time.Time         `json:"last_updated" bson:"last_updated"`
 	Source      *TaskMetadata     `json:"source" bson:"source"`
-	State       MigrationState    `json:"state" bson:"state"`
+	State       JobState          `json:"state" bson:"state"`
 	Target      *TaskMetadata     `json:"target" bson:"target"`
 	Type        MigrationTaskType `json:"type" bson:"type"`
 	Links       TaskLinks         `json:"links" bson:"links"`
@@ -36,42 +36,6 @@ const (
 	MigrationTaskTypeDatasetVersion MigrationTaskType = "dataset_version"
 	// MigrationTaskTypeDatasetDownload indicates a dataset download task
 	MigrationTaskTypeDatasetDownload MigrationTaskType = "dataset_download"
-)
-
-// MigrationState represents the state of a migration job or task
-type MigrationState string
-
-const (
-	// MigrationStateSubmitted indicates a job or task has been submitted
-	MigrationStateSubmitted MigrationState = "submitted"
-	// MigrationStateInReview indicates a job or task is in review
-	MigrationStateInReview MigrationState = "in_review"
-	// MigrationStateApproved indicates a job or task has been approved
-	MigrationStateApproved MigrationState = "approved"
-	// MigrationStatePublished indicates a job or task has been published
-	MigrationStatePublished MigrationState = "published"
-	// MigrationStateCompleted indicates a job or task has completed successfully
-	MigrationStateCompleted MigrationState = "completed"
-
-	// MigrationStateMigrating indicates a job or task is currently migrating
-	MigrationStateMigrating MigrationState = "migrating"
-	// MigrationStatePublishing indicates a job or task is currently publishing
-	MigrationStatePublishing MigrationState = "publishing"
-	// MigrationStatePostPublishing indicates a job or task is
-	// in post-publishing phase
-	MigrationStatePostPublishing MigrationState = "post_publishing"
-	// MigrationStateReverting indicates a job or task is being reverted
-	MigrationStateReverting MigrationState = "reverting"
-
-	// MigrationStateFailedPostPublish indicates a job or task failed
-	// during post-publishing
-	MigrationStateFailedPostPublish MigrationState = "failed_post_publish"
-	// MigrationStateFailedPublish indicates a job or task failed during publishing
-	MigrationStateFailedPublish MigrationState = "failed_publish"
-	// MigrationStateFailedMigration indicates a job or task failed during migration
-	MigrationStateFailedMigration MigrationState = "failed_migration"
-	// MigrationStateCancelled indicates a job or task has been cancelled
-	MigrationStateCancelled MigrationState = "cancelled"
 )
 
 // TaskLinks contains HATEOAS links for a migration task

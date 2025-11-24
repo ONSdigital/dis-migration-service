@@ -52,7 +52,6 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 		log.Error(ctx, "failed to validate job creation", err)
 		return &domain.Job{}, appErrors.ErrInternalServerError
 	}
-
 	if len(foundJobs) > 0 {
 		log.Error(ctx, "found running jobs with this config", err, log.Data{
 			"job_config": job.Config,

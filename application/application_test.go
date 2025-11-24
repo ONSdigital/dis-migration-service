@@ -444,7 +444,7 @@ func TestGetJobTasks(t *testing.T) {
 							Label: "Target Dataset 1",
 							URI:   "/data/target1",
 						},
-						State: domain.MigrationStateMigrating,
+						State: domain.JobStateMigrating,
 						Type:  domain.MigrationTaskTypeDataset,
 						Links: domain.TaskLinks{
 							Self: &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id/tasks/task1"},
@@ -465,7 +465,7 @@ func TestGetJobTasks(t *testing.T) {
 							Label: "Target Dataset 2",
 							URI:   "/data/target2",
 						},
-						State: domain.MigrationStatePublishing,
+						State: domain.JobStatePublishing,
 						Type:  domain.MigrationTaskTypeDatasetEdition,
 						Links: domain.TaskLinks{
 							Self: &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id/tasks/task2"},
@@ -505,10 +505,10 @@ func TestGetJobTasks(t *testing.T) {
 						So(tasks[0].ID, ShouldEqual, "task1")
 						So(tasks[0].Source.ID, ShouldEqual, "source-id-1")
 						So(tasks[0].Target.ID, ShouldEqual, "target-id-1")
-						So(tasks[0].State, ShouldEqual, domain.MigrationStateMigrating)
+						So(tasks[0].State, ShouldEqual, domain.JobStateMigrating)
 						So(tasks[0].Type, ShouldEqual, domain.MigrationTaskTypeDataset)
 						So(tasks[1].ID, ShouldEqual, "task2")
-						So(tasks[1].State, ShouldEqual, domain.MigrationStatePublishing)
+						So(tasks[1].State, ShouldEqual, domain.JobStatePublishing)
 						So(tasks[1].Type, ShouldEqual, domain.MigrationTaskTypeDatasetEdition)
 					})
 				})
