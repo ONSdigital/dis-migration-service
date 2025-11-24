@@ -21,12 +21,13 @@ const databaseName = "testing"
 
 type ComponentTest struct {
 	Mongo *componentTest.MongoFeature
+	Auth  *componentTest.AuthorizationFeature
 }
 
 func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	ctx := context.Background()
 
-	migrationComponent, err := steps.NewMigrationComponent(f.Mongo)
+	migrationComponent, err := steps.NewMigrationComponent(f.Mongo, f.Auth)
 	if err != nil {
 		log.Error(ctx, "error occurred while creating a new migrationComponent", err)
 		os.Exit(1)
@@ -37,6 +38,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	godogCtx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		f.Mongo.Reset()
 		apiFeature.Reset()
+		f.Auth.Reset()
 
 		return ctx, nil
 	})
@@ -44,6 +46,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	godogCtx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 		f.Mongo.Reset()
 		apiFeature.Reset()
+		f.Auth.Reset()
 
 		return ctx, nil
 	})
@@ -51,6 +54,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	apiFeature.RegisterSteps(godogCtx)
 	f.Mongo.RegisterSteps(godogCtx)
 	migrationComponent.RegisterSteps(godogCtx)
+	f.Auth.RegisterSteps(godogCtx)
 }
 
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
@@ -62,6 +66,7 @@ func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 			DatabaseName: databaseName,
 		}
 		f.Mongo = componentTest.NewMongoFeature(mongoOptions)
+		f.Auth = componentTest.NewAuthorizationFeature()
 	})
 	ctx.AfterSuite(func() {
 		err := f.Mongo.Close()
@@ -69,6 +74,8 @@ func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 			log.Error(ctxBackground, "error occurred while closing the MongoFeature", err)
 			os.Exit(1)
 		}
+
+		f.Auth.Close()
 	})
 }
 

@@ -2,7 +2,6 @@ package steps
 
 import (
 	"context"
-	"errors"
 
 	"github.com/ONSdigital/log.go/v2/log"
 
@@ -12,7 +11,7 @@ import (
 func (c *MigrationComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^mongodb is healthy$`, c.mongodbIsHealthy)
 	ctx.Step(`^all its expected collections exist$`, c.allItsExpectedCollectionsExist)
-	ctx.Step(`^the migration service is running$`, c.theMigrationServiceIsRunning)
+	ctx.Step(`^the migration service is running$`, c.restartMigrationService)
 	ctx.Step(`^mongodb stops running$`, c.mongodbStopsRunning)
 	ctx.Step(`^a get page data request to zebedee for "([^"]*)" returns a page of type "([^"]*)" with status (\d+)$`, c.getPageDataRequestToZebedeeForReturnsAPageOfTypeWithStatus)
 	ctx.Step(`^a get dataset request to the dataset API for "([^"]*)" returns with status (\d+)$`, c.getDatasetRequestToDatasetAPIForReturnsWithStatus)
@@ -21,14 +20,6 @@ func (c *MigrationComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 func (c *MigrationComponent) mongodbIsHealthy() error {
 	err := c.mongoFeature.Client.Ping(context.Background(), nil)
 	return err
-}
-
-func (c *MigrationComponent) theMigrationServiceIsRunning() error {
-	if c.ServiceRunning {
-		return nil // already started
-	} else {
-		return errors.New("expected the migration service to be running but it was not")
-	}
 }
 
 func (c *MigrationComponent) allItsExpectedCollectionsExist() error {
@@ -62,4 +53,8 @@ func (c *MigrationComponent) getPageDataRequestToZebedeeForReturnsAPageOfTypeWit
 func (c *MigrationComponent) getDatasetRequestToDatasetAPIForReturnsWithStatus(id string, statusCode int) error {
 	c.FakeAPIRouter.setJSONResponseForGetDataset(id, statusCode)
 	return nil
+}
+
+func (c *MigrationComponent) restartMigrationService() error {
+	return c.Restart()
 }

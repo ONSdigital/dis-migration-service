@@ -46,17 +46,19 @@ type MigrationComponent struct {
 	apiFeature              *componenttest.APIFeature
 	MongoClient             *mongo.Mongo
 	mongoFeature            *componenttest.MongoFeature
+	authFeature             *componenttest.AuthorizationFeature
 	StartTime               time.Time
 	FakeAPIRouter           *FakeAPI
 	AuthorisationMiddleware authorisation.Middleware
 }
 
-func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationComponent, error) {
+func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *componenttest.AuthorizationFeature) (*MigrationComponent, error) {
 	c := &MigrationComponent{
 		HTTPServer:     &http.Server{ReadHeaderTimeout: 3 * time.Second},
 		errorChan:      make(chan error),
 		ServiceRunning: false,
 		mongoFeature:   mongoFeat,
+		authFeature:    authFeat,
 	}
 
 	var err error
@@ -100,14 +102,10 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature) (*MigrationCom
 	c.Config.HealthCheckInterval = 1 * time.Second
 	c.Config.HealthCheckCriticalTimeout = 3 * time.Second
 	c.Config.BindAddr = "localhost:0"
+	c.Config.AuthConfig.PermissionsAPIURL = c.authFeature.FakePermissionsAPI.URL()
 	c.StartTime = time.Now()
 	c.svcList = service.NewServiceList(initMock)
 	c.svc = service.New(c.Config, c.svcList)
-	err = c.svc.Run(context.Background(), "1", "", "", c.errorChan)
-	if err != nil {
-		return &MigrationComponent{}, err
-	}
-	c.ServiceRunning = true
 
 	return c, nil
 }
@@ -134,6 +132,26 @@ func (c *MigrationComponent) Close() error {
 	}
 
 	return nil
+}
+
+func (c *MigrationComponent) Start() error {
+	if c.svc != nil && !c.ServiceRunning {
+		err := c.svc.Run(context.Background(), "1", "", "", c.errorChan)
+		if err != nil {
+			return err
+		}
+		c.ServiceRunning = true
+	}
+
+	return nil
+}
+
+func (c *MigrationComponent) Restart() error {
+	err := c.Close()
+	if err != nil {
+		return err
+	}
+	return c.Start()
 }
 
 func (c *MigrationComponent) InitialiseService() (http.Handler, error) {
@@ -165,7 +183,10 @@ func (c *MigrationComponent) DoGetMongoDB(ctx context.Context, cfg config.MongoC
 
 func (c *MigrationComponent) DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
 	mig := &migratorMock.MigratorMock{
-		MigrateFunc: func(ctx context.Context, job *domain.Job) {},
+		MigrateFunc: func(ctx context.Context, job *domain.Job) {
+			// mock no-op function
+		},
+		ShutdownFunc: func(ctx context.Context) error { return nil },
 	}
 
 	return mig, nil
@@ -178,7 +199,7 @@ func (c *MigrationComponent) DoGetAppClients(ctx context.Context, cfg *config.Co
 }
 
 func (c *MigrationComponent) DoGetAuthorisationMiddleware(ctx context.Context, cfg *authorisation.Config) (authorisation.Middleware, error) {
-	middleware, err := authorisation.NewFeatureFlaggedMiddleware(ctx, cfg, nil)
+	middleware, err := authorisation.NewMiddlewareFromConfig(ctx, cfg, cfg.JWTVerificationPublicKeys)
 	if err != nil {
 		return nil, err
 	}
