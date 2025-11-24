@@ -173,7 +173,7 @@ Feature: Create a Job
         """
 
     @StoreError
-    Scenario: Create a job with valid input
+    Scenario: Create a job which is already running
       Given the following document exists in the "jobs" collection:
         """
         {

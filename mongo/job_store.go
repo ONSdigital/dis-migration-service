@@ -44,8 +44,10 @@ func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfi
 		Find(
 			ctx,
 			bson.M{
-				"config": &jc,
-				"state":  bson.M{"$in": stateFilter},
+				"config.source_id": jc.SourceID,
+				"config.target_id": jc.TargetID,
+				"config.type":      jc.Type,
+				"state":            bson.M{"$in": stateFilter},
 			},
 			&results,
 			mongodriver.Offset(offset), mongodriver.Limit(limit),
