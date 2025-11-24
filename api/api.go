@@ -36,7 +36,7 @@ func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService
 	}
 
 	api.get("/v1/migration-jobs",
-		paginator.Paginate(api.getJobs),
+		authMiddleware.Require("migrations:read", paginator.Paginate(api.getJobs)),
 	)
 
 	api.post(
