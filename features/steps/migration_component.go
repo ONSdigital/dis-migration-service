@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -68,10 +69,22 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *comp
 		return &MigrationComponent{}, fmt.Errorf("failed to get config: %w", err)
 	}
 
+	mongoURI, err := mongoFeat.GetConnectionString()
+	if err != nil {
+		panic(err)
+	}
+
+	// Extract host:port from the MongoDB URI
+	parsedURI, err := url.Parse(mongoURI)
+	if err != nil {
+		return nil, err
+	}
+	hostPort := parsedURI.Host
+
 	mongodb := &mongo.Mongo{
 		MongoConfig: config.MongoConfig{
 			MongoDriverConfig: mongodriver.MongoDriverConfig{
-				ClusterEndpoint: mongoFeat.Server.URI(),
+				ClusterEndpoint: hostPort,
 				Database:        databaseName,
 				Collections:     c.Config.Collections,
 				ConnectTimeout:  c.Config.ConnectTimeout,
