@@ -61,9 +61,17 @@ jobs:
   dis-migration-service-component:
     needs: dis-migration-service-setup
     runs-on: ubuntu-latest
+
+    container:
+      image: onsdigital/dp-concourse-tools-docker-go:1.24.9-dind-24
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Start Docker
+        run: /start_docker.sh
+
       - name: Run Go component tests
         run: make test-component
 
