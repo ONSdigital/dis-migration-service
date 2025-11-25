@@ -21,11 +21,11 @@ type JobLinks struct {
 	Self *LinkObject `bson:"self,omitempty"       json:"self,omitempty"`
 }
 
-// NewJob creates a new Job instance with the provided configuration and host
-func NewJob(cfg *JobConfig, host string) Job {
+// NewJob creates a new Job instance with the provided configuration
+func NewJob(cfg *JobConfig) Job {
 	id := uuid.New().String()
 
-	links := NewJobLinks(id, host)
+	links := NewJobLinks(id)
 
 	return Job{
 		Config:      cfg,
@@ -36,11 +36,11 @@ func NewJob(cfg *JobConfig, host string) Job {
 	}
 }
 
-// NewJobLinks creates JobLinks for a job with the given ID and host
-func NewJobLinks(id, host string) JobLinks {
+// NewJobLinks creates JobLinks for a job with the given ID
+func NewJobLinks(id string) JobLinks {
 	return JobLinks{
 		Self: &LinkObject{
-			HRef: fmt.Sprintf("%s/v1/migration-jobs/%s", host, id),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s", id),
 		},
 	}
 }

@@ -31,7 +31,7 @@ Feature: Create a Job
           },
           "links": {
             "self": {
-              "href": "{{DYNAMIC_URL}}"
+              "href": "{{DYNAMIC_URI_PATH}}"
             }
           }
         }

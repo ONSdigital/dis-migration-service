@@ -23,16 +23,14 @@ type JobService interface {
 
 type jobService struct {
 	store   *store.Datastore
-	host    string
 	clients *clients.ClientList
 }
 
 // Setup initializes a new JobService with the provided
 // dependencies.
-func Setup(datastore *store.Datastore, appClients *clients.ClientList, host string) JobService {
+func Setup(datastore *store.Datastore, appClients *clients.ClientList) JobService {
 	return &jobService{
 		store:   datastore,
-		host:    host,
 		clients: appClients,
 	}
 }
@@ -45,7 +43,7 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 		return &domain.Job{}, err
 	}
 
-	job := domain.NewJob(jobConfig, js.host)
+	job := domain.NewJob(jobConfig)
 
 	foundJobs, err := js.store.GetJobsByConfigAndState(ctx, job.Config, domain.GetNonCancelledStates(), 1, 0)
 	if err != nil {

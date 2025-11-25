@@ -47,7 +47,7 @@ func TestCreateJob(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 		jobConfig := domain.JobConfig{
 			SourceID:  "/source-id",
 			TargetID:  "target-id",
@@ -111,7 +111,7 @@ func TestCreateJob(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 		jobConfig := domain.JobConfig{
 			SourceID:  "/source-id",
 			TargetID:  "target-id",
@@ -154,8 +154,6 @@ func TestCreateJob(t *testing.T) {
 			Backend: mockMongo,
 		}
 
-		host := "http://localhost:8080"
-
 		mockValidator := &domainMocks.JobValidatorMock{
 			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) error {
 				return nil
@@ -167,7 +165,7 @@ func TestCreateJob(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, host)
+		jobService := Setup(&mockStore, &mockClients)
 		jobConfig := domain.JobConfig{
 			SourceID:  "/source-id",
 			TargetID:  "target-id",
@@ -221,7 +219,7 @@ func TestCreateJob(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 		jobConfig := domain.JobConfig{
 			SourceID:  "/source-id",
 			TargetID:  "target-id",
@@ -266,7 +264,7 @@ func TestGetJob(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 
@@ -298,7 +296,7 @@ func TestGetJob(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 
@@ -331,7 +329,7 @@ func TestGetJob(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 		jobID := "job-error"
@@ -368,7 +366,7 @@ func TestGetJobs(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 
@@ -405,7 +403,7 @@ func TestGetJobs(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 
@@ -482,7 +480,7 @@ func TestGetJobTasks(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 		jobID := testJobID
@@ -529,7 +527,7 @@ func TestGetJobTasks(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 		jobID := testJobID
@@ -566,7 +564,7 @@ func TestGetJobTasks(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 		jobID := testJobID
@@ -601,7 +599,7 @@ func TestCountTasksByJobID(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 		jobID := testJobID
@@ -637,7 +635,7 @@ func TestCountTasksByJobID(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 		jobID := testJobID
@@ -672,7 +670,7 @@ func TestCountTasksByJobID(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients, testHost)
+		jobService := Setup(&mockStore, &mockClients)
 
 		ctx := context.Background()
 		jobID := testJobID

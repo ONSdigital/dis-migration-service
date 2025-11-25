@@ -66,7 +66,7 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	svc.clients = svc.ServiceList.GetAppClients(ctx, svc.Config)
 
 	// Get job service
-	svc.JobService = application.Setup(&datastore, svc.clients, svc.Config.MigrationServiceURL)
+	svc.JobService = application.Setup(&datastore, svc.clients)
 
 	// Get Migrator
 	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, svc.JobService, svc.clients)

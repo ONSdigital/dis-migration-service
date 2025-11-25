@@ -83,7 +83,6 @@ func Get() (*Config, error) {
 		OTExporterOTLPEndpoint:     "localhost:4317",
 		OTServiceName:              "dis-migration-service",
 		OtelEnabled:                false,
-		MigrationServiceURL:        "http://localhost:30100",
 		MongoConfig: MongoConfig{
 			MongoDriverConfig: dpMongo.MongoDriverConfig{
 				ClusterEndpoint:               "localhost:27017",

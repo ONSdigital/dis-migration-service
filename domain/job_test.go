@@ -9,10 +9,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-const (
-	testHost = "http://localhost:8080"
-)
-
 func TestNewJob(t *testing.T) {
 	Convey("Given a valid job config and host", t, func() {
 		jobConfig := JobConfig{
@@ -22,13 +18,13 @@ func TestNewJob(t *testing.T) {
 		}
 
 		Convey("When a job is created", func() {
-			job := NewJob(&jobConfig, testHost)
+			job := NewJob(&jobConfig)
 
 			Convey("Then a valid job should be returned", func() {
 				So(job.Config, ShouldResemble, &jobConfig)
 				So(job.State, ShouldEqual, JobStateSubmitted)
 				So(uuid.Validate(job.ID), ShouldBeNil)
-				So(job.Links.Self.HRef, ShouldEqual, fmt.Sprintf("%s/v1/migration-jobs/%s", testHost, job.ID))
+				So(job.Links.Self.HRef, ShouldEqual, fmt.Sprintf("/v1/migration-jobs/%s", job.ID))
 				So(job.LastUpdated, ShouldHappenOnOrBetween, time.Now().Add(-5*time.Second), time.Now())
 			})
 		})
@@ -40,10 +36,10 @@ func TestNewJobLinks(t *testing.T) {
 		id := uuid.New().String()
 
 		Convey("When a job links is created", func() {
-			jobLinks := NewJobLinks(id, testHost)
+			jobLinks := NewJobLinks(id)
 
 			Convey("Then a valid jobLinks should be returned", func() {
-				So(jobLinks.Self.HRef, ShouldEqual, fmt.Sprintf("%s/v1/migration-jobs/%s", testHost, id))
+				So(jobLinks.Self.HRef, ShouldEqual, fmt.Sprintf("/v1/migration-jobs/%s", id))
 			})
 		})
 	})
