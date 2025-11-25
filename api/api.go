@@ -53,12 +53,8 @@ func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService
 		authMiddleware.Require("migrations:read", paginator.Paginate(api.getJobTasks)),
 	)
 
-	api.get(fmt.Sprintf("/v1/migration-jobs/{%s}/tasks", PathParameterJobID),
-		paginator.Paginate(api.getJobTasks),
-	)
-
 	api.get(fmt.Sprintf("/v1/migration-jobs/{%s}/events", PathParameterJobID),
-		paginator.Paginate(api.getJobEvents),
+		authMiddleware.Require("migrations:read", paginator.Paginate(api.getJobEvents)),
 	)
 
 	return api
