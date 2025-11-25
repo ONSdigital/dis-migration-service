@@ -110,3 +110,27 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 
 	api.Migrator.Migrate(context.Background(), job)
 }
+
+// getJobEvents is an implementation for retrieving job events.
+func (api *MigrationAPI) getJobEvents(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
+	ctx := r.Context()
+	vars := mux.Vars(r)
+	jobID := vars[PathParameterJobID]
+
+	if jobID == "" {
+		return nil, 0, appErrors.ErrJobIDNotProvided
+	}
+
+	// Ensure job exists -> return 404 if not found
+	if _, err := api.JobService.GetJob(ctx, jobID); err != nil {
+		return nil, 0, err
+	}
+
+	// Fetch events for the job
+	events, totalCount, err := api.JobService.GetJobEvents(ctx, jobID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return events, totalCount, nil
+}

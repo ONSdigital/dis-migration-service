@@ -39,6 +39,7 @@ func TestSetup(t *testing.T) {
 			So(hasRoute(api.Router, "/v1/migration-jobs", "POST"), ShouldBeTrue)
 			So(hasRoute(api.Router, "/v1/migration-jobs/myJob", "GET"), ShouldBeTrue)
 			So(hasRoute(api.Router, "/v1/migration-jobs/myJob/tasks", "GET"), ShouldBeTrue)
+			So(hasRoute(api.Router, "/v1/migration-jobs/myJob/events", "GET"), ShouldBeTrue)
 		})
 	})
 }

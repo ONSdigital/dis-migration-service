@@ -42,6 +42,7 @@ var (
 	ErrSourceIDInvalid     = errors.New("source ID is invalid")
 	ErrTargetIDInvalid     = errors.New("target ID is invalid")
 	ErrJobTypeInvalid      = errors.New("job type is invalid")
+	ErrJobStateInvalid     = errors.New("job state is invalid")
 	ErrInternalServerError = errors.New("an unexpected error occurred")
 	ErrSourceIDValidation  = errors.New("source ID failed to validate")
 	ErrTargetIDValidation  = errors.New("target ID failed to validate")

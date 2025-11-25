@@ -17,8 +17,12 @@ type JobService interface {
 	CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error)
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
 	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
+	CreateTask(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error)
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
+	CreateEvent(ctx context.Context, jobID string, event *domain.Event) (*domain.Event, error)
+	GetJobEvents(ctx context.Context, jobID string, limit, offset int) ([]*domain.Event, int, error)
+	CountEventsByJobID(ctx context.Context, jobID string) (int, error)
 }
 
 type jobService struct {
@@ -75,6 +79,31 @@ func (js *jobService) GetJobs(ctx context.Context, limit, offset int) ([]*domain
 	return js.store.GetJobs(ctx, limit, offset)
 }
 
+// CreateTask creates a new migration task for a job.
+func (js *jobService) CreateTask(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+	// Verify job exists
+	job, err := js.store.GetJob(ctx, jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate job is in a state where tasks can be created
+	if !domain.IsValidJobStateForTaskCreation(job.State) {
+		return nil, appErrors.ErrJobStateInvalid
+	}
+
+	// Set job ID on the task
+	task.JobID = jobID
+
+	// Create the task in the store
+	err = js.store.CreateTask(ctx, task)
+	if err != nil {
+		return nil, err
+	}
+
+	return task, nil
+}
+
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
 func (js *jobService) GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
 	return js.store.GetJobTasks(ctx, jobID, limit, offset)
@@ -83,4 +112,34 @@ func (js *jobService) GetJobTasks(ctx context.Context, jobID string, limit, offs
 // CountTasksByJobID returns the total count of tasks for a job.
 func (js *jobService) CountTasksByJobID(ctx context.Context, jobID string) (int, error) {
 	return js.store.CountTasksByJobID(ctx, jobID)
+}
+
+// CreateEvent creates a new migration event for a job.
+func (js *jobService) CreateEvent(ctx context.Context, jobID string, event *domain.Event) (*domain.Event, error) {
+	// Verify job exists
+	_, err := js.store.GetJob(ctx, jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set job ID on the event
+	event.JobID = jobID
+
+	// Create the event in the store
+	err = js.store.CreateEvent(ctx, event)
+	if err != nil {
+		return nil, err
+	}
+
+	return event, nil
+}
+
+// GetJobEvents retrieves a list of migration events for a job with pagination.
+func (js *jobService) GetJobEvents(ctx context.Context, jobID string, limit, offset int) ([]*domain.Event, int, error) {
+	return js.store.GetJobEvents(ctx, jobID, limit, offset)
+}
+
+// CountEventsByJobID returns the total count of events for a job.
+func (js *jobService) CountEventsByJobID(ctx context.Context, jobID string) (int, error) {
+	return js.store.CountEventsByJobID(ctx, jobID)
 }
