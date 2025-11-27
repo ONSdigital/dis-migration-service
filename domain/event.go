@@ -27,13 +27,13 @@ type EventLinks struct {
 }
 
 // NewEventLinks creates EventLinks for an event with the given ID and jobID
-func NewEventLinks(id, jobID, host string) EventLinks {
+func NewEventLinks(id, jobID string) EventLinks {
 	return EventLinks{
 		Self: &LinkObject{
-			HRef: fmt.Sprintf("%s/v1/migration-jobs/%s/events/%s", host, jobID, id),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s/events/%s", jobID, id),
 		},
 		Job: &LinkObject{
-			HRef: fmt.Sprintf("%s/v1/migration-jobs/%s", host, jobID),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s", jobID),
 		},
 	}
 }

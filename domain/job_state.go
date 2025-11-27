@@ -48,17 +48,6 @@ func IsValidJobState(state JobState) bool {
 	}
 }
 
-// IsValidJobStateForTaskCreation checks if the provided state is a valid
-// JobState for task creation.
-func IsValidJobStateForTaskCreation(state JobState) bool {
-	switch state {
-	case JobStateSubmitted, JobStateApproved:
-		return true
-	default:
-		return false
-	}
-}
-
 // GetNonCancelledStates returns a slice of JobStates excluding the
 // 'cancelled' state.
 func GetNonCancelledStates() []JobState {

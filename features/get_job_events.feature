@@ -15,13 +15,13 @@ Feature: Get list of job events
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
             },
             "events": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
             },
             "tasks": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
             }
           },
           "state": "submitted",
@@ -46,10 +46,10 @@ Feature: Get list of job events
           },
           "links": {
             "self": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events/event-123e4567-e89b-12d3-a456-426614174000"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events/event-123e4567-e89b-12d3-a456-426614174000"
             },
             "job": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
             }
           }
         }
@@ -71,10 +71,10 @@ Feature: Get list of job events
               },
               "links": {
                 "self": {
-                  "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events/event-123e4567-e89b-12d3-a456-426614174000"
+                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events/event-123e4567-e89b-12d3-a456-426614174000"
                 },
                 "job": {
-                  "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
                 }
               }
             }
@@ -107,13 +107,13 @@ Feature: Get list of job events
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
             },
             "events": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
             },
             "tasks": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
             }
           },
           "state": "submitted",
@@ -146,13 +146,13 @@ Feature: Get list of job events
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
             },
             "events": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
             },
             "tasks": {
-              "href": "http://localhost:30100/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
             }
           },
           "state": "submitted",

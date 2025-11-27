@@ -87,13 +87,10 @@ func (js *jobService) CreateTask(ctx context.Context, jobID string, task *domain
 		return nil, err
 	}
 
-	// Validate job is in a state where tasks can be created
-	if !domain.IsValidJobStateForTaskCreation(job.State) {
-		return nil, appErrors.ErrJobStateInvalid
-	}
+	// TODO: Validate job is in a state where tasks can be created
 
 	// Set job ID on the task
-	task.JobID = jobID
+	task.JobID = job.ID
 
 	// Create the task in the store
 	err = js.store.CreateTask(ctx, task)

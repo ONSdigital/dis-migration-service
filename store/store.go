@@ -24,12 +24,12 @@ type dataMongoDB interface {
 	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
 
-	// TODO: Tasks
+	// Tasks
 	CreateTask(ctx context.Context, task *domain.Task) error
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
 
-	// TODO: Events
+	// Events
 	CreateEvent(ctx context.Context, event *domain.Event) error
 	GetJobEvents(ctx context.Context, jobID string, limit, offset int) ([]*domain.Event, int, error)
 	CountEventsByJobID(ctx context.Context, jobID string) (int, error)

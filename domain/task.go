@@ -45,13 +45,13 @@ type TaskLinks struct {
 }
 
 // NewTaskLinks creates TaskLinks for a task
-func NewTaskLinks(id, jobID, host string) TaskLinks {
+func NewTaskLinks(id, jobID string) TaskLinks {
 	return TaskLinks{
 		Self: &LinkObject{
-			HRef: fmt.Sprintf("%s/v1/migration-jobs/%s/tasks/%s", host, jobID, id),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s/tasks/%s", jobID, id),
 		},
 		Job: &LinkObject{
-			HRef: fmt.Sprintf("%s/v1/migration-jobs/%s", host, jobID),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s", jobID),
 		},
 	}
 }
