@@ -15,10 +15,13 @@ import (
 	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dis-migration-service/store"
 	redirectAPI "github.com/ONSdigital/dis-redirect-api/sdk/go"
-	"github.com/ONSdigital/dp-api-clients-go/v2/files"
-	"github.com/ONSdigital/dp-api-clients-go/v2/upload"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetAPI "github.com/ONSdigital/dp-dataset-api/sdk"
+	datasetAPIMocks "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
+	filesAPI "github.com/ONSdigital/dp-files-api/sdk"
+	filesAPIMocks "github.com/ONSdigital/dp-files-api/sdk/mocks"
+	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
+	uploadSDKMocks "github.com/ONSdigital/dp-upload-service/sdk/mocks"
 	"github.com/pkg/errors"
 
 	"github.com/ONSdigital/log.go/v2/log"
@@ -133,10 +136,10 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 	if cfg.EnableMockClients {
 		log.Info(ctx, "returning mock app clients")
 		return &clients.ClientList{
-			DatasetAPI:    &clientMocks.DatasetAPIClientMock{},
-			FilesAPI:      &clientMocks.FilesAPIClientMock{},
+			DatasetAPI:    &datasetAPIMocks.ClienterMock{},
+			FilesAPI:      &filesAPIMocks.ClienterMock{},
 			RedirectAPI:   &clientMocks.RedirectAPIClientMock{},
-			UploadService: &clientMocks.UploadServiceClientMock{},
+			UploadService: &uploadSDKMocks.ClienterMock{},
 			Zebedee: &clientMocks.ZebedeeClientMock{
 				GetPageDataFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (zebedee.PageData, error) {
 					switch path {
@@ -157,9 +160,9 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 
 	return &clients.ClientList{
 		DatasetAPI:    datasetAPI.New(cfg.DatasetAPIURL),
-		FilesAPI:      files.NewAPIClient(cfg.FilesAPIURL, cfg.ServiceAuthToken),
+		FilesAPI:      filesAPI.New(cfg.FilesAPIURL, cfg.ServiceAuthToken),
 		RedirectAPI:   redirectAPI.NewClient(cfg.RedirectAPIURL),
-		UploadService: upload.NewAPIClient(cfg.UploadServiceURL, cfg.ServiceAuthToken),
+		UploadService: uploadSDK.New(cfg.UploadServiceURL),
 		Zebedee:       zebedee.New(cfg.ZebedeeURL),
 	}
 }

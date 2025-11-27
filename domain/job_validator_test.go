@@ -12,7 +12,8 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetError "github.com/ONSdigital/dp-dataset-api/apierrors"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
-	"github.com/ONSdigital/dp-dataset-api/sdk"
+	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk"
+	datasetMocks "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -45,8 +46,8 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 		},
 	}
 
-	datasetAPIMock := &clientMocks.DatasetAPIClientMock{
-		GetDatasetFunc: func(ctx context.Context, headers sdk.Headers, collectionID, datasetID string) (datasetModels.Dataset, error) {
+	datasetAPIMock := &datasetMocks.ClienterMock{
+		GetDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, collectionID, datasetID string) (datasetModels.Dataset, error) {
 			switch datasetID {
 			case datasetErrorID:
 				return datasetModels.Dataset{}, errors.New("unexpected error")
