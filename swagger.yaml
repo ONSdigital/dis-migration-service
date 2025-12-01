@@ -82,18 +82,18 @@ paths:
         500: 
           $ref: "#/responses/Error"
 
-  /migration-jobs/{job_id}:
+  /migration-jobs/{job_number}:
     get:
       security: 
         - Authorization: [migration:read]
       tags:
         - private
       summary: "Get a migration job"
-      description: "Gets a specific migration job using the unique job id"
+      description: "Gets a specific migration job using the unique job number"
       produces:
         - application/json
       parameters:
-        - $ref: "#/parameters/job_id"
+        - $ref: "#/parameters/job_number"
       responses:
         200: 
           description: "Successful response"
@@ -110,20 +110,20 @@ paths:
         500: 
           $ref: "#/responses/Error"
 
-  /migration-jobs/{job_id}/state:
+  /migration-jobs/{job_number}/state:
     put:
       security: 
         - Authorization: [migration:edit]
       tags:
         - private
       summary: "Updates a migration state"
-      description: "Updates the state of a specific migration job using the unique job id"
+      description: "Updates the state of a specific migration job using the unique job number"
       produces:
         - application/json
       consumes:
         - application/json
       parameters:
-        - $ref: "#/parameters/job_id"
+        - $ref: "#/parameters/job_number"
         - $ref: "#/parameters/MigrationJobState"
       responses:
         204: 
@@ -147,7 +147,7 @@ paths:
         500: 
           $ref: "#/responses/Error"
 
-  /migration-jobs/{job_id}/events:
+  /migration-jobs/{job_number}/events:
     get:
       security: 
         - Authorization: [migration:read]
@@ -155,12 +155,12 @@ paths:
         - private
       summary: "Gets a migration job's events"
       description: >
-        "Gets a specific migration job using the unique job id and returns 
+        "Gets a specific migration job using the unique job number and returns 
         it's events (state changes) in a paginated list"
       produces:
         - application/json
       parameters:
-        - $ref: "#/parameters/job_id"
+        - $ref: "#/parameters/job_number"
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
       responses:
@@ -183,7 +183,7 @@ paths:
         500: 
           $ref: "#/responses/Error"
   
-  /migration-jobs/{job_id}/tasks:
+  /migration-jobs/{job_number}/tasks:
     get:
       security: 
         - Authorization: [migration:read]
@@ -191,12 +191,12 @@ paths:
         - private
       summary: "Gets a migration job's tasks"
       description: >
-        "Gets a specific migration job using the unique job id and returns 
+        "Gets a specific migration job using the unique job number and returns 
         it's tasks in a paginated list"
       produces:
         - application/json
       parameters:
-        - $ref: "#/parameters/job_id"
+        - $ref: "#/parameters/job_number"
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
         - $ref: "#/parameters/state"
@@ -251,6 +251,12 @@ parameters:
     in: path
     name: job_id
     description: "Unique identifier for a migration job"
+    type: string
+    required: true
+  job_number:
+    in: path
+    name: job_number
+    description: "Unique human-readable identifier for a migration job"
     type: string
     required: true
   limit:
@@ -419,7 +425,7 @@ definitions:
   MigrationJob:
     type: object
     properties:
-      id:
+      job_number:
         type: string
         example: 1
       last_updated:
@@ -445,7 +451,7 @@ definitions:
                 description: "A fully qualified URL to the migration job API response"
                 type: string
                 example: "https://api.beta.ons.gov.uk/v1/migration-jobs/1"
-              id:
+              job_number:
                 type: string
           tasks:
             description: "A link to all the tasks for the migration job"
