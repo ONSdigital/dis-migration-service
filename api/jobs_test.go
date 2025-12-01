@@ -148,10 +148,11 @@ func TestGetJob(t *testing.T) {
 func TestGetJobs(t *testing.T) {
 	Convey("Given a test API instance and a mocked jobservice that returns multiple jobs", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobsFunc: func(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
 				jobs := []*domain.Job{
-					{ID: "job1"},
-					{ID: "job2"},
+					{ID: "job1", State: domain.JobStateSubmitted},
+					{ID: "job2", State: domain.JobStateApproved},
+					{ID: "job3", State: domain.JobStateCompleted},
 				}
 				return jobs, len(jobs), nil
 			},
@@ -172,7 +173,7 @@ func TestGetJobs(t *testing.T) {
 		cfg := &config.Config{}
 		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
 
-		Convey("When a valid request is made", func() {
+		Convey("When a valid request is made with no state filter", func() {
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs", http.NoBody)
 			resp := httptest.NewRecorder()
 			api.Router.ServeHTTP(resp, req)
@@ -189,7 +190,12 @@ func TestGetJobs(t *testing.T) {
 
 				err = json.Unmarshal(bodyBytes, &paginatedResponse)
 				So(err, ShouldBeNil)
-				So(len(paginatedResponse.Items), ShouldEqual, 2)
+				So(len(paginatedResponse.Items), ShouldEqual, 3)
+
+				Convey("And the service is called with all states", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
+					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.JobState{})
+				})
 			})
 		})
 
@@ -203,6 +209,7 @@ func TestGetJobs(t *testing.T) {
 				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrLimitInvalid.Error())
 			})
 		})
+
 		Convey("When an invalid request is made with a non-integer offset", func() {
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?offset=invalid", http.NoBody)
 			resp := httptest.NewRecorder()
@@ -236,11 +243,56 @@ func TestGetJobs(t *testing.T) {
 				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrOffsetInvalid.Error())
 			})
 		})
+
+		Convey("When a request is made with a single valid state", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?state=submitted", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then only jobs matching that state are returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				Convey("And the service is called with the submitted state", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
+					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.JobState{domain.JobStateSubmitted})
+				})
+			})
+		})
+
+		Convey("When a request is made with multiple valid states", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?state=submitted&state=approved", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then jobs matching any of the states are returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				Convey("And the service is called with both states", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
+					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.JobState{domain.JobStateSubmitted, domain.JobStateApproved})
+				})
+			})
+		})
+
+		Convey("When a request is made with an invalid state", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?state=unknown", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 400 Bad Request is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				So(resp.Body.String(), ShouldContainSubstring, "job state parameter is invalid")
+
+				Convey("And the service is not called", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 0)
+				})
+			})
+		})
 	})
 
 	Convey("Given a test API instance and a mocked jobservice that returns no jobs", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobsFunc: func(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
 				return []*domain.Job{}, 0, nil
 			},
 		}
@@ -284,7 +336,7 @@ func TestGetJobs(t *testing.T) {
 }
 
 func TestCreateJob(t *testing.T) {
-	Convey("Given an test API instance and a mocked jobservice that creates a job", t, func() {
+	Convey("Given a test API instance and a mocked jobservice that creates a job", t, func() {
 		testConfig := domain.JobConfig{
 			SourceID: testSourceID,
 			TargetID: testTargetID,

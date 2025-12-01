@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
@@ -39,7 +40,19 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 
 // getJobs is an implementation of PaginatedHandler for retrieving jobs.
 func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
-	return api.JobService.GetJobs(r.Context(), limit, offset)
+	statesParam := r.URL.Query()["state"] // supports ?state=a&state=b and ?state=a,b
+	states := make([]domain.JobState, 0, len(statesParam))
+
+	for _, s := range statesParam {
+		for _, p := range strings.Split(s, ",") {
+			state := domain.JobState(strings.TrimSpace(p))
+			if !domain.IsValidJobState(state) {
+				return nil, 0, appErrors.ErrJobStateInvalid
+			}
+			states = append(states, state)
+		}
+	}
+	return api.JobService.GetJobs(r.Context(), states, limit, offset)
 }
 
 // getJobTasks is an implementation of PaginatedHandler for retrieving

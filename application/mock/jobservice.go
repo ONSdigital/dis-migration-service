@@ -44,7 +44,7 @@ var _ application.JobService = &JobServiceMock{}
 //			GetJobTasksFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error) {
 //				panic("mock out the GetJobTasks method")
 //			},
-//			GetJobsFunc: func(ctx context.Context, limit int, offset int) ([]*domain.Job, int, error) {
+//			GetJobsFunc: func(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error) {
 //				panic("mock out the GetJobs method")
 //			},
 //		}
@@ -79,7 +79,7 @@ type JobServiceMock struct {
 	GetJobTasksFunc func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error)
 
 	// GetJobsFunc mocks the GetJobs method.
-	GetJobsFunc func(ctx context.Context, limit int, offset int) ([]*domain.Job, int, error)
+	GetJobsFunc func(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -155,6 +155,8 @@ type JobServiceMock struct {
 		GetJobs []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// States is the states argument value.
+			States []domain.JobState
 			// Limit is the limit argument value.
 			Limit int
 			// Offset is the offset argument value.
@@ -485,23 +487,25 @@ func (mock *JobServiceMock) GetJobTasksCalls() []struct {
 }
 
 // GetJobs calls GetJobsFunc.
-func (mock *JobServiceMock) GetJobs(ctx context.Context, limit int, offset int) ([]*domain.Job, int, error) {
+func (mock *JobServiceMock) GetJobs(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error) {
 	if mock.GetJobsFunc == nil {
 		panic("JobServiceMock.GetJobsFunc: method is nil but JobService.GetJobs was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
+		States []domain.JobState
 		Limit  int
 		Offset int
 	}{
 		Ctx:    ctx,
+		States: states,
 		Limit:  limit,
 		Offset: offset,
 	}
 	mock.lockGetJobs.Lock()
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
 	mock.lockGetJobs.Unlock()
-	return mock.GetJobsFunc(ctx, limit, offset)
+	return mock.GetJobsFunc(ctx, states, limit, offset)
 }
 
 // GetJobsCalls gets all the calls that were made to GetJobs.
@@ -510,11 +514,13 @@ func (mock *JobServiceMock) GetJobs(ctx context.Context, limit int, offset int) 
 //	len(mockedJobService.GetJobsCalls())
 func (mock *JobServiceMock) GetJobsCalls() []struct {
 	Ctx    context.Context
+	States []domain.JobState
 	Limit  int
 	Offset int
 } {
 	var calls []struct {
 		Ctx    context.Context
+		States []domain.JobState
 		Limit  int
 		Offset int
 	}

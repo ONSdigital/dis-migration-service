@@ -36,16 +36,24 @@ func (m *Mongo) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (m *Mongo) GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
+func (m *Mongo) GetJobs(ctx context.Context, stateFilter []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
 	var results []*domain.Job
+
+	filter := bson.M{}
+	if len(stateFilter) > 0 {
+		filter["state"] = bson.M{"$in": stateFilter}
+	}
 
 	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		Find(
-			ctx, bson.M{},
+			ctx,
+			filter,
 			&results,
-			mongodriver.Limit(limit), mongodriver.Offset(offset),
+			mongodriver.Limit(limit),
+			mongodriver.Offset(offset),
 			mongodriver.Sort(bson.M{"last_updated": -1}),
 		)
+
 	return results, totalCount, err
 }
 

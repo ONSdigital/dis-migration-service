@@ -16,7 +16,7 @@ import (
 type JobService interface {
 	CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error)
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
-	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
+	GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error)
 	CreateTask(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error)
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
@@ -75,8 +75,8 @@ func (js *jobService) GetJob(ctx context.Context, jobID string) (*domain.Job, er
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (js *jobService) GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
-	return js.store.GetJobs(ctx, limit, offset)
+func (js *jobService) GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
+	return js.store.GetJobs(ctx, states, limit, offset)
 }
 
 // CreateTask creates a new migration task for a job.
