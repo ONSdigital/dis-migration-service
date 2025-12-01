@@ -186,10 +186,10 @@ Feature: Get list of job events
     Scenario: User that is not authenticated
       Given I am not authorised
       And the migration service is running
-      When I GET "/v1/migration-jobs/1"
+      When I GET "/v1/migration-jobs/1/events"
       Then the HTTP status code should be "401"
 
     Scenario: User that is not authorised
       Given I am an admin user
-      When I GET "/v1/migration-jobs/1"
+      When I GET "/v1/migration-jobs/1/events"
       Then the HTTP status code should be "403"

@@ -82,15 +82,12 @@ func (js *jobService) GetJobs(ctx context.Context, limit, offset int) ([]*domain
 // CreateTask creates a new migration task for a job.
 func (js *jobService) CreateTask(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
 	// Verify job exists
-	job, err := js.store.GetJob(ctx, jobID)
+	_, err := js.store.GetJob(ctx, jobID)
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO: Validate job is in a state where tasks can be created
-
-	// Set job ID on the task
-	task.JobID = job.ID
 
 	// Create the task in the store
 	err = js.store.CreateTask(ctx, task)
@@ -118,9 +115,6 @@ func (js *jobService) CreateEvent(ctx context.Context, jobID string, event *doma
 	if err != nil {
 		return nil, err
 	}
-
-	// Set job ID on the event
-	event.JobID = jobID
 
 	// Create the event in the store
 	err = js.store.CreateEvent(ctx, event)
