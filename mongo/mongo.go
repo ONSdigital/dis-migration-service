@@ -28,6 +28,7 @@ func (m *Mongo) Init(ctx context.Context) (err error) {
 
 	databaseCollectionBuilder := map[mongoHealth.Database][]mongoHealth.Collection{
 		mongoHealth.Database(m.Database): {
+			mongoHealth.Collection(m.ActualCollectionName(config.CountersCollectionTitle)),
 			mongoHealth.Collection(m.ActualCollectionName(config.JobsCollectionTitle)),
 			mongoHealth.Collection(m.ActualCollectionName(config.EventsCollectionTitle)),
 			mongoHealth.Collection(m.ActualCollectionName(config.TasksCollectionTitle)),

@@ -46,7 +46,7 @@ func TestConfig(t *testing.T) {
 							Username:                      "",
 							Password:                      "",
 							Database:                      "migrations",
-							Collections:                   map[string]string{JobsCollectionTitle: JobsCollectionName, EventsCollectionTitle: EventsCollectionName, TasksCollectionTitle: TasksCollectionName},
+							Collections:                   map[string]string{CountersCollectionTitle: CountersCollectionName, JobsCollectionTitle: JobsCollectionName, EventsCollectionTitle: EventsCollectionName, TasksCollectionTitle: TasksCollectionName},
 							ReplicaSet:                    "",
 							IsStrongReadConcernEnabled:    false,
 							IsWriteConcernMajorityEnabled: true,

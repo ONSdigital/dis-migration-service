@@ -27,6 +27,8 @@ func NewJob(cfg *JobConfig) Job {
 
 	links := NewJobLinks(id)
 
+	//jobNum: = GetNewJobNumber()
+
 	return Job{
 		Config:      cfg,
 		ID:          id,
@@ -35,6 +37,11 @@ func NewJob(cfg *JobConfig) Job {
 		State:       JobStateSubmitted,
 	}
 }
+
+//// GetNewJobNumber gets the value of JobCount from the Counters collection and increments the existing value by 1
+//func GetNewJobNumber() int {
+//
+//}
 
 // NewJobLinks creates JobLinks for a job with the given ID
 func NewJobLinks(id string) JobLinks {

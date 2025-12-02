@@ -41,6 +41,12 @@ type Config struct {
 var cfg *Config
 
 const (
+	// CountersCollectionTitle is the well known name of the MongoDB collection for
+	// counters relating to migration jobs.
+	CountersCollectionTitle = "MigrationsCountersCollection"
+	// CountersCollectionName is the actual name of the MongoDB collection for
+	// counters relating to migration jobs.
+	CountersCollectionName = "counters"
 	// JobsCollectionTitle is the well known name of the MongoDB collection for
 	// migration jobs.
 	JobsCollectionTitle = "MigrationsJobsCollection"
@@ -89,7 +95,7 @@ func Get() (*Config, error) {
 				Username:                      "",
 				Password:                      "",
 				Database:                      "migrations",
-				Collections:                   map[string]string{JobsCollectionTitle: JobsCollectionName, EventsCollectionTitle: EventsCollectionName, TasksCollectionTitle: TasksCollectionName},
+				Collections:                   map[string]string{CountersCollectionTitle: CountersCollectionName, JobsCollectionTitle: JobsCollectionName, EventsCollectionTitle: EventsCollectionName, TasksCollectionTitle: TasksCollectionName},
 				ReplicaSet:                    "",
 				IsStrongReadConcernEnabled:    false,
 				IsWriteConcernMajorityEnabled: true,
