@@ -10,6 +10,7 @@ import (
 // Job represents a migration job
 type Job struct {
 	ID          string     `json:"id" bson:"_id"`
+	Label       string     `json:"label" bson:"label"`
 	LastUpdated time.Time  `json:"last_updated" bson:"last_updated"`
 	State       JobState   `json:"state" bson:"state"`
 	Config      *JobConfig `json:"config" bson:"config"`
@@ -22,7 +23,7 @@ type JobLinks struct {
 }
 
 // NewJob creates a new Job instance with the provided configuration
-func NewJob(cfg *JobConfig) Job {
+func NewJob(cfg *JobConfig, label string) Job {
 	id := uuid.New().String()
 
 	links := NewJobLinks(id)
@@ -30,6 +31,7 @@ func NewJob(cfg *JobConfig) Job {
 	return Job{
 		Config:      cfg,
 		ID:          id,
+		Label:       label,
 		LastUpdated: time.Now().UTC(),
 		Links:       links,
 		State:       JobStateSubmitted,

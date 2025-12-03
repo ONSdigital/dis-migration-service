@@ -42,12 +42,13 @@ func Setup(datastore *store.Datastore, appClients *clients.ClientList) JobServic
 // CreateJob creates a new migration job based on the
 // provided job configuration.
 func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error) {
-	err := jobConfig.ValidateExternal(ctx, *js.clients)
+	label, err := jobConfig.ValidateExternal(ctx, *js.clients)
 	if err != nil {
 		return &domain.Job{}, err
 	}
 
-	job := domain.NewJob(jobConfig)
+	// Create job with label
+	job := domain.NewJob(jobConfig, label)
 
 	foundJobs, err := js.store.GetJobsByConfigAndState(ctx, job.Config, domain.GetNonCancelledStates(), 1, 0)
 	if err != nil {

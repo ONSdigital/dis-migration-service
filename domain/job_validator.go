@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/ONSdigital/dis-migration-service/clients"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
@@ -21,7 +22,7 @@ import (
 //go:generate moq -out mock/job_validator.go -pkg mock . JobValidator
 type JobValidator interface {
 	ValidateSourceID(sourceID string) error
-	ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList) error
+	ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error)
 	ValidateTargetID(targetID string) error
 	ValidateTargetIDWithExternal(ctx context.Context, targetID string, appClients *clients.ClientList) error
 }
@@ -51,17 +52,23 @@ func (v *StaticDatasetValidator) ValidateSourceID(sourceID string) error {
 
 // ValidateSourceIDWithExternal validates if the given source ID exists in
 // Zebedee and is of the correct type
-func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList) error {
+func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
 	data, err := checkZebedeeURIExists(ctx, appClients.Zebedee, sourceID)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if data.Type != zebedee.PageTypeDatasetLandingPage {
-		return appErrors.ErrSourceIDInvalid
+		return "", appErrors.ErrSourceIDInvalid
 	}
 
-	return nil
+	// Extract and validate title
+	title := strings.TrimSpace(data.Description.Title)
+	if title == "" {
+		return "", appErrors.ErrSourceTitleNotFound
+	}
+
+	return title, nil
 }
 
 // ValidateTargetID validates if the given id is a valid dataset ID

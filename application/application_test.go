@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	testDatasetTitle = "Test Dataset Title"
 	testJobID        = "test-job-id"
 	nonExistentJobID = "non-existent-job-id"
 )
@@ -38,8 +39,8 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockValidator := &domainMocks.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) error {
-				return nil
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+				return testDatasetTitle, nil
 			},
 			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
 				return nil
@@ -61,22 +62,79 @@ func TestCreateJob(t *testing.T) {
 		Convey("When a job is created", func() {
 			job, err := jobService.CreateJob(ctx, &jobConfig)
 
-			Convey("Then the store should be checked for matching jobs", func() {
-				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)
-				So(mockMongo.GetJobsByConfigAndStateCalls()[0].Jc.SourceID, ShouldEqual, jobConfig.SourceID)
-				So(mockMongo.GetJobsByConfigAndStateCalls()[0].Jc.TargetID, ShouldEqual, jobConfig.TargetID)
-				So(mockMongo.GetJobsByConfigAndStateCalls()[0].Jc.Type, ShouldEqual, jobConfig.Type)
-				So(mockMongo.GetJobsByConfigAndStateCalls()[0].Limit, ShouldEqual, 1)
-				So(mockMongo.GetJobsByConfigAndStateCalls()[0].Offset, ShouldEqual, 0)
-				So(mockMongo.GetJobsByConfigAndStateCalls()[0].States, ShouldEqual, domain.GetNonCancelledStates())
+			Convey("Then the validator should be called to get the title", func() {
+				So(len(mockValidator.ValidateSourceIDWithExternalCalls()), ShouldEqual, 1)
 
-				Convey("Then no error should be returned", func() {
-					So(err, ShouldBeNil)
+				Convey("And the store should be checked for matching jobs", func() {
+					So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)
+					So(mockMongo.GetJobsByConfigAndStateCalls()[0].Jc.SourceID, ShouldEqual, jobConfig.SourceID)
+					So(mockMongo.GetJobsByConfigAndStateCalls()[0].Jc.TargetID, ShouldEqual, jobConfig.TargetID)
+					So(mockMongo.GetJobsByConfigAndStateCalls()[0].Jc.Type, ShouldEqual, jobConfig.Type)
+					So(mockMongo.GetJobsByConfigAndStateCalls()[0].Limit, ShouldEqual, 1)
+					So(mockMongo.GetJobsByConfigAndStateCalls()[0].Offset, ShouldEqual, 0)
+					So(mockMongo.GetJobsByConfigAndStateCalls()[0].States, ShouldEqual, domain.GetNonCancelledStates())
 
-					Convey("And a job should be created in the store", func() {
-						So(job, ShouldNotEqual, &domain.Job{})
-						So(len(mockMongo.CreateJobCalls()), ShouldEqual, 1)
+					Convey("Then no error should be returned", func() {
+						So(err, ShouldBeNil)
+
+						Convey("And a job should be created in the store with the correct label", func() {
+							So(job, ShouldNotEqual, &domain.Job{})
+							So(job.Label, ShouldEqual, testDatasetTitle)
+							So(len(mockMongo.CreateJobCalls()), ShouldEqual, 1)
+							So(mockMongo.CreateJobCalls()[0].Job.Label, ShouldEqual, testDatasetTitle)
+						})
 					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service where validation returns an empty title", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error) {
+				return nil, nil
+			},
+			CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
+				return nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockValidator := &domainMocks.JobValidatorMock{
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+				return "", appErrors.ErrSourceTitleNotFound
+			},
+			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
+				return nil
+			},
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients)
+		jobConfig := domain.JobConfig{
+			SourceID:  "/source-id",
+			TargetID:  "target-id",
+			Type:      domain.JobTypeStaticDataset,
+			Validator: mockValidator,
+		}
+
+		ctx := context.Background()
+
+		Convey("When a job is created", func() {
+			job, err := jobService.CreateJob(ctx, &jobConfig)
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrSourceTitleNotFound)
+				So(job, ShouldEqual, &domain.Job{})
+
+				Convey("And the store should not be called", func() {
+					So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 0)
+					So(len(mockMongo.CreateJobCalls()), ShouldEqual, 0)
 				})
 			})
 		})
@@ -89,6 +147,7 @@ func TestCreateJob(t *testing.T) {
 					{
 						Config: jc,
 						State:  domain.JobStateSubmitted,
+						Label:  "Existing Job Title",
 					},
 				}, nil
 			},
@@ -102,8 +161,8 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockValidator := &domainMocks.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) error {
-				return nil
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+				return testDatasetTitle, nil
 			},
 			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
 				return nil
@@ -156,8 +215,8 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockValidator := &domainMocks.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) error {
-				return nil
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+				return testDatasetTitle, nil
 			},
 			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
 				return nil
@@ -210,8 +269,8 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockValidator := &domainMocks.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) error {
-				return nil
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+				return testDatasetTitle, nil
 			},
 			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
 				return nil

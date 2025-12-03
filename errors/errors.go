@@ -39,6 +39,7 @@ var (
 	ErrSourceIDNotProvided = errors.New("source ID not provided")
 	ErrTargetIDNotProvided = errors.New("target ID not provided")
 	ErrJobTypeNotProvided  = errors.New("job type not provided")
+	ErrSourceTitleNotFound = errors.New("source title not found or empty")
 	ErrSourceIDInvalid     = errors.New("source ID is invalid")
 	ErrTargetIDInvalid     = errors.New("target ID is invalid")
 	ErrJobTypeInvalid      = errors.New("job type is invalid")
@@ -63,6 +64,7 @@ var (
 		ErrTargetIDNotProvided:       http.StatusBadRequest,
 		ErrJobTypeNotProvided:        http.StatusBadRequest,
 		ErrInternalServerError:       http.StatusInternalServerError,
+		ErrSourceTitleNotFound:       http.StatusInternalServerError,
 		ErrSourceIDValidation:        http.StatusInternalServerError,
 		ErrTargetIDValidation:        http.StatusInternalServerError,
 		ErrJobAlreadyRunning:         http.StatusConflict,

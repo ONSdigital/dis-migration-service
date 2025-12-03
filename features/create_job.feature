@@ -23,6 +23,7 @@ Feature: Create a Job
         {
           "id": "{{DYNAMIC_UUID}}",
           "last_updated": "{{DYNAMIC_RECENT_TIMESTAMP}}",
+          "label": "Labour Market statistics",
           "state": "submitted",
           "config": {
             "source_id": "/test-source-id",

@@ -12,6 +12,7 @@ Feature: Get a Job
         """
         {
           "_id": "1",
+          "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "submitted",
           "config": {
@@ -26,6 +27,7 @@ Feature: Get a Job
         """
         {
           "id": "1",
+          "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "submitted",
           "config": {

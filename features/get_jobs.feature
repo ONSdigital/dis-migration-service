@@ -12,6 +12,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
@@ -34,6 +35,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "label": "Labour Market statistics",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {
                 "self": {
@@ -60,6 +62,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
@@ -78,6 +81,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "label": "Retail Sales Index",
           "last_updated": "2025-11-20T10:15:00Z",
           "links": {
             "self": {
@@ -100,6 +104,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "label": "Retail Sales Index",
               "last_updated": "2025-11-20T10:15:00Z",
               "links": {
                 "self": {
@@ -115,6 +120,7 @@ Feature: Get list of jobs
             },
             {
               "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "label": "Labour Market statistics",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {
                 "self": {
@@ -142,6 +148,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "label": "Labour Market statistics",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {
                 "self": {
@@ -169,6 +176,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "label": "Retail Sales Index",
               "last_updated": "2025-11-20T10:15:00Z",
               "links": {
                 "self": {
@@ -194,6 +202,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-submitted-1",
+          "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "submitted",
           "config": {"source_id":"s1","target_id":"t1","type":"type1"}
@@ -203,6 +212,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-approved-1",
+          "label": "job-approved-1",
           "last_updated": "2025-11-19T14:00:00Z",
           "state": "approved",
           "config": {"source_id":"s2","target_id":"t2","type":"type2"}
@@ -216,6 +226,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "job-submitted-1",
+              "label": "job-submitted-1",
               "state": "submitted",
               "config": {
                 "source_id": "s1",
@@ -237,6 +248,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-submitted-1",
+          "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "submitted",
           "config": {"source_id":"s1","target_id":"t1","type":"type1"}
@@ -246,6 +258,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-approved-1",
+          "label": "job-approved-1",
           "last_updated": "2025-11-19T14:00:00Z",
           "state": "approved",
           "config": {"source_id":"s2","target_id":"t2","type":"type2"}
@@ -259,6 +272,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "job-approved-1",
+              "label": "job-approved-1",
               "last_updated": "2025-11-19T14:00:00Z",
               "links": {},
               "state": "approved",
@@ -266,6 +280,7 @@ Feature: Get list of jobs
             },
             {
               "id": "job-submitted-1",
+              "label": "job-submitted-1",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {},
               "state": "submitted",
@@ -283,6 +298,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-submitted-1",
+          "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "submitted",
           "config": {"source_id":"s1","target_id":"t1","type":"type1"}
@@ -292,6 +308,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-approved-1",
+          "label": "job-approved-1",
           "last_updated": "2025-11-19T14:00:00Z",
           "state": "approved",
           "config": {"source_id":"s2","target_id":"t2","type":"type2"}
@@ -305,6 +322,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "job-approved-1",
+              "label": "job-approved-1",
               "last_updated": "2025-11-19T14:00:00Z",
               "links": {},
               "state": "approved",
@@ -312,6 +330,7 @@ Feature: Get list of jobs
             },
             {
               "id": "job-submitted-1",
+              "label": "job-submitted-1",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {},
               "state": "submitted",
