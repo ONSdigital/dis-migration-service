@@ -1,6 +1,7 @@
 package domain
 
-// Counters represents a set of counter relating to migration
-type Counters struct {
-	JobNumberCounter string `json:"job_number_counter" bson:"job_number_counter"`
+// Counter represents a counter relating to migration e.g. a counter for creating new job numbers
+type Counter struct {
+	CounterName  string `json:"counter_name" bson:"counter_name"`
+	CounterValue string `json:"counter_value" bson:"counter_value"`
 }

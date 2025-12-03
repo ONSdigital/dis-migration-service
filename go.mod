@@ -2,17 +2,20 @@ module github.com/ONSdigital/dis-migration-service
 
 go 1.24.0
 
+replace github.com/ONSdigital/dp-mongodb/v3 => /Users/cookel/EllasFiles/DpCodeRepos/dp-mongodb
+
 require (
 	github.com/ONSdigital/dis-redirect-api v0.3.8
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.270.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.32.3
-	github.com/ONSdigital/dp-component-test v1.1.0-alpha
+	github.com/ONSdigital/dp-component-test v1.2.1-alpha
 	github.com/ONSdigital/dp-dataset-api v1.90.0
 	github.com/ONSdigital/dp-files-api v1.14.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-mongodb/v3 v3.8.0
 	github.com/ONSdigital/dp-net/v2 v2.22.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
+	github.com/ONSdigital/dp-upload-service v1.12.0
 	github.com/ONSdigital/log.go/v2 v2.5.0
 	github.com/cucumber/godog v0.15.1
 	github.com/google/uuid v1.6.0
@@ -34,7 +37,6 @@ require (
 	github.com/ONSdigital/dp-net/v3 v3.8.0 // indirect
 	github.com/ONSdigital/dp-permissions-api v1.6.0 // indirect
 	github.com/ONSdigital/dp-s3/v3 v3.3.0 // indirect
-	github.com/ONSdigital/dp-upload-service v1.12.0 // indirect
 	github.com/Shopify/sarama v1.38.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.39.4 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.2 // indirect
@@ -137,7 +139,6 @@ require (
 	github.com/shirou/gopsutil/v4 v4.25.10 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smarty/assertions v1.16.0 // indirect
-	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/square/mongo-lock v0.0.0-20230808145049-cfcf499f6bf0 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect

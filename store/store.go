@@ -23,12 +23,13 @@ type dataMongoDB interface {
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
 	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
+	CreateJobNumberCounter(ctx context.Context) error
 
-	// TODO: Tasks
+	// Tasks
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
 
-	// TODO: Events
+	// Events
 	CreateEvent(ctx context.Context, event *domain.Event) error
 
 	// Other
@@ -78,4 +79,8 @@ func (ds *Datastore) GetJobTasks(ctx context.Context, jobID string, limit, offse
 // CountTasksByJobID returns the total count of tasks for a job.
 func (ds *Datastore) CountTasksByJobID(ctx context.Context, jobID string) (int, error) {
 	return ds.Backend.CountTasksByJobID(ctx, jobID)
+}
+
+func (ds *Datastore) CreateJobNumberCounter(ctx context.Context) error {
+	return ds.Backend.CreateJobNumberCounter(ctx)
 }

@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
@@ -19,6 +18,7 @@ type JobService interface {
 	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
+	CreateJobNumberCounter(ctx context.Context) error
 }
 
 type jobService struct {
@@ -63,6 +63,13 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 		return &domain.Job{}, appErrors.ErrInternalServerError
 	}
 	return &job, nil
+}
+
+// CreateJobNumberCounter will create a counter with the following values:
+// counter_name = "job_number_counter"
+// counter_value = "0"
+func (js *jobService) CreateJobNumberCounter(ctx context.Context) error {
+	return js.store.CreateJobNumberCounter(ctx)
 }
 
 // GetJob retrieves a migration job by its ID.
