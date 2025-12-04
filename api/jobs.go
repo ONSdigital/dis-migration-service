@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -120,8 +119,6 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handleSuccess(ctx, w, r, http.StatusAccepted, bytes)
-
-	api.Migrator.Migrate(context.Background(), job)
 }
 
 // getJobEvents is an implementation for retrieving job events.
