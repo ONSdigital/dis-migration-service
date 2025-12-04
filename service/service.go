@@ -108,7 +108,8 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	}
 
 	// Set up the API
-	svc.API = api.Setup(ctx, svc.Config, r, svc.JobService, svc.migrator, authorisation)
+	svc.API = api.Setup(ctx, svc.Config, r, svc.JobService, authorisation)
+
 
 	// Run the http server in a new go-routine
 	go func() {
