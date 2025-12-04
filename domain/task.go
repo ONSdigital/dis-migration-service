@@ -3,6 +3,8 @@ package domain
 import (
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Task represents a migration task
@@ -17,11 +19,26 @@ type Task struct {
 	Links       TaskLinks     `json:"links" bson:"links"`
 }
 
+// NewTask creates a new Task instance with the provided configuration
+func NewTask(jobID string) Task {
+	id := uuid.New().String()
+
+	links := NewTaskLinks(id, jobID)
+
+	return Task{
+		ID:          id,
+		JobID:       jobID,
+		LastUpdated: time.Now().UTC(),
+		Links:       links,
+		State:       TaskStateSubmitted,
+	}
+}
+
 // TaskMetadata represents metadata about a task's source or target
 type TaskMetadata struct {
-	ID    string `json:"id" bson:"id"`
-	Label string `json:"label" bson:"label"`
-	URI   string `json:"uri" bson:"uri"`
+	ID        string `json:"id" bson:"id"`
+	DatasetID string `json:"dataset_id,omitempty" bson:"dataset_id"`
+	Label     string `json:"label" bson:"label"`
 }
 
 // TaskType represents the type of migration task

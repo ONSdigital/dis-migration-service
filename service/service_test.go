@@ -98,8 +98,10 @@ func TestRun(t *testing.T) {
 			return &storeMock.MongoDBMock{}, nil
 		}
 
-		funcDoGetMigrator := func(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
-			return &migratorMock.MigratorMock{}, nil
+		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+			return &migratorMock.MigratorMock{
+				StartFunc: func(ctx context.Context) {},
+			}, nil
 		}
 
 		funcDoGetAppClientsOk := func(context.Context, *config.Config) *clients.ClientList {
@@ -285,8 +287,9 @@ func TestClose(t *testing.T) {
 			return nil
 		}
 
-		funcDoGetMigrator := func(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
 			return &migratorMock.MigratorMock{
+				StartFunc:    func(ctx context.Context) {},
 				ShutdownFunc: funcClose,
 			}, nil
 		}

@@ -1,5 +1,7 @@
 package domain
 
+import "fmt"
+
 // JobState represents the various states a migration job can be in.
 type JobState string
 
@@ -56,4 +58,34 @@ func GetNonCancelledStates() []JobState {
 		JobStateCompleted, JobStateMigrating, JobStatePublishing, JobStatePostPublishing,
 		JobStateReverting, JobStateFailedMigration, JobStateFailedPostPublish, JobStateFailedPublish,
 	}
+}
+
+// IsFailedState checks if the provided state is a failure state.
+func IsFailedState(state JobState) bool {
+	switch state {
+	case JobStateFailedMigration, JobStateFailedPostPublish, JobStateFailedPublish:
+		return true
+	default:
+		return false
+	}
+}
+
+var (
+	// jobFailureStateMap maps active task states to their corresponding
+	// failure states
+	jobFailureStateMap = map[JobState]JobState{
+		JobStateMigrating:      JobStateFailedMigration,
+		JobStatePublishing:     JobStateFailedPublish,
+		JobStatePostPublishing: JobStateFailedPostPublish,
+	}
+)
+
+// GetFailureStateForJobState returns the corresponding failure state
+// for a given active job state.
+func GetFailureStateForJobState(state JobState) (JobState, error) {
+	failureState, exists := jobFailureStateMap[state]
+	if !exists {
+		return "", fmt.Errorf("no failure state defined for job state: %s", state)
+	}
+	return failureState, nil
 }

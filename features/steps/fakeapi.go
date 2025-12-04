@@ -40,6 +40,12 @@ func (f *FakeAPI) setJSONResponseForGetPageData(url, pageType string, statusCode
 	f.fakeHTTP.NewHandler().Get(path).Reply(statusCode).BodyString(bodyStr)
 }
 
+func (f *FakeAPI) setFullJSONResponseForGetPageData(url string, statusCode int, payload string) {
+	specialCharURL := strings.ReplaceAll(url, "/", "%2F")
+	path := "/data?uri=" + specialCharURL + "&lang=en"
+	f.fakeHTTP.NewHandler().Get(path).Reply(statusCode).BodyString(payload)
+}
+
 func (f *FakeAPI) setJSONResponseForGetDataset(id string, statusCode int) {
 	var body []byte
 	path := fmt.Sprintf("/datasets/%s", id)
