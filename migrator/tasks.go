@@ -39,6 +39,7 @@ func (mig *migrator) monitorTasks(ctx context.Context) {
 			task, err := mig.jobService.ClaimTask(ctx)
 			if err != nil {
 				log.Error(ctx, "error claiming task", err)
+				time.Sleep(mig.pollInterval)
 				continue
 			}
 			if task == nil {

@@ -21,6 +21,7 @@ type migrator struct {
 	wg            sync.WaitGroup
 	semaphore     chan struct{}
 	pollInterval  time.Duration
+	stopJobsFunc  context.CancelFunc
 }
 
 // NewDefaultMigrator creates a new default migrator with the
@@ -42,12 +43,27 @@ func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, a
 // Start begins monitoring for jobs and tasks to process
 func (mig *migrator) Start(ctx context.Context) {
 	log.Info(ctx, "starting migrator")
-	go mig.monitorJobs(ctx)
-	go mig.monitorTasks(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+	mig.stopJobsFunc = cancel
+	mig.wg.Add(2)
+	go func() {
+		defer mig.wg.Done()
+		mig.monitorJobs(ctx)
+	}()
+	go func() {
+		defer mig.wg.Done()
+		mig.monitorTasks(ctx)
+	}()
 }
 
 // Shutdown waits for all ongoing migrations to complete or times out
 func (mig *migrator) Shutdown(ctx context.Context) error {
+	log.Info(ctx, "shutting down migrator")
+
+	if mig.stopJobsFunc != nil {
+		mig.stopJobsFunc()
+	}
+
 	done := make(chan struct{})
 	go func() {
 		mig.wg.Wait()
