@@ -16,13 +16,14 @@ import (
 	"github.com/ONSdigital/dis-migration-service/store"
 	redirectAPI "github.com/ONSdigital/dis-redirect-api/sdk/go"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	datasetErrors "github.com/ONSdigital/dp-dataset-api/apierrors"
+	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	datasetAPI "github.com/ONSdigital/dp-dataset-api/sdk"
 	datasetAPIMocks "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
 	filesAPI "github.com/ONSdigital/dp-files-api/sdk"
 	filesAPIMocks "github.com/ONSdigital/dp-files-api/sdk/mocks"
 	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
 	uploadSDKMocks "github.com/ONSdigital/dp-upload-service/sdk/mocks"
-	"github.com/pkg/errors"
 
 	"github.com/ONSdigital/log.go/v2/log"
 
@@ -79,8 +80,8 @@ func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg config.MongoCo
 }
 
 // GetMigrator returns the background migrator
-func (e *ExternalServiceList) GetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig, err := e.Init.DoGetMigrator(ctx, jobService, clientList)
+func (e *ExternalServiceList) GetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+	mig, err := e.Init.DoGetMigrator(ctx, cfg, jobService, clientList)
 	if err != nil {
 		return nil, err
 	}
@@ -125,8 +126,8 @@ func (e *Init) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.
 }
 
 // DoGetMigrator returns a Migrator
-func (e *Init) DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig := migrator.NewDefaultMigrator(jobService, clientList)
+func (e *Init) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+	mig := migrator.NewDefaultMigrator(cfg, jobService, clientList)
 	log.Info(ctx, "migrator initialised")
 	return mig, nil
 }
@@ -136,21 +137,49 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 	if cfg.EnableMockClients {
 		log.Info(ctx, "returning mock app clients")
 		return &clients.ClientList{
-			DatasetAPI:    &datasetAPIMocks.ClienterMock{},
+			DatasetAPI: &datasetAPIMocks.ClienterMock{
+				GetDatasetFunc: func(ctx context.Context, headers datasetAPI.Headers, collectionID string, datasetID string) (datasetModels.Dataset, error) {
+					return datasetModels.Dataset{}, datasetErrors.ErrDatasetNotFound
+				},
+			},
 			FilesAPI:      &filesAPIMocks.ClienterMock{},
 			RedirectAPI:   &clientMocks.RedirectAPIClientMock{},
 			UploadService: &uploadSDKMocks.ClienterMock{},
 			Zebedee: &clientMocks.ZebedeeClientMock{
 				GetPageDataFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (zebedee.PageData, error) {
-					switch path {
-					case "/error":
-						return zebedee.PageData{}, errors.New("unexpected error")
-					case "/found":
-						return zebedee.PageData{}, nil
-					case "/not-found":
-						return zebedee.PageData{}, zebedee.ErrInvalidZebedeeResponse{ActualCode: http.StatusNotFound}
-					}
-					return zebedee.PageData{}, errors.New("unexpected path")
+					return zebedee.PageData{
+						Type: "dataset_landing_page",
+						Description: zebedee.Description{
+							Title: "Mock Dataset Title",
+						},
+					}, nil
+				},
+				GetDatasetLandingPageFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.DatasetLandingPage, error) {
+					return zebedee.DatasetLandingPage{
+						Type: "dataset_landing_page",
+						Description: zebedee.Description{
+							Title: "Mock Dataset Title",
+							Contact: zebedee.Contact{
+								Name:      "Mock Contact Name",
+								Email:     "mock.contact@example.com",
+								Telephone: "my telephone",
+							},
+							Keywords:    []string{"some", "keywords", "here"},
+							NextRelease: "2024-12-31",
+						},
+						RelatedMethodology: []zebedee.Related{
+							{
+								URI:     "/qmi/real-qmi",
+								Title:   "This is a real QMI",
+								Summary: "This is the summary of the real QMI",
+							},
+						},
+						Datasets: []zebedee.Related{
+							{
+								URI: "/mock-dataset/editions/2024",
+							},
+						},
+					}, nil
 				},
 			},
 		}

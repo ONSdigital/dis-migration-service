@@ -22,12 +22,16 @@ type dataMongoDB interface {
 	CreateJob(ctx context.Context, job *domain.Job) error
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
 	GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error)
+	ClaimJob(ctx context.Context, pendingState domain.JobState, activeState domain.JobState) (*domain.Job, error)
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
+	UpdateJob(ctx context.Context, job *domain.Job) error
 
 	// Tasks
 	CreateTask(ctx context.Context, task *domain.Task) error
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
+	UpdateTask(ctx context.Context, task *domain.Task) error
+	ClaimTask(ctx context.Context, pendingState domain.TaskState, activeState domain.TaskState) (*domain.Task, error)
 
 	// Events
 	CreateEvent(ctx context.Context, event *domain.Event) error
@@ -62,6 +66,16 @@ func (ds *Datastore) GetJob(ctx context.Context, jobID string) (*domain.Job, err
 	return ds.Backend.GetJob(ctx, jobID)
 }
 
+// ClaimJob claims a pending job for processing.
+func (ds *Datastore) ClaimJob(ctx context.Context, pendingState, activeState domain.JobState) (*domain.Job, error) {
+	return ds.Backend.ClaimJob(ctx, pendingState, activeState)
+}
+
+// UpdateJob updates an existing migration job.
+func (ds *Datastore) UpdateJob(ctx context.Context, job *domain.Job) error {
+	return ds.Backend.UpdateJob(ctx, job)
+}
+
 // GetJobs retrieves a list of migration jobs with pagination.
 func (ds *Datastore) GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
 	return ds.Backend.GetJobs(ctx, states, limit, offset)
@@ -76,6 +90,16 @@ func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.Job
 // CreateTask creates a new migration task.
 func (ds *Datastore) CreateTask(ctx context.Context, task *domain.Task) error {
 	return ds.Backend.CreateTask(ctx, task)
+}
+
+// UpdateTask updates an existing migration task.
+func (ds *Datastore) UpdateTask(ctx context.Context, task *domain.Task) error {
+	return ds.Backend.UpdateTask(ctx, task)
+}
+
+// ClaimTask claims a pending task for processing.
+func (ds *Datastore) ClaimTask(ctx context.Context, pendingState, activeState domain.TaskState) (*domain.Task, error) {
+	return ds.Backend.ClaimTask(ctx, pendingState, activeState)
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
