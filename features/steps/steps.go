@@ -14,6 +14,7 @@ func (c *MigrationComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the migration service is running$`, c.restartMigrationService)
 	ctx.Step(`^mongodb stops running$`, c.mongodbStopsRunning)
 	ctx.Step(`^a get page data request to zebedee for "([^"]*)" returns a page of type "([^"]*)" with status (\d+)$`, c.getPageDataRequestToZebedeeForReturnsAPageOfTypeWithStatus)
+	ctx.Step(`^a get page data request to zebedee for "([^"]*)" returns with status (\d+) and payload:$`, c.getPageDataRequestToZebedeeForReturnsWithPayload)
 	ctx.Step(`^a get dataset request to the dataset API for "([^"]*)" returns with status (\d+)$`, c.getDatasetRequestToDatasetAPIForReturnsWithStatus)
 }
 
@@ -47,6 +48,11 @@ func (c *MigrationComponent) mongodbStopsRunning() error {
 
 func (c *MigrationComponent) getPageDataRequestToZebedeeForReturnsAPageOfTypeWithStatus(url, pageType string, statusCode int) error {
 	c.FakeAPIRouter.setJSONResponseForGetPageData(url, pageType, statusCode)
+	return nil
+}
+
+func (c *MigrationComponent) getPageDataRequestToZebedeeForReturnsWithPayload(url string, statusCode int, payload *godog.DocString) error {
+	c.FakeAPIRouter.setFullJSONResponseForGetPageData(url, statusCode, payload.Content)
 	return nil
 }
 

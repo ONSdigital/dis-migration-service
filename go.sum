@@ -12,8 +12,8 @@ github.com/ONSdigital/dp-api-clients-go/v2 v2.270.0 h1:kTSud/+crx9ijAHb5wOCgVx9L
 github.com/ONSdigital/dp-api-clients-go/v2 v2.270.0/go.mod h1:bLseTP21r8LCStUEeOdVPyqtrTomOFP/azPjKWW4deA=
 github.com/ONSdigital/dp-authorisation/v2 v2.32.3 h1:Tx0uTo/P5oXyYTNqw5m+nKxe+7HvtTqPz320pqWrEoY=
 github.com/ONSdigital/dp-authorisation/v2 v2.32.3/go.mod h1:uDDkQ/HeqeirqXBCVrvyGxbKSO/bKe80wW7V226sB+g=
-github.com/ONSdigital/dp-component-test v1.1.0-alpha h1:4epaKJhX74rbwWs4iDiRqKRdEj1LKYanYRaUrVCS11Y=
-github.com/ONSdigital/dp-component-test v1.1.0-alpha/go.mod h1:5IYvqiKqKTfkN5lTbIH8NzUxjclsztWgEroKxY/MVEE=
+github.com/ONSdigital/dp-component-test v1.2.1-alpha h1:zPkGeFlPIL0PUDwYIIWlbgi2ly1mHMJvQIXynwCPNLs=
+github.com/ONSdigital/dp-component-test v1.2.1-alpha/go.mod h1:5IYvqiKqKTfkN5lTbIH8NzUxjclsztWgEroKxY/MVEE=
 github.com/ONSdigital/dp-dataset-api v1.90.0 h1:225bY0fxmi4dzX0N1tkjguDMdJGF5woah1ttr17oKKY=
 github.com/ONSdigital/dp-dataset-api v1.90.0/go.mod h1:Fh13w+0hQpYLR/gqjWsYAMESrImYUXkGlgLbCSBq/HQ=
 github.com/ONSdigital/dp-files-api v1.14.0 h1:OYXBkni8402DxmSXFTo6o3vq6ts4s9xAnabF389/Z3o=
@@ -24,10 +24,8 @@ github.com/ONSdigital/dp-kafka/v3 v3.11.0 h1:A2rOt2c+7unDM7McFvZEl4EsS0FbT9GJhGH
 github.com/ONSdigital/dp-kafka/v3 v3.11.0/go.mod h1:46LmGU5t2MrVITblJHsQp3kj24FzJV6c2huzxRHMnI4=
 github.com/ONSdigital/dp-mocking v0.11.0 h1:laln6e2JD4vtsYbg0cTw9ur1Xf390AUYdd85cG2UNQw=
 github.com/ONSdigital/dp-mocking v0.11.0/go.mod h1:oHkuukWnURnK7epY5TD5oYVkOwldR2La1D5LQBTxY0A=
-github.com/ONSdigital/dp-mongodb-in-memory v1.8.1 h1:yCz6BfjA0bvesA0JjyBIA6nsOzNquBNS7FQP5pbnZKU=
-github.com/ONSdigital/dp-mongodb-in-memory v1.8.1/go.mod h1:YyTE7QBdV+Fzz5vGnmcPI1nVGCkMcaqsO4TCUlRe6Pc=
-github.com/ONSdigital/dp-mongodb/v3 v3.8.0 h1:9mHKePAdg0BLelHtGG1cGRlY78c7kSDB62lEXR2Cor8=
-github.com/ONSdigital/dp-mongodb/v3 v3.8.0/go.mod h1:x/YvepJ5/s05iKxWJNhkqGsncV130Bo4G/AwLTwesh4=
+github.com/ONSdigital/dp-mongodb/v3 v3.10.0 h1:chmY9TGfxEeEoKLoROL0yL3Tt6Zf3lTvUdLaT5uedhU=
+github.com/ONSdigital/dp-mongodb/v3 v3.10.0/go.mod h1:Yg6buatxXV2bly6w2RLNAFjSLNiw0mwiKVUw6t4fDk8=
 github.com/ONSdigital/dp-net/v2 v2.22.0 h1:LY9C5x1+sfK9QyjNpB2G3TPvAtSuOFR9FRcXsR9twqs=
 github.com/ONSdigital/dp-net/v2 v2.22.0/go.mod h1:F6yL3jjuVwBLVMFIKgHF3zhMRbmZysAxBiu+aIAi3Z0=
 github.com/ONSdigital/dp-net/v3 v3.8.0 h1:4VYHBryZyN/4Aa3SywJIwuNF3Ey6JRoZbWO1Wb+tPUc=
@@ -324,8 +322,6 @@ github.com/smarty/assertions v1.16.0 h1:EvHNkdRA4QHMrn75NZSoUQ/mAUXAYWfatfB01yTC
 github.com/smarty/assertions v1.16.0/go.mod h1:duaaFdCS0K9dnoM50iyek/eYINOZ64gbh1Xlf6LG7AI=
 github.com/smartystreets/goconvey v1.8.1 h1:qGjIddxOk4grTu9JPOU31tVfq3cNdBlNa5sSznIX1xY=
 github.com/smartystreets/goconvey v1.8.1/go.mod h1:+/u4qLyY6x1jReYOp7GOM2FSt8aP9CzCZL03bI28W60=
-github.com/spf13/afero v1.15.0 h1:b/YBCLWAJdFWJTN9cLhiXXcD7mzKn9Dm86dNnfyQw1I=
-github.com/spf13/afero v1.15.0/go.mod h1:NC2ByUVxtQs4b3sIUphxK0NioZnmxgyCrfzeuq8lxMg=
 github.com/spf13/cobra v1.7.0/go.mod h1:uLxZILRyS/50WlhOIKD7W6V5bgeIt+4sICxh6uRMrb0=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/spf13/pflag v1.0.7/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=

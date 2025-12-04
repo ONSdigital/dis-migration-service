@@ -14,9 +14,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/service/mock"
 
-	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/migrator"
-	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 
 	"github.com/ONSdigital/dp-component-test/utils"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
@@ -68,6 +66,8 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *comp
 	if err != nil {
 		return &MigrationComponent{}, fmt.Errorf("failed to get config: %w", err)
 	}
+
+	c.Config.MigratorPollInterval = 2 * time.Second
 
 	mongoURI, err := mongoFeat.GetConnectionString()
 	if err != nil {
@@ -194,14 +194,8 @@ func (c *MigrationComponent) DoGetMongoDB(ctx context.Context, cfg config.MongoC
 	return c.MongoClient, nil
 }
 
-func (c *MigrationComponent) DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig := &migratorMock.MigratorMock{
-		MigrateFunc: func(ctx context.Context, job *domain.Job) {
-			// mock no-op function
-		},
-		ShutdownFunc: func(ctx context.Context) error { return nil },
-	}
-
+func (c *MigrationComponent) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+	mig := migrator.NewDefaultMigrator(cfg, jobService, clientList)
 	return mig, nil
 }
 

@@ -38,7 +38,7 @@ var _ service.Initialiser = &InitialiserMock{}
 //			DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 //				panic("mock out the DoGetHealthCheck method")
 //			},
-//			DoGetMigratorFunc: func(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+//			DoGetMigratorFunc: func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
 //				panic("mock out the DoGetMigrator method")
 //			},
 //			DoGetMongoDBFunc: func(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
@@ -64,7 +64,7 @@ type InitialiserMock struct {
 	DoGetHealthCheckFunc func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error)
 
 	// DoGetMigratorFunc mocks the DoGetMigrator method.
-	DoGetMigratorFunc func(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error)
+	DoGetMigratorFunc func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error)
 
 	// DoGetMongoDBFunc mocks the DoGetMongoDB method.
 	DoGetMongoDBFunc func(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error)
@@ -107,6 +107,8 @@ type InitialiserMock struct {
 		DoGetMigrator []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
 			// JobService is the jobService argument value.
 			JobService application.JobService
 			// ClientList is the clientList argument value.
@@ -281,23 +283,25 @@ func (mock *InitialiserMock) DoGetHealthCheckCalls() []struct {
 }
 
 // DoGetMigrator calls DoGetMigratorFunc.
-func (mock *InitialiserMock) DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+func (mock *InitialiserMock) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
 	if mock.DoGetMigratorFunc == nil {
 		panic("InitialiserMock.DoGetMigratorFunc: method is nil but Initialiser.DoGetMigrator was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
+		Cfg        *config.Config
 		JobService application.JobService
 		ClientList *clients.ClientList
 	}{
 		Ctx:        ctx,
+		Cfg:        cfg,
 		JobService: jobService,
 		ClientList: clientList,
 	}
 	mock.lockDoGetMigrator.Lock()
 	mock.calls.DoGetMigrator = append(mock.calls.DoGetMigrator, callInfo)
 	mock.lockDoGetMigrator.Unlock()
-	return mock.DoGetMigratorFunc(ctx, jobService, clientList)
+	return mock.DoGetMigratorFunc(ctx, cfg, jobService, clientList)
 }
 
 // DoGetMigratorCalls gets all the calls that were made to DoGetMigrator.
@@ -306,11 +310,13 @@ func (mock *InitialiserMock) DoGetMigrator(ctx context.Context, jobService appli
 //	len(mockedInitialiser.DoGetMigratorCalls())
 func (mock *InitialiserMock) DoGetMigratorCalls() []struct {
 	Ctx        context.Context
+	Cfg        *config.Config
 	JobService application.JobService
 	ClientList *clients.ClientList
 } {
 	var calls []struct {
 		Ctx        context.Context
+		Cfg        *config.Config
 		JobService application.JobService
 		ClientList *clients.ClientList
 	}
