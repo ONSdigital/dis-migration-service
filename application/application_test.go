@@ -539,7 +539,7 @@ func TestCreateTask(t *testing.T) {
 			task := &domain.Task{
 				ID:    "task-123",
 				Type:  domain.TaskTypeDataset,
-				State: domain.JobStateSubmitted,
+				State: domain.TaskStateSubmitted,
 				Source: &domain.TaskMetadata{
 					ID:    "source-1",
 					Label: "Source Dataset",
@@ -568,7 +568,7 @@ func TestCreateTask(t *testing.T) {
 							So(createdTask, ShouldNotBeNil)
 							So(createdTask.ID, ShouldEqual, "task-123")
 							So(createdTask.Type, ShouldEqual, domain.TaskTypeDataset)
-							So(createdTask.State, ShouldEqual, domain.JobStateSubmitted)
+							So(createdTask.State, ShouldEqual, domain.TaskStateSubmitted)
 						})
 					})
 				})
@@ -689,7 +689,7 @@ func TestGetJobTasks(t *testing.T) {
 							Label: "Target Dataset 1",
 							URI:   "/data/target1",
 						},
-						State: domain.JobStateMigrating,
+						State: domain.TaskStatePublishing,
 						Type:  domain.TaskTypeDataset,
 						Links: domain.TaskLinks{
 							Self: &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id/tasks/task1"},
@@ -710,7 +710,7 @@ func TestGetJobTasks(t *testing.T) {
 							Label: "Target Dataset 2",
 							URI:   "/data/target2",
 						},
-						State: domain.JobStatePublishing,
+						State: domain.TaskStatePublishing,
 						Type:  domain.TaskTypeDatasetEdition,
 						Links: domain.TaskLinks{
 							Self: &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id/tasks/task2"},
@@ -750,10 +750,10 @@ func TestGetJobTasks(t *testing.T) {
 						So(tasks[0].ID, ShouldEqual, "task1")
 						So(tasks[0].Source.ID, ShouldEqual, "source-id-1")
 						So(tasks[0].Target.ID, ShouldEqual, "target-id-1")
-						So(tasks[0].State, ShouldEqual, domain.JobStateMigrating)
+						So(tasks[0].State, ShouldEqual, domain.TaskStatePublishing)
 						So(tasks[0].Type, ShouldEqual, domain.TaskTypeDataset)
 						So(tasks[1].ID, ShouldEqual, "task2")
-						So(tasks[1].State, ShouldEqual, domain.JobStatePublishing)
+						So(tasks[1].State, ShouldEqual, domain.TaskStatePublishing)
 						So(tasks[1].Type, ShouldEqual, domain.TaskTypeDatasetEdition)
 					})
 				})

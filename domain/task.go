@@ -11,7 +11,7 @@ type Task struct {
 	JobID       string        `json:"job_id" bson:"job_id"`
 	LastUpdated time.Time     `json:"last_updated" bson:"last_updated"`
 	Source      *TaskMetadata `json:"source" bson:"source"`
-	State       JobState      `json:"state" bson:"state"`
+	State       TaskState     `json:"state" bson:"state"`
 	Target      *TaskMetadata `json:"target" bson:"target"`
 	Type        TaskType      `json:"type" bson:"type"`
 	Links       TaskLinks     `json:"links" bson:"links"`
