@@ -28,8 +28,8 @@ type TaskMetadata struct {
 type TaskType string
 
 const (
-	// TaskTypeDataset indicates a dataset task
-	TaskTypeDataset TaskType = "dataset"
+	// TaskTypeDatasetSeries indicates a dataset series task
+	TaskTypeDatasetSeries TaskType = "dataset_series"
 	// TaskTypeDatasetEdition indicates a dataset edition task
 	TaskTypeDatasetEdition TaskType = "dataset_edition"
 	// TaskTypeDatasetVersion indicates a dataset version task

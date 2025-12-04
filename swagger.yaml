@@ -612,7 +612,7 @@ definitions:
   MigrationTaskType:
     type: string
     enum:
-      - dataset
+      - dataset_series
       - dataset_edition
       - dataset_version
       - dataset_download

@@ -597,7 +597,7 @@ func TestCreateTask(t *testing.T) {
 		Convey("When a task is created", func() {
 			task := &domain.Task{
 				ID:    "task-123",
-				Type:  domain.TaskTypeDataset,
+				Type:  domain.TaskTypeDatasetSeries,
 				State: domain.TaskStateSubmitted,
 				Source: &domain.TaskMetadata{
 					ID:    "source-1",
@@ -626,7 +626,7 @@ func TestCreateTask(t *testing.T) {
 						Convey("And the task should be returned", func() {
 							So(createdTask, ShouldNotBeNil)
 							So(createdTask.ID, ShouldEqual, "task-123")
-							So(createdTask.Type, ShouldEqual, domain.TaskTypeDataset)
+							So(createdTask.Type, ShouldEqual, domain.TaskTypeDatasetSeries)
 							So(createdTask.State, ShouldEqual, domain.TaskStateSubmitted)
 						})
 					})
@@ -656,7 +656,7 @@ func TestCreateTask(t *testing.T) {
 		Convey("When a task is created for that job", func() {
 			task := &domain.Task{
 				ID:   "task-123",
-				Type: domain.TaskTypeDataset,
+				Type: domain.TaskTypeDatasetSeries,
 				Source: &domain.TaskMetadata{
 					ID:  "source-1",
 					URI: "/data/source",
@@ -708,7 +708,7 @@ func TestCreateTask(t *testing.T) {
 		Convey("When a task is created", func() {
 			task := &domain.Task{
 				ID:   "task-123",
-				Type: domain.TaskTypeDataset,
+				Type: domain.TaskTypeDatasetSeries,
 				Source: &domain.TaskMetadata{
 					ID:  "source-1",
 					URI: "/data/source",
@@ -749,7 +749,7 @@ func TestGetJobTasks(t *testing.T) {
 							URI:   "/data/target1",
 						},
 						State: domain.TaskStatePublishing,
-						Type:  domain.TaskTypeDataset,
+						Type:  domain.TaskTypeDatasetSeries,
 						Links: domain.TaskLinks{
 							Self: &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id/tasks/task1"},
 							Job:  &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id"},
@@ -810,7 +810,7 @@ func TestGetJobTasks(t *testing.T) {
 						So(tasks[0].Source.ID, ShouldEqual, "source-id-1")
 						So(tasks[0].Target.ID, ShouldEqual, "target-id-1")
 						So(tasks[0].State, ShouldEqual, domain.TaskStatePublishing)
-						So(tasks[0].Type, ShouldEqual, domain.TaskTypeDataset)
+						So(tasks[0].Type, ShouldEqual, domain.TaskTypeDatasetSeries)
 						So(tasks[1].ID, ShouldEqual, "task2")
 						So(tasks[1].State, ShouldEqual, domain.TaskStatePublishing)
 						So(tasks[1].Type, ShouldEqual, domain.TaskTypeDatasetEdition)
