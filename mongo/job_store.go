@@ -64,15 +64,21 @@ func (m *Mongo) GetJobs(ctx context.Context, stateFilter []domain.State, limit, 
 func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, stateFilter []domain.State, limit, offset int) ([]*domain.Job, error) {
 	var results []*domain.Job
 
+	filter := bson.M{
+		"config.source_id": jc.SourceID,
+		"config.target_id": jc.TargetID,
+		"config.type":      jc.Type,
+	}
+
+	// Only add state filter if provided
+	if len(stateFilter) > 0 {
+		filter["state"] = bson.M{"$in": stateFilter}
+	}
+
 	_, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		Find(
 			ctx,
-			bson.M{
-				"config.source_id": jc.SourceID,
-				"config.target_id": jc.TargetID,
-				"config.type":      jc.Type,
-				"state":            bson.M{"$in": stateFilter},
-			},
+			filter,
 			&results,
 			mongodriver.Limit(limit), mongodriver.Offset(offset),
 		)
