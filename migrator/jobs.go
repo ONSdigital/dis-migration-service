@@ -27,15 +27,14 @@ func (mig *migrator) getJobExecutor(ctx context.Context, job *domain.Job) (execu
 }
 
 func (mig *migrator) monitorJobs(ctx context.Context) {
-	log.Info(ctx, "monitoring jobs")
+	log.Info(ctx, "monitoring jobs", log.Data{"pollInterval": mig.pollInterval})
 
 	for {
 		select {
 		case <-ctx.Done():
+			log.Info(ctx, "stopping monitoring jobs")
 			return
 		default:
-			log.Info(ctx, "claiming jobs")
-
 			job, err := mig.jobService.ClaimJob(ctx)
 			if err != nil {
 				log.Error(ctx, "error claiming job", err)
@@ -43,8 +42,6 @@ func (mig *migrator) monitorJobs(ctx context.Context) {
 			}
 			if job == nil {
 				// No jobs available, wait before retrying
-				log.Info(ctx, "no jobs available to claim, sleeping", log.Data{"pollInterval": mig.pollInterval})
-
 				time.Sleep(mig.pollInterval)
 				continue
 			}

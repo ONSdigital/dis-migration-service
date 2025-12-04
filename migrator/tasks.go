@@ -28,9 +28,12 @@ func (mig *migrator) getTaskExecutor(ctx context.Context, task *domain.Task) (ex
 }
 
 func (mig *migrator) monitorTasks(ctx context.Context) {
+	log.Info(ctx, "monitoring tasks", log.Data{"pollInterval": mig.pollInterval})
+
 	for {
 		select {
 		case <-ctx.Done():
+			log.Info(ctx, "stopping monitoring tasks")
 			return
 		default:
 			task, err := mig.jobService.ClaimTask(ctx)

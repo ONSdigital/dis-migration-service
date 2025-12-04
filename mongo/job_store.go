@@ -100,7 +100,6 @@ func (m *Mongo) GetJobsByState(ctx context.Context, states []domain.JobState, li
 
 // ClaimJob claims a pending job for processing.
 func (m *Mongo) ClaimJob(ctx context.Context, pendingState, activeState domain.JobState) (*domain.Job, error) {
-	log.Info(ctx, "claiming pending job", log.Data{"pendingState": pendingState, "activeState": activeState})
 	var job domain.Job
 
 	filter := bson.M{"state": pendingState}
@@ -115,7 +114,6 @@ func (m *Mongo) ClaimJob(ctx context.Context, pendingState, activeState domain.J
 		FindOneAndUpdate(ctx, filter, update, &job, mongodriver.ReturnDocument(options.After), mongodriver.Sort(bson.M{"last_updated": 1}))
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
-			log.Info(ctx, "no pending jobs found to claim", log.Data{"pendingState": pendingState, "activeState": activeState})
 			// If no pending jobs, no error.
 			return nil, nil
 		}
@@ -123,8 +121,6 @@ func (m *Mongo) ClaimJob(ctx context.Context, pendingState, activeState domain.J
 
 		return nil, appErrors.ErrInternalServerError
 	}
-
-	log.Info(ctx, "found a job to claim", log.Data{"pendingState": pendingState, "activeState": activeState, "job": &job})
 
 	return &job, nil
 }
