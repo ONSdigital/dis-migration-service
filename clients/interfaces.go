@@ -23,4 +23,5 @@ type RedirectAPIClient interface {
 // (github.com/ONSdigital/zebedee) client.
 type ZebedeeClient interface {
 	GetPageData(ctx context.Context, userAuthToken, collectionID, lang, path string) (m zebedee.PageData, err error)
+	GetDatasetLandingPage(ctx context.Context, userAccessToken, collectionID, lang, path string) (d zebedee.DatasetLandingPage, err error)
 }

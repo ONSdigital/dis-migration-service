@@ -3,6 +3,8 @@ package domain
 import (
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Task represents a migration task
@@ -11,25 +13,40 @@ type Task struct {
 	JobID       string        `json:"job_id" bson:"job_id"`
 	LastUpdated time.Time     `json:"last_updated" bson:"last_updated"`
 	Source      *TaskMetadata `json:"source" bson:"source"`
-	State       JobState      `json:"state" bson:"state"`
+	State       TaskState     `json:"state" bson:"state"`
 	Target      *TaskMetadata `json:"target" bson:"target"`
 	Type        TaskType      `json:"type" bson:"type"`
 	Links       TaskLinks     `json:"links" bson:"links"`
 }
 
+// NewTask creates a new Task instance with the provided configuration
+func NewTask(jobID string) Task {
+	id := uuid.New().String()
+
+	links := NewTaskLinks(id, jobID)
+
+	return Task{
+		ID:          id,
+		JobID:       jobID,
+		LastUpdated: time.Now().UTC(),
+		Links:       links,
+		State:       TaskStateSubmitted,
+	}
+}
+
 // TaskMetadata represents metadata about a task's source or target
 type TaskMetadata struct {
-	ID    string `json:"id" bson:"id"`
-	Label string `json:"label" bson:"label"`
-	URI   string `json:"uri" bson:"uri"`
+	ID        string `json:"id" bson:"id"`
+	DatasetID string `json:"dataset_id,omitempty" bson:"dataset_id"`
+	Label     string `json:"label" bson:"label"`
 }
 
 // TaskType represents the type of migration task
 type TaskType string
 
 const (
-	// TaskTypeDataset indicates a dataset task
-	TaskTypeDataset TaskType = "dataset"
+	// TaskTypeDatasetSeries indicates a dataset series task
+	TaskTypeDatasetSeries TaskType = "dataset_series"
 	// TaskTypeDatasetEdition indicates a dataset edition task
 	TaskTypeDatasetEdition TaskType = "dataset_edition"
 	// TaskTypeDatasetVersion indicates a dataset version task

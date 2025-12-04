@@ -538,17 +538,15 @@ func TestCreateTask(t *testing.T) {
 		Convey("When a task is created", func() {
 			task := &domain.Task{
 				ID:    "task-123",
-				Type:  domain.TaskTypeDataset,
-				State: domain.JobStateSubmitted,
+				Type:  domain.TaskTypeDatasetSeries,
+				State: domain.TaskStateSubmitted,
 				Source: &domain.TaskMetadata{
 					ID:    "source-1",
 					Label: "Source Dataset",
-					URI:   "/data/source",
 				},
 				Target: &domain.TaskMetadata{
 					ID:    "target-1",
 					Label: "Target Dataset",
-					URI:   "/data/target",
 				},
 			}
 
@@ -567,8 +565,8 @@ func TestCreateTask(t *testing.T) {
 						Convey("And the task should be returned", func() {
 							So(createdTask, ShouldNotBeNil)
 							So(createdTask.ID, ShouldEqual, "task-123")
-							So(createdTask.Type, ShouldEqual, domain.TaskTypeDataset)
-							So(createdTask.State, ShouldEqual, domain.JobStateSubmitted)
+							So(createdTask.Type, ShouldEqual, domain.TaskTypeDatasetSeries)
+							So(createdTask.State, ShouldEqual, domain.TaskStateSubmitted)
 						})
 					})
 				})
@@ -597,14 +595,12 @@ func TestCreateTask(t *testing.T) {
 		Convey("When a task is created for that job", func() {
 			task := &domain.Task{
 				ID:   "task-123",
-				Type: domain.TaskTypeDataset,
+				Type: domain.TaskTypeDatasetSeries,
 				Source: &domain.TaskMetadata{
-					ID:  "source-1",
-					URI: "/data/source",
+					ID: "source-1",
 				},
 				Target: &domain.TaskMetadata{
-					ID:  "target-1",
-					URI: "/data/target",
+					ID: "target-1",
 				},
 			}
 
@@ -649,14 +645,12 @@ func TestCreateTask(t *testing.T) {
 		Convey("When a task is created", func() {
 			task := &domain.Task{
 				ID:   "task-123",
-				Type: domain.TaskTypeDataset,
+				Type: domain.TaskTypeDatasetSeries,
 				Source: &domain.TaskMetadata{
-					ID:  "source-1",
-					URI: "/data/source",
+					ID: "source-1",
 				},
 				Target: &domain.TaskMetadata{
-					ID:  "target-1",
-					URI: "/data/target",
+					ID: "target-1",
 				},
 			}
 
@@ -682,15 +676,13 @@ func TestGetJobTasks(t *testing.T) {
 						Source: &domain.TaskMetadata{
 							ID:    "source-id-1",
 							Label: "Source Dataset 1",
-							URI:   "/data/source1",
 						},
 						Target: &domain.TaskMetadata{
 							ID:    "target-id-1",
 							Label: "Target Dataset 1",
-							URI:   "/data/target1",
 						},
-						State: domain.JobStateMigrating,
-						Type:  domain.TaskTypeDataset,
+						State: domain.TaskStatePublishing,
+						Type:  domain.TaskTypeDatasetSeries,
 						Links: domain.TaskLinks{
 							Self: &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id/tasks/task1"},
 							Job:  &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id"},
@@ -703,14 +695,12 @@ func TestGetJobTasks(t *testing.T) {
 						Source: &domain.TaskMetadata{
 							ID:    "source-id-2",
 							Label: "Source Dataset 2",
-							URI:   "/data/source2",
 						},
 						Target: &domain.TaskMetadata{
 							ID:    "target-id-2",
 							Label: "Target Dataset 2",
-							URI:   "/data/target2",
 						},
-						State: domain.JobStatePublishing,
+						State: domain.TaskStatePublishing,
 						Type:  domain.TaskTypeDatasetEdition,
 						Links: domain.TaskLinks{
 							Self: &domain.LinkObject{HRef: "http://localhost:8080/v1/migration-jobs/test-job-id/tasks/task2"},
@@ -750,10 +740,10 @@ func TestGetJobTasks(t *testing.T) {
 						So(tasks[0].ID, ShouldEqual, "task1")
 						So(tasks[0].Source.ID, ShouldEqual, "source-id-1")
 						So(tasks[0].Target.ID, ShouldEqual, "target-id-1")
-						So(tasks[0].State, ShouldEqual, domain.JobStateMigrating)
-						So(tasks[0].Type, ShouldEqual, domain.TaskTypeDataset)
+						So(tasks[0].State, ShouldEqual, domain.TaskStatePublishing)
+						So(tasks[0].Type, ShouldEqual, domain.TaskTypeDatasetSeries)
 						So(tasks[1].ID, ShouldEqual, "task2")
-						So(tasks[1].State, ShouldEqual, domain.JobStatePublishing)
+						So(tasks[1].State, ShouldEqual, domain.TaskStatePublishing)
 						So(tasks[1].Type, ShouldEqual, domain.TaskTypeDatasetEdition)
 					})
 				})
@@ -1507,6 +1497,152 @@ func TestCountEventsByJobID(t *testing.T) {
 				So(err2, ShouldBeNil)
 				So(count1, ShouldEqual, 3)
 				So(count2, ShouldEqual, 7)
+			})
+		})
+	})
+}
+
+func TestClaimJob(t *testing.T) {
+	Convey("Given a job service and store with no jobs to be claimed", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			ClaimJobFunc: func(ctx context.Context, pendingState domain.JobState, activeState domain.JobState) (*domain.Job, error) {
+				return nil, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients)
+
+		ctx := context.Background()
+
+		Convey("When a job tries to be claimed", func() {
+			job, err := jobService.ClaimJob(ctx)
+
+			Convey("The store should be called to claim a job for all pending states", func() {
+				So(len(mockMongo.ClaimJobCalls()), ShouldEqual, 1)
+				Convey("And no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And no job should be claimed", func() {
+						So(job, ShouldBeNil)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service and a store with a job to be claimed", t, func() {
+		claimedJob := &domain.Job{
+			ID:    "job-123",
+			State: domain.JobStateMigrating,
+		}
+
+		mockMongo := &storeMocks.MongoDBMock{
+			ClaimJobFunc: func(ctx context.Context, pendingState domain.JobState, activeState domain.JobState) (*domain.Job, error) {
+				return claimedJob, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients)
+
+		ctx := context.Background()
+
+		Convey("When a job tries to be claimed", func() {
+			job, err := jobService.ClaimJob(ctx)
+
+			Convey("The store should be called to claim a job for the pending states", func() {
+				So(len(mockMongo.ClaimJobCalls()), ShouldEqual, 1)
+				Convey("And no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And the job should be claimed", func() {
+						So(job, ShouldEqual, claimedJob)
+					})
+				})
+			})
+		})
+	})
+}
+
+func TestClaimTask(t *testing.T) {
+	Convey("Given a job service and store with no tasks to be claimed", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			ClaimTaskFunc: func(ctx context.Context, pendingState domain.TaskState, activeState domain.TaskState) (*domain.Task, error) {
+				return nil, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients)
+
+		ctx := context.Background()
+
+		Convey("When a task tries to be claimed", func() {
+			task, err := jobService.ClaimTask(ctx)
+
+			Convey("The store should be called to claim a task for all pending states", func() {
+				So(len(mockMongo.ClaimTaskCalls()), ShouldEqual, 1)
+				Convey("And no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And no task should be claimed", func() {
+						So(task, ShouldBeNil)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service and a store with a task to be claimed", t, func() {
+		claimedTask := &domain.Task{
+			ID:    "job-123",
+			State: domain.TaskStateMigrating,
+		}
+
+		mockMongo := &storeMocks.MongoDBMock{
+			ClaimTaskFunc: func(ctx context.Context, pendingState domain.TaskState, activeState domain.TaskState) (*domain.Task, error) {
+				return claimedTask, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+
+		jobService := Setup(&mockStore, &mockClients)
+
+		ctx := context.Background()
+
+		Convey("When a task tries to be claimed", func() {
+			task, err := jobService.ClaimTask(ctx)
+
+			Convey("The store should be called to claim a task for the pending states", func() {
+				So(len(mockMongo.ClaimTaskCalls()), ShouldEqual, 1)
+				Convey("And no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And the task should be claimed", func() {
+						So(task, ShouldEqual, claimedTask)
+					})
+				})
 			})
 		})
 	})

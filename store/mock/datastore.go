@@ -24,6 +24,12 @@ var _ store.Storer = &StorerMock{}
 //			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
 //				panic("mock out the Checker method")
 //			},
+//			ClaimJobFunc: func(ctx context.Context, pendingState domain.JobState, activeState domain.JobState) (*domain.Job, error) {
+//				panic("mock out the ClaimJob method")
+//			},
+//			ClaimTaskFunc: func(ctx context.Context, pendingState domain.TaskState, activeState domain.TaskState) (*domain.Task, error) {
+//				panic("mock out the ClaimTask method")
+//			},
 //			CloseFunc: func(ctx context.Context) error {
 //				panic("mock out the Close method")
 //			},
@@ -57,6 +63,15 @@ var _ store.Storer = &StorerMock{}
 //			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit int, offset int) ([]*domain.Job, error) {
 //				panic("mock out the GetJobsByConfigAndState method")
 //			},
+//			GetJobsByStateFunc: func(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error) {
+//				panic("mock out the GetJobsByState method")
+//			},
+//			UpdateJobFunc: func(ctx context.Context, job *domain.Job) error {
+//				panic("mock out the UpdateJob method")
+//			},
+//			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+//				panic("mock out the UpdateTask method")
+//			},
 //		}
 //
 //		// use mockedStorer in code that requires store.Storer
@@ -66,6 +81,12 @@ var _ store.Storer = &StorerMock{}
 type StorerMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
+
+	// ClaimJobFunc mocks the ClaimJob method.
+	ClaimJobFunc func(ctx context.Context, pendingState domain.JobState, activeState domain.JobState) (*domain.Job, error)
+
+	// ClaimTaskFunc mocks the ClaimTask method.
+	ClaimTaskFunc func(ctx context.Context, pendingState domain.TaskState, activeState domain.TaskState) (*domain.Task, error)
 
 	// CloseFunc mocks the Close method.
 	CloseFunc func(ctx context.Context) error
@@ -100,6 +121,15 @@ type StorerMock struct {
 	// GetJobsByConfigAndStateFunc mocks the GetJobsByConfigAndState method.
 	GetJobsByConfigAndStateFunc func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit int, offset int) ([]*domain.Job, error)
 
+	// GetJobsByStateFunc mocks the GetJobsByState method.
+	GetJobsByStateFunc func(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error)
+
+	// UpdateJobFunc mocks the UpdateJob method.
+	UpdateJobFunc func(ctx context.Context, job *domain.Job) error
+
+	// UpdateTaskFunc mocks the UpdateTask method.
+	UpdateTaskFunc func(ctx context.Context, task *domain.Task) error
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// Checker holds details about calls to the Checker method.
@@ -108,6 +138,24 @@ type StorerMock struct {
 			Ctx context.Context
 			// State is the state argument value.
 			State *healthcheck.CheckState
+		}
+		// ClaimJob holds details about calls to the ClaimJob method.
+		ClaimJob []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// PendingState is the pendingState argument value.
+			PendingState domain.JobState
+			// ActiveState is the activeState argument value.
+			ActiveState domain.JobState
+		}
+		// ClaimTask holds details about calls to the ClaimTask method.
+		ClaimTask []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// PendingState is the pendingState argument value.
+			PendingState domain.TaskState
+			// ActiveState is the activeState argument value.
+			ActiveState domain.TaskState
 		}
 		// Close holds details about calls to the Close method.
 		Close []struct {
@@ -202,8 +250,35 @@ type StorerMock struct {
 			// Offset is the offset argument value.
 			Offset int
 		}
+		// GetJobsByState holds details about calls to the GetJobsByState method.
+		GetJobsByState []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// States is the states argument value.
+			States []domain.JobState
+			// Limit is the limit argument value.
+			Limit int
+			// Offset is the offset argument value.
+			Offset int
+		}
+		// UpdateJob holds details about calls to the UpdateJob method.
+		UpdateJob []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Job is the job argument value.
+			Job *domain.Job
+		}
+		// UpdateTask holds details about calls to the UpdateTask method.
+		UpdateTask []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Task is the task argument value.
+			Task *domain.Task
+		}
 	}
 	lockChecker                 sync.RWMutex
+	lockClaimJob                sync.RWMutex
+	lockClaimTask               sync.RWMutex
 	lockClose                   sync.RWMutex
 	lockCountEventsByJobID      sync.RWMutex
 	lockCountTasksByJobID       sync.RWMutex
@@ -215,6 +290,9 @@ type StorerMock struct {
 	lockGetJobTasks             sync.RWMutex
 	lockGetJobs                 sync.RWMutex
 	lockGetJobsByConfigAndState sync.RWMutex
+	lockGetJobsByState          sync.RWMutex
+	lockUpdateJob               sync.RWMutex
+	lockUpdateTask              sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -250,6 +328,86 @@ func (mock *StorerMock) CheckerCalls() []struct {
 	mock.lockChecker.RLock()
 	calls = mock.calls.Checker
 	mock.lockChecker.RUnlock()
+	return calls
+}
+
+// ClaimJob calls ClaimJobFunc.
+func (mock *StorerMock) ClaimJob(ctx context.Context, pendingState domain.JobState, activeState domain.JobState) (*domain.Job, error) {
+	if mock.ClaimJobFunc == nil {
+		panic("StorerMock.ClaimJobFunc: method is nil but Storer.ClaimJob was just called")
+	}
+	callInfo := struct {
+		Ctx          context.Context
+		PendingState domain.JobState
+		ActiveState  domain.JobState
+	}{
+		Ctx:          ctx,
+		PendingState: pendingState,
+		ActiveState:  activeState,
+	}
+	mock.lockClaimJob.Lock()
+	mock.calls.ClaimJob = append(mock.calls.ClaimJob, callInfo)
+	mock.lockClaimJob.Unlock()
+	return mock.ClaimJobFunc(ctx, pendingState, activeState)
+}
+
+// ClaimJobCalls gets all the calls that were made to ClaimJob.
+// Check the length with:
+//
+//	len(mockedStorer.ClaimJobCalls())
+func (mock *StorerMock) ClaimJobCalls() []struct {
+	Ctx          context.Context
+	PendingState domain.JobState
+	ActiveState  domain.JobState
+} {
+	var calls []struct {
+		Ctx          context.Context
+		PendingState domain.JobState
+		ActiveState  domain.JobState
+	}
+	mock.lockClaimJob.RLock()
+	calls = mock.calls.ClaimJob
+	mock.lockClaimJob.RUnlock()
+	return calls
+}
+
+// ClaimTask calls ClaimTaskFunc.
+func (mock *StorerMock) ClaimTask(ctx context.Context, pendingState domain.TaskState, activeState domain.TaskState) (*domain.Task, error) {
+	if mock.ClaimTaskFunc == nil {
+		panic("StorerMock.ClaimTaskFunc: method is nil but Storer.ClaimTask was just called")
+	}
+	callInfo := struct {
+		Ctx          context.Context
+		PendingState domain.TaskState
+		ActiveState  domain.TaskState
+	}{
+		Ctx:          ctx,
+		PendingState: pendingState,
+		ActiveState:  activeState,
+	}
+	mock.lockClaimTask.Lock()
+	mock.calls.ClaimTask = append(mock.calls.ClaimTask, callInfo)
+	mock.lockClaimTask.Unlock()
+	return mock.ClaimTaskFunc(ctx, pendingState, activeState)
+}
+
+// ClaimTaskCalls gets all the calls that were made to ClaimTask.
+// Check the length with:
+//
+//	len(mockedStorer.ClaimTaskCalls())
+func (mock *StorerMock) ClaimTaskCalls() []struct {
+	Ctx          context.Context
+	PendingState domain.TaskState
+	ActiveState  domain.TaskState
+} {
+	var calls []struct {
+		Ctx          context.Context
+		PendingState domain.TaskState
+		ActiveState  domain.TaskState
+	}
+	mock.lockClaimTask.RLock()
+	calls = mock.calls.ClaimTask
+	mock.lockClaimTask.RUnlock()
 	return calls
 }
 
@@ -678,5 +836,121 @@ func (mock *StorerMock) GetJobsByConfigAndStateCalls() []struct {
 	mock.lockGetJobsByConfigAndState.RLock()
 	calls = mock.calls.GetJobsByConfigAndState
 	mock.lockGetJobsByConfigAndState.RUnlock()
+	return calls
+}
+
+// GetJobsByState calls GetJobsByStateFunc.
+func (mock *StorerMock) GetJobsByState(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error) {
+	if mock.GetJobsByStateFunc == nil {
+		panic("StorerMock.GetJobsByStateFunc: method is nil but Storer.GetJobsByState was just called")
+	}
+	callInfo := struct {
+		Ctx    context.Context
+		States []domain.JobState
+		Limit  int
+		Offset int
+	}{
+		Ctx:    ctx,
+		States: states,
+		Limit:  limit,
+		Offset: offset,
+	}
+	mock.lockGetJobsByState.Lock()
+	mock.calls.GetJobsByState = append(mock.calls.GetJobsByState, callInfo)
+	mock.lockGetJobsByState.Unlock()
+	return mock.GetJobsByStateFunc(ctx, states, limit, offset)
+}
+
+// GetJobsByStateCalls gets all the calls that were made to GetJobsByState.
+// Check the length with:
+//
+//	len(mockedStorer.GetJobsByStateCalls())
+func (mock *StorerMock) GetJobsByStateCalls() []struct {
+	Ctx    context.Context
+	States []domain.JobState
+	Limit  int
+	Offset int
+} {
+	var calls []struct {
+		Ctx    context.Context
+		States []domain.JobState
+		Limit  int
+		Offset int
+	}
+	mock.lockGetJobsByState.RLock()
+	calls = mock.calls.GetJobsByState
+	mock.lockGetJobsByState.RUnlock()
+	return calls
+}
+
+// UpdateJob calls UpdateJobFunc.
+func (mock *StorerMock) UpdateJob(ctx context.Context, job *domain.Job) error {
+	if mock.UpdateJobFunc == nil {
+		panic("StorerMock.UpdateJobFunc: method is nil but Storer.UpdateJob was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Job *domain.Job
+	}{
+		Ctx: ctx,
+		Job: job,
+	}
+	mock.lockUpdateJob.Lock()
+	mock.calls.UpdateJob = append(mock.calls.UpdateJob, callInfo)
+	mock.lockUpdateJob.Unlock()
+	return mock.UpdateJobFunc(ctx, job)
+}
+
+// UpdateJobCalls gets all the calls that were made to UpdateJob.
+// Check the length with:
+//
+//	len(mockedStorer.UpdateJobCalls())
+func (mock *StorerMock) UpdateJobCalls() []struct {
+	Ctx context.Context
+	Job *domain.Job
+} {
+	var calls []struct {
+		Ctx context.Context
+		Job *domain.Job
+	}
+	mock.lockUpdateJob.RLock()
+	calls = mock.calls.UpdateJob
+	mock.lockUpdateJob.RUnlock()
+	return calls
+}
+
+// UpdateTask calls UpdateTaskFunc.
+func (mock *StorerMock) UpdateTask(ctx context.Context, task *domain.Task) error {
+	if mock.UpdateTaskFunc == nil {
+		panic("StorerMock.UpdateTaskFunc: method is nil but Storer.UpdateTask was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Task *domain.Task
+	}{
+		Ctx:  ctx,
+		Task: task,
+	}
+	mock.lockUpdateTask.Lock()
+	mock.calls.UpdateTask = append(mock.calls.UpdateTask, callInfo)
+	mock.lockUpdateTask.Unlock()
+	return mock.UpdateTaskFunc(ctx, task)
+}
+
+// UpdateTaskCalls gets all the calls that were made to UpdateTask.
+// Check the length with:
+//
+//	len(mockedStorer.UpdateTaskCalls())
+func (mock *StorerMock) UpdateTaskCalls() []struct {
+	Ctx  context.Context
+	Task *domain.Task
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Task *domain.Task
+	}
+	mock.lockUpdateTask.RLock()
+	calls = mock.calls.UpdateTask
+	mock.lockUpdateTask.RUnlock()
 	return calls
 }

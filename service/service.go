@@ -69,7 +69,7 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	svc.JobService = application.Setup(&datastore, svc.clients)
 
 	// Get Migrator
-	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, svc.JobService, svc.clients)
+	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, svc.Config, svc.JobService, svc.clients)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise migrator", err)
 		return err
@@ -108,7 +108,10 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	}
 
 	// Set up the API
-	svc.API = api.Setup(ctx, svc.Config, r, svc.JobService, svc.migrator, authorisation)
+	svc.API = api.Setup(ctx, svc.Config, r, svc.JobService, authorisation)
+
+	// Start the migrator
+	svc.migrator.Start(ctx)
 
 	// Run the http server in a new go-routine
 	go func() {
