@@ -31,6 +31,7 @@ func (mig *migrator) monitorTasks(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			log.Info(ctx, "stopping monitoring tasks")
 			return
 		default:
 			task, err := mig.jobService.ClaimTask(ctx)
