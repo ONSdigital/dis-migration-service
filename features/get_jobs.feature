@@ -19,7 +19,7 @@ Feature: Get list of jobs
               "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
             }
           },
-          "state": "submitted",
+          "state": "migrating",
           "config": {
             "source_id": "test-source-id",
             "target_id": "test-target-id",
@@ -42,7 +42,7 @@ Feature: Get list of jobs
                   "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
                 }
               },
-              "state": "submitted",
+              "state": "migrating",
               "config": {
                 "source_id": "test-source-id",
                 "target_id": "test-target-id",
@@ -69,7 +69,7 @@ Feature: Get list of jobs
               "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
             }
           },
-          "state": "submitted",
+          "state": "migrating",
           "config": {
             "source_id": "test-source-id",
             "target_id": "test-target-id",
@@ -127,7 +127,7 @@ Feature: Get list of jobs
                   "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
                 }
               },
-              "state": "submitted",
+              "state": "migrating",
               "config": {
                 "source_id": "test-source-id",
                 "target_id": "test-target-id",
@@ -155,7 +155,7 @@ Feature: Get list of jobs
                   "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
                 }
               },
-              "state": "submitted",
+              "state": "migrating",
               "config": {
                 "source_id": "test-source-id",
                 "target_id": "test-target-id",
@@ -204,7 +204,7 @@ Feature: Get list of jobs
           "_id": "job-submitted-1",
           "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
-          "state": "submitted",
+          "state": "migrating",
           "config": {"source_id":"s1","target_id":"t1","type":"type1"}
         }
         """
@@ -218,7 +218,7 @@ Feature: Get list of jobs
           "config": {"source_id":"s2","target_id":"t2","type":"type2"}
         }
         """
-      When I GET "/v1/migration-jobs?state=submitted"
+      When I GET "/v1/migration-jobs?state=migrating"
       Then I should receive the following JSON response with status "200":
         """
         {
@@ -227,7 +227,7 @@ Feature: Get list of jobs
             {
               "id": "job-submitted-1",
               "label": "job-submitted-1",
-              "state": "submitted",
+              "state": "migrating",
               "config": {
                 "source_id": "s1",
                 "target_id": "t1",
@@ -250,7 +250,7 @@ Feature: Get list of jobs
           "_id": "job-submitted-1",
           "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
-          "state": "submitted",
+          "state": "migrating",
           "config": {"source_id":"s1","target_id":"t1","type":"type1"}
         }
         """
@@ -264,7 +264,7 @@ Feature: Get list of jobs
           "config": {"source_id":"s2","target_id":"t2","type":"type2"}
         }
         """
-      When I GET "/v1/migration-jobs?state=submitted&state=approved"
+      When I GET "/v1/migration-jobs?state=migrating&state=approved"
       Then I should receive the following JSON response with status "200":
         """
         {
@@ -283,7 +283,7 @@ Feature: Get list of jobs
               "label": "job-submitted-1",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {},
-              "state": "submitted",
+              "state": "migrating",
               "config": {"source_id":"s1","target_id":"t1","type":"type1"}
             }
           ],
@@ -300,7 +300,7 @@ Feature: Get list of jobs
           "_id": "job-submitted-1",
           "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
-          "state": "submitted",
+          "state": "migrating",
           "config": {"source_id":"s1","target_id":"t1","type":"type1"}
         }
         """
@@ -314,7 +314,7 @@ Feature: Get list of jobs
           "config": {"source_id":"s2","target_id":"t2","type":"type2"}
         }
         """
-      When I GET "/v1/migration-jobs?state=submitted,approved"
+      When I GET "/v1/migration-jobs?state=migrating,approved"
       Then I should receive the following JSON response with status "200":
         """
         {
@@ -333,7 +333,7 @@ Feature: Get list of jobs
               "label": "job-submitted-1",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {},
-              "state": "submitted",
+              "state": "migrating",
               "config": {"source_id":"s1","target_id":"t1","type":"type1"}
             }
           ],

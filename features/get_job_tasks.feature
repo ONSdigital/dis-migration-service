@@ -24,7 +24,7 @@ Feature: Get list of job tasks
               "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
             }
           },
-          "state": "submitted",
+          "state": "migrating",
           "type": "static_dataset",
           "config": {
             "source_id": "test-source-id",
@@ -43,13 +43,11 @@ Feature: Get list of job tasks
           "type": "dataset",
           "source": {
             "id": "source-dataset-1",
-            "label": "Source Dataset 1",
-            "uri": "/economy/inflationandpriceindices/datasets/consumerpriceinflation/data"
+            "label": "Source Dataset 1"
           },
           "target": {
             "id": "target-dataset-1",
-            "label": "Target Dataset 1",
-            "uri": "/data/target/dataset1"
+            "label": "Target Dataset 1"
           },
           "links": {
             "self": {
@@ -75,13 +73,11 @@ Feature: Get list of job tasks
               "type": "dataset",
               "source": {
                 "id": "source-dataset-1",
-                "label": "Source Dataset 1",
-                "uri": "/economy/inflationandpriceindices/datasets/consumerpriceinflation/data"
+                "label": "Source Dataset 1"
               },
               "target": {
                 "id": "target-dataset-1",
-                "label": "Target Dataset 1",
-                "uri": "/data/target/dataset1"
+                "label": "Target Dataset 1"
               },
               "links": {
                 "self": {
@@ -116,7 +112,7 @@ Feature: Get list of job tasks
               "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
             }
           },
-          "state": "submitted",
+          "state": "migrating",
           "type": "static_dataset",
           "config": {
             "source_id": "test-source-id",
@@ -131,17 +127,15 @@ Feature: Get list of job tasks
           "_id": "task-123e4567-e89b-12d3-a456-426614174000",
           "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
           "last_updated": "2025-11-19T13:30:00Z",
-          "state": "submitted",
+          "state": "migrating",
           "type": "dataset",
           "source": {
             "id": "source-dataset-1",
-            "label": "Source Dataset 1",
-            "uri": "/data/source1"
+            "label": "Source Dataset 1"
           },
           "target": {
             "id": "target-dataset-1",
-            "label": "Target Dataset 1",
-            "uri": "/data/target1"
+            "label": "Target Dataset 1"
           },
           "links": {
             "self": {
@@ -163,13 +157,11 @@ Feature: Get list of job tasks
           "type": "dataset_edition",
           "source": {
             "id": "source-edition-2",
-            "label": "Source Edition 2",
-            "uri": "/data/source2"
+            "label": "Source Edition 2"
           },
           "target": {
             "id": "target-edition-2",
-            "label": "Target Edition 2",
-            "uri": "/data/target2"
+            "label": "Target Edition 2"
           },
           "links": {
             "self": {
@@ -195,13 +187,11 @@ Feature: Get list of job tasks
               "type": "dataset_edition",
               "source": {
                 "id": "source-edition-2",
-                "label": "Source Edition 2",
-                "uri": "/data/source2"
+                "label": "Source Edition 2"
               },
               "target": {
                 "id": "target-edition-2",
-                "label": "Target Edition 2",
-                "uri": "/data/target2"
+                "label": "Target Edition 2"
               },
               "links": {
                 "self": {
@@ -216,17 +206,15 @@ Feature: Get list of job tasks
               "id": "task-123e4567-e89b-12d3-a456-426614174000",
               "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
               "last_updated": "2025-11-19T13:30:00Z",
-              "state": "submitted",
+              "state": "migrating",
               "type": "dataset",
               "source": {
                 "id": "source-dataset-1",
-                "label": "Source Dataset 1",
-                "uri": "/data/source1"
+                "label": "Source Dataset 1"
               },
               "target": {
                 "id": "target-dataset-1",
-                "label": "Target Dataset 1",
-                "uri": "/data/target1"
+                "label": "Target Dataset 1"
               },
               "links": {
                 "self": {
@@ -253,17 +241,15 @@ Feature: Get list of job tasks
               "id": "task-123e4567-e89b-12d3-a456-426614174000",
               "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
               "last_updated": "2025-11-19T13:30:00Z",
-              "state": "submitted",
+              "state": "migrating",
               "type": "dataset",
               "source": {
                 "id": "source-dataset-1",
-                "label": "Source Dataset 1",
-                "uri": "/data/source1"
+                "label": "Source Dataset 1"
               },
               "target": {
                 "id": "target-dataset-1",
-                "label": "Target Dataset 1",
-                "uri": "/data/target1"
+                "label": "Target Dataset 1"
               },
               "links": {
                 "self": {
@@ -298,7 +284,7 @@ Feature: Get list of job tasks
               "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
             }
           },
-          "state": "submitted",
+          "state": "migrating",
           "type": "static_dataset",
           "config": {
             "source_id": "test-source-id",
@@ -351,7 +337,7 @@ Feature: Get list of job tasks
               "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
             }
           },
-          "state": "submitted",
+          "state": "migrating",
           "type": "static_dataset",
           "config": {
             "source_id": "test-source-id",
@@ -391,7 +377,7 @@ Feature: Get list of job tasks
               "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
             }
           },
-          "state": "submitted",
+          "state": "migrating",
           "type": "static_dataset",
           "config": {
             "source_id": "test-source-id",
