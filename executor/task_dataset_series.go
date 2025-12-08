@@ -71,6 +71,7 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 		log.Error(ctx, "failed to update migration task", err, logData)
 		return err
 	}
+	log.Info(ctx, "completed migration for dataset series task", logData)
 	return nil
 }
 

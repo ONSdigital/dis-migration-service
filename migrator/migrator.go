@@ -72,6 +72,7 @@ func (mig *migrator) Shutdown(ctx context.Context) error {
 
 	select {
 	case <-done:
+		log.Info(ctx, "migrator shut down completed successfully")
 		return nil
 	case <-ctx.Done():
 		err := fmt.Errorf("timed out waiting for background tasks to complete")
