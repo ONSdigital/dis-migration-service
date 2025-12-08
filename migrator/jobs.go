@@ -42,9 +42,13 @@ func (mig *migrator) monitorJobs(ctx context.Context) {
 				continue
 			}
 			if job == nil {
-				// No jobs available, wait before retrying
-				time.Sleep(mig.pollInterval)
-				continue
+				select {
+				case <-ctx.Done():
+					log.Info(ctx, "stopping monitoring jobs")
+					return
+				case <-time.After(mig.pollInterval):
+					continue
+				}
 			}
 
 			log.Info(ctx, "claimed job", log.Data{"jobID": job.ID, "jobState": job.State})

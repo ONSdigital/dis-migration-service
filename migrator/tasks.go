@@ -43,9 +43,13 @@ func (mig *migrator) monitorTasks(ctx context.Context) {
 				continue
 			}
 			if task == nil {
-				// No tasks available, wait before retrying
-				time.Sleep(mig.pollInterval)
-				continue
+				select {
+				case <-ctx.Done():
+					log.Info(ctx, "stopping monitoring tasks")
+					return
+				case <-time.After(mig.pollInterval):
+					continue
+				}
 			}
 			log.Info(ctx, "claimed task", log.Data{"taskID": task.ID, "taskState": task.State})
 			mig.executeTask(ctx, task)
