@@ -516,9 +516,9 @@ definitions:
       label:
         type: string
         example: "Consumer price inflation tables"
-      uri:
+      dataset_id:
         type: string
-        example: "/data?uri=/economy/inflationandpriceindices/datasets/consumerpriceinflation/data"
+        example: "consumer-price-inflation"
 
   MigrationJobList:
     allOf:
