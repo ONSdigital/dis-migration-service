@@ -44,6 +44,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	})
 
 	godogCtx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+		//migrationComponent.Close()
 		f.Mongo.Reset()
 		apiFeature.Reset()
 		f.Auth.Reset()

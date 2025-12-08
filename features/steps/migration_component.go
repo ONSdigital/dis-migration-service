@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
@@ -191,6 +192,7 @@ func (c *MigrationComponent) DoGetHTTPServer(bindAddr string, router http.Handle
 }
 
 func (c *MigrationComponent) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
+	c.SeedDatabase(ctx)
 	return c.MongoClient, nil
 }
 
@@ -219,4 +221,15 @@ func (c *MigrationComponent) DoGetAuthorisationMiddleware(ctx context.Context, c
 
 	c.AuthorisationMiddleware = middleware
 	return c.AuthorisationMiddleware, nil
+}
+
+func (c *MigrationComponent) SeedDatabase(ctx context.Context) error {
+	for _, coll := range c.Config.Collections {
+		cmd := bson.D{{Key: "create", Value: coll}}
+		err := c.MongoClient.Connection.RunCommand(ctx, cmd)
+		if err != nil {
+			return fmt.Errorf("failed to create collection %s: %w", coll, err)
+		}
+	}
+	return nil
 }
