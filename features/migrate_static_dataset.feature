@@ -42,6 +42,7 @@ Feature: Migrate a static dataset job
           }
         },
         "state": "submitted",
+        "label": "Test Dataset Series",
         "config": {
           "source_id": "/test-static-dataset-job",
           "target_id": "test-target-id",
@@ -62,6 +63,7 @@ Feature: Migrate a static dataset job
           "target_id": "test-target-id",
           "type": "static_dataset"
         },
+        "label": "Test Dataset Series",
         "links": {
           "self": {
             "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
@@ -145,6 +147,7 @@ Feature: Migrate a static dataset job
           }
         },
         "state": "submitted",
+        "label": "Test Failed Dataset Series",
         "config": {
           "source_id": "/test-static-dataset-job-failed",
           "target_id": "test-target-id",
@@ -165,6 +168,7 @@ Feature: Migrate a static dataset job
           "target_id": "test-target-id",
           "type": "static_dataset"
         },
+        "label": "Test Failed Dataset Series",
         "links": {
           "self": {
             "href": "/v1/migration-jobs/13de71de-4201-494a-851b-3d65575235e6"
