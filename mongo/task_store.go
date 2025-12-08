@@ -60,7 +60,7 @@ func (m *Mongo) ClaimTask(ctx context.Context, pendingState, activeState domain.
 			// If no pending jobs, no error.
 			return nil, nil
 		}
-		return nil, appErrors.ErrInternalServerError
+		return nil, err
 	}
 
 	return &task, nil
