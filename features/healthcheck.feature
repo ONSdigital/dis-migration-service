@@ -6,7 +6,6 @@ Feature: Health endpoint
 
     Scenario: Returning a OK (200) status when health endpoint called
         Given mongodb is healthy
-        And all its expected collections exist
         And I have a healthcheck interval of 1 second
         And I wait 2 seconds for the healthcheck to be available
         When I GET "/health"
@@ -33,7 +32,6 @@ Feature: Health endpoint
 
     Scenario: Returning a WARNING (429) status when health endpoint called
         Given mongodb is healthy
-        And all its expected collections exist
         And mongodb stops running
         And I have a healthcheck interval of 1 second
         And I wait 2 seconds for the healthcheck to be available
@@ -63,7 +61,6 @@ Feature: Health endpoint
 
     Scenario: Returning a CRITICAL (500) status when health endpoint called
         Given mongodb is healthy
-        And all its expected collections exist
         And mongodb stops running
         And I have a healthcheck interval of 1 second
         And I wait 6 seconds to pass the critical timeout
