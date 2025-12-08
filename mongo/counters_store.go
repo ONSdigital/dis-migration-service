@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
@@ -11,25 +12,23 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// CreateJobNumberCounter creates a new Counter to use for creating unique human-readable job numbers.
-// NB. This should only be used if the JobNumberCounter does not already exist.
-func (m *Mongo) CreateJobNumberCounter(ctx context.Context) error {
-	// Firstly check that the Job Number Counter does not already exist
-	counterRetrieved, err := m.GetJobNumberCounter(ctx)
-	if counterRetrieved != nil {
-		logData := log.Data{"jobNumberCounter": counterRetrieved}
-		log.Info(ctx, "job number counter already exists in mongo DB", logData)
-		return appErrors.ErrJobNumberCounterAlreadyExists
-	}
-
+/* createJobNumberCounter creates a new Counter to use for creating unique
+* human-readable job numbers.
+* The new Counter will contain the following values:
+* counter_name = "job_number_counter"
+* counter_value = "0"
+*
+* NB. This private function should only be called by GetJobNumberCounter,
+* which will only call it if a JobNumberCounter does not already exist. */
+func (m *Mongo) createJobNumberCounter(ctx context.Context) error {
 	jobNumberCounter := &domain.Counter{
 		CounterName:  "job_number_counter",
-		CounterValue: "0",
+		CounterValue: 0,
 	}
 	logData := log.Data{"jobNumberCounter": jobNumberCounter}
 	log.Info(ctx, "creating job number counter in mongo DB", logData)
 
-	_, err = m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).InsertOne(ctx, jobNumberCounter)
+	_, err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).InsertOne(ctx, jobNumberCounter)
 	if err != nil {
 		log.Error(ctx, "failed to insert job number counter into mongo DB", err, logData)
 		return err
@@ -47,7 +46,7 @@ func (m *Mongo) GetJobNumberCounter(ctx context.Context) (*domain.Counter, error
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
 			log.Error(ctx, "the job number counter does not exist so shall create it",
 				appErrors.ErrJobNumberCounterNotFound)
-			err = m.CreateJobNumberCounter(ctx)
+			err = m.createJobNumberCounter(ctx)
 			if err != nil {
 				log.Error(ctx, "error creating job number counter", err)
 				return nil, err
@@ -59,20 +58,20 @@ func (m *Mongo) GetJobNumberCounter(ctx context.Context) (*domain.Counter, error
 	return &jobNumberCounter, nil
 }
 
-// UpdateJobNumberCounter updates the job number counter with the number provided in the updates
-func (m *Mongo) UpdateJobNumberCounter(ctx context.Context, updates bson.M) error {
-	update := bson.M{"$set": updates}
+// UpdateJobNumberCounter increments the job number counter, in mongoDB, by 1
+func (m *Mongo) UpdateJobNumberCounter(ctx context.Context) error {
+	_, err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).UpdateOne(ctx, bson.M{
+		"counter_name": "job_number_counter",
+	}, bson.D{
+		{"$inc", bson.D{{"counter_value", 1}}},
+	})
 
-	if _, err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).Must().
-		UpdateOne(ctx, bson.M{"counter_name": "job_number_counter"}, update); err != nil {
+	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
 			return appErrors.ErrJobNumberCounterNotFound
 		}
 		return appErrors.ErrInternalServerError
 	}
+
 	return nil
 }
-
-//// GetJobNumberCounterAndUpdate finds and updates the job number counter with the number provided in the updates
-//func (m *Mongo) GetJobNumberCounterAndUpdate(ctx context.Context, updates bson.M) error {
-//}

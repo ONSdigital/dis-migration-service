@@ -23,7 +23,8 @@ type dataMongoDB interface {
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
 	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
-	CreateJobNumberCounter(ctx context.Context) error
+	GetJobNumberCounter(ctx context.Context) (*domain.Counter, error)
+	UpdateJobNumberCounter(ctx context.Context) error
 
 	// Tasks
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
@@ -81,6 +82,13 @@ func (ds *Datastore) CountTasksByJobID(ctx context.Context, jobID string) (int, 
 	return ds.Backend.CountTasksByJobID(ctx, jobID)
 }
 
-func (ds *Datastore) CreateJobNumberCounter(ctx context.Context) error {
-	return ds.Backend.CreateJobNumberCounter(ctx)
+// GetJobNumberCounter retrieves the current value from the JobNumberCounter.
+// If the JobNumberCounter does not exist then it creates it.
+func (ds *Datastore) GetJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
+	return ds.Backend.GetJobNumberCounter(ctx)
+}
+
+// UpdateJobNumberCounter increments the job number counter, in mongoDB, by 1.
+func (ds *Datastore) UpdateJobNumberCounter(ctx context.Context) error {
+	return ds.Backend.UpdateJobNumberCounter(ctx)
 }

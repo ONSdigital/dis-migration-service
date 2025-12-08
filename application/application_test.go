@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	testHost  = "http://localhost:8080"
-	testJobID = "test-job-id"
+	testHost                  = "http://localhost:8080"
+	testJobID                 = "test-job-id"
+	testJobNumberCounterValue = 5
 )
 
 func TestCreateJob(t *testing.T) {
@@ -58,7 +59,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig)
+			job, err := jobService.CreateJob(ctx, &jobConfig, testJobNumberCounterValue)
 
 			Convey("Then the store should be checked for matching jobs", func() {
 				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)
@@ -122,7 +123,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig)
+			job, err := jobService.CreateJob(ctx, &jobConfig, testJobNumberCounterValue)
 
 			Convey("Then the store should be checked for matching jobs", func() {
 				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)
@@ -176,7 +177,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig)
+			job, err := jobService.CreateJob(ctx, &jobConfig, testJobNumberCounterValue)
 
 			Convey("Then the store should be checked for matching jobs", func() {
 				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)
@@ -230,7 +231,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig)
+			job, err := jobService.CreateJob(ctx, &jobConfig, testJobNumberCounterValue)
 
 			Convey("Then the store should be called to create a job", func() {
 				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)

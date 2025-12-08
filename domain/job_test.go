@@ -9,8 +9,10 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+const testJobNumberCounterValue = 1
+
 func TestNewJob(t *testing.T) {
-	Convey("Given a valid job config and host", t, func() {
+	Convey("Given a valid job config, job number, and host", t, func() {
 		jobConfig := JobConfig{
 			Type:     JobTypeStaticDataset,
 			SourceID: "/source-id",
@@ -18,7 +20,7 @@ func TestNewJob(t *testing.T) {
 		}
 
 		Convey("When a job is created", func() {
-			job := NewJob(&jobConfig)
+			job := NewJob(&jobConfig, testJobNumberCounterValue)
 
 			Convey("Then a valid job should be returned", func() {
 				So(job.Config, ShouldResemble, &jobConfig)

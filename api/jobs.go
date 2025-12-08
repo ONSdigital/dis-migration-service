@@ -93,7 +93,21 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	job, err := api.JobService.CreateJob(ctx, jobConfig)
+	// increment the job number counter
+	err = api.JobService.UpdateJobNumberCounter(ctx)
+	if err != nil {
+		handleError(ctx, w, r, err)
+		return
+	}
+
+	// get the job number counter
+	jobNumberCounter, err := api.JobService.GetJobNumberCounter(ctx)
+	if err != nil {
+		handleError(ctx, w, r, err)
+		return
+	}
+
+	job, err := api.JobService.CreateJob(ctx, jobConfig, jobNumberCounter.CounterValue)
 	if err != nil {
 		handleError(ctx, w, r, err)
 		return

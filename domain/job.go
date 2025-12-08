@@ -10,6 +10,7 @@ import (
 // Job represents a migration job
 type Job struct {
 	ID          string     `json:"id" bson:"_id"`
+	JobNumber   int        `json:"job_number" bson:"job_number"`
 	LastUpdated time.Time  `json:"last_updated" bson:"last_updated"`
 	State       JobState   `json:"state" bson:"state"`
 	Config      *JobConfig `json:"config" bson:"config"`
@@ -22,26 +23,20 @@ type JobLinks struct {
 }
 
 // NewJob creates a new Job instance with the provided configuration
-func NewJob(cfg *JobConfig) Job {
+func NewJob(cfg *JobConfig, jobNumber int) Job {
 	id := uuid.New().String()
 
 	links := NewJobLinks(id)
 
-	//jobNum: = GetNewJobNumber()
-
 	return Job{
 		Config:      cfg,
 		ID:          id,
+		JobNumber:   jobNumber,
 		LastUpdated: time.Now().UTC(),
 		Links:       links,
 		State:       JobStateSubmitted,
 	}
 }
-
-//// GetNewJobNumber gets the value of JobCount from the Counters collection and increments the existing value by 1
-//func GetNewJobNumber() int {
-//
-//}
 
 // NewJobLinks creates JobLinks for a job with the given ID
 func NewJobLinks(id string) JobLinks {

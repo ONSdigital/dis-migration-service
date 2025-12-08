@@ -296,9 +296,20 @@ func TestCreateJob(t *testing.T) {
 			LastUpdated: time.Now().UTC(),
 		}
 
+		testCounter := &domain.Counter{
+			CounterName:  "job_number_counter",
+			CounterValue: 0,
+		}
+
 		mockService := applicationMock.JobServiceMock{
-			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error) {
+			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error) {
 				return createdJob, nil
+			},
+			UpdateJobNumberCounterFunc: func(ctx context.Context) error {
+				return nil
+			},
+			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+				return testCounter, nil
 			},
 		}
 

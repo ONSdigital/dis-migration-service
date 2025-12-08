@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
@@ -13,12 +14,13 @@ import (
 //
 //go:generate moq -out mock/jobservice.go -pkg mock . JobService
 type JobService interface {
-	CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error)
+	CreateJob(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error)
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
 	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
-	CreateJobNumberCounter(ctx context.Context) error
+	GetJobNumberCounter(ctx context.Context) (*domain.Counter, error)
+	UpdateJobNumberCounter(ctx context.Context) error
 }
 
 type jobService struct {
@@ -37,13 +39,13 @@ func Setup(datastore *store.Datastore, appClients *clients.ClientList) JobServic
 
 // CreateJob creates a new migration job based on the
 // provided job configuration.
-func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error) {
+func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error) {
 	err := jobConfig.ValidateExternal(ctx, *js.clients)
 	if err != nil {
 		return &domain.Job{}, err
 	}
 
-	job := domain.NewJob(jobConfig)
+	job := domain.NewJob(jobConfig, jobNumberCounterValue)
 
 	foundJobs, err := js.store.GetJobsByConfigAndState(ctx, job.Config, domain.GetNonCancelledStates(), 1, 0)
 	if err != nil {
@@ -65,11 +67,15 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 	return &job, nil
 }
 
-// CreateJobNumberCounter will create a counter with the following values:
+// GetJobNumberCounter will return the domain.Counter with
 // counter_name = "job_number_counter"
-// counter_value = "0"
-func (js *jobService) CreateJobNumberCounter(ctx context.Context) error {
-	return js.store.CreateJobNumberCounter(ctx)
+func (js *jobService) GetJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
+	return js.store.GetJobNumberCounter(ctx)
+}
+
+// UpdateJobNumberCounter increments the job number counter, in mongoDB, by 1
+func (js *jobService) UpdateJobNumberCounter(ctx context.Context) error {
+	return js.store.UpdateJobNumberCounter(ctx)
 }
 
 // GetJob retrieves a migration job by its ID.
