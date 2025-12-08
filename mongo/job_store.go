@@ -9,7 +9,6 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
-	"github.com/ONSdigital/log.go/v2/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -117,9 +116,7 @@ func (m *Mongo) ClaimJob(ctx context.Context, pendingState, activeState domain.J
 			// If no pending jobs, no error.
 			return nil, nil
 		}
-		log.Error(ctx, "error claiming pending job", err, log.Data{"pendingState": pendingState, "activeState": activeState})
-
-		return nil, appErrors.ErrInternalServerError
+		return nil, err
 	}
 
 	return &job, nil
