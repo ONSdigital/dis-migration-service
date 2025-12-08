@@ -135,7 +135,6 @@ func (c *MigrationComponent) Reset() error {
 
 func (c *MigrationComponent) Close() error {
 	if c.svc != nil && c.ServiceRunning {
-		log.Info(context.Background(), "closing migration service")
 		if err := c.svc.Close(context.Background()); err != nil {
 			return err
 		}
@@ -147,7 +146,6 @@ func (c *MigrationComponent) Close() error {
 
 func (c *MigrationComponent) Start() error {
 	if c.svc != nil && !c.ServiceRunning {
-		log.Info(context.Background(), "starting migration service")
 		err := c.svc.Run(context.Background(), "1", "", "", c.errorChan)
 		if err != nil {
 			return err
