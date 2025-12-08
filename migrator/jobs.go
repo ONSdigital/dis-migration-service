@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -36,7 +37,7 @@ func (mig *migrator) monitorJobs(ctx context.Context) {
 			return
 		default:
 			job, err := mig.jobService.ClaimJob(ctx)
-			if err != nil {
+			if err != nil && !errors.Is(err, context.Canceled) {
 				log.Error(ctx, "error claiming job", err)
 				time.Sleep(mig.pollInterval)
 				continue
