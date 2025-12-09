@@ -6,7 +6,6 @@ import (
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
-	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // DatasetEditionTaskExecutor executes migration tasks for dataset editions.
@@ -25,10 +24,6 @@ func NewDatasetEditionTaskExecutor(ctx context.Context, jobService application.J
 
 // Migrate handles the migration operations for a dataset edition task.
 func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.Task) error {
-	logData := log.Data{"taskID": task.ID, "jobID": task.JobID}
-
-	log.Info(ctx, "starting migration for dataset edition task", logData)
-	//TODO: implement edition migration logic
 	return nil
 }
 
