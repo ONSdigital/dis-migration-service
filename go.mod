@@ -6,7 +6,7 @@ require (
 	github.com/ONSdigital/dis-redirect-api v0.3.8
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.270.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.32.3
-	github.com/ONSdigital/dp-component-test v1.2.1-alpha
+	github.com/ONSdigital/dp-component-test v1.2.3-alpha
 	github.com/ONSdigital/dp-dataset-api v1.90.0
 	github.com/ONSdigital/dp-files-api v1.14.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
