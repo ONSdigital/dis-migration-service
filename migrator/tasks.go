@@ -64,8 +64,12 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 	go func() {
 		defer mig.wg.Done()
 
-		mig.semaphore <- struct{}{}
-		defer func() { <-mig.semaphore }()
+		select {
+		case mig.semaphore <- struct{}{}:
+			defer func() { <-mig.semaphore }()
+		case <-ctx.Done():
+			return
+		}
 
 		taskExecutor, err := mig.getTaskExecutor(ctx, task)
 		if err != nil {
