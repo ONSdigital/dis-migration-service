@@ -16,7 +16,7 @@ type StaticDatasetJobExecutor struct {
 }
 
 // NewStaticDatasetJobExecutor creates a new StaticDatasetJobExecutor
-func NewStaticDatasetJobExecutor(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) *StaticDatasetJobExecutor {
+func NewStaticDatasetJobExecutor(jobService application.JobService, clientList *clients.ClientList) *StaticDatasetJobExecutor {
 	return &StaticDatasetJobExecutor{
 		jobService: jobService,
 		clientList: clientList,

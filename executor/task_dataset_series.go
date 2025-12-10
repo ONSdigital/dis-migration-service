@@ -16,7 +16,7 @@ type DatasetSeriesTaskExecutor struct {
 }
 
 // NewDatasetSeriesTaskExecutor creates a new DatasetSeriesTaskExecutor
-func NewDatasetSeriesTaskExecutor(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) *DatasetSeriesTaskExecutor {
+func NewDatasetSeriesTaskExecutor(jobService application.JobService, clientList *clients.ClientList) *DatasetSeriesTaskExecutor {
 	return &DatasetSeriesTaskExecutor{
 		jobService: jobService,
 		clientList: clientList,

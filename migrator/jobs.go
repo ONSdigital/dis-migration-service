@@ -15,7 +15,7 @@ import (
 
 var getJobExecutors = func(jobService application.JobService, appClients *clients.ClientList) map[domain.JobType]executor.JobExecutor {
 	jobExecutors := make(map[domain.JobType]executor.JobExecutor)
-	jobExecutors[domain.JobTypeStaticDataset] = executor.NewStaticDatasetJobExecutor(context.Background(), jobService, appClients)
+	jobExecutors[domain.JobTypeStaticDataset] = executor.NewStaticDatasetJobExecutor(jobService, appClients)
 	return jobExecutors
 }
 

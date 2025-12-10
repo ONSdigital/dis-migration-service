@@ -15,8 +15,8 @@ import (
 
 var getTaskExecutors = func(jobService application.JobService, appClients *clients.ClientList) map[domain.TaskType]executor.TaskExecutor {
 	taskExecutors := make(map[domain.TaskType]executor.TaskExecutor)
-	taskExecutors[domain.TaskTypeDatasetSeries] = executor.NewDatasetSeriesTaskExecutor(context.Background(), jobService, appClients)
-	taskExecutors[domain.TaskTypeDatasetEdition] = executor.NewDatasetEditionTaskExecutor(context.Background(), jobService, appClients)
+	taskExecutors[domain.TaskTypeDatasetSeries] = executor.NewDatasetSeriesTaskExecutor(jobService, appClients)
+	taskExecutors[domain.TaskTypeDatasetEdition] = executor.NewDatasetEditionTaskExecutor(jobService, appClients)
 	return taskExecutors
 }
 

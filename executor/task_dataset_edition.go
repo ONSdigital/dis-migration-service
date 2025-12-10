@@ -15,7 +15,7 @@ type DatasetEditionTaskExecutor struct {
 }
 
 // NewDatasetEditionTaskExecutor creates a new DatasetEditionTaskExecutor
-func NewDatasetEditionTaskExecutor(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) *DatasetEditionTaskExecutor {
+func NewDatasetEditionTaskExecutor(jobService application.JobService, clientList *clients.ClientList) *DatasetEditionTaskExecutor {
 	return &DatasetEditionTaskExecutor{
 		jobService: jobService,
 		clientList: clientList,

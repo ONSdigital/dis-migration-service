@@ -22,7 +22,7 @@ func TestJobStaticDataset(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewStaticDatasetJobExecutor(ctx, mockJobService, mockClientList)
+		executor := NewStaticDatasetJobExecutor(mockJobService, mockClientList)
 
 		Convey("When migrate is called for a job", func() {
 			job := &domain.Job{
@@ -62,7 +62,7 @@ func TestJobStaticDataset(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewStaticDatasetJobExecutor(ctx, mockJobService, mockClientList)
+		executor := NewStaticDatasetJobExecutor(mockJobService, mockClientList)
 
 		Convey("When migrate is called for a job", func() {
 			job := &domain.Job{
