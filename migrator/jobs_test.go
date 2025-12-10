@@ -88,7 +88,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 		}
 
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateJobStateFunc: func(ctx context.Context, job *domain.Job, state domain.JobState) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobID string, state domain.JobState) error {
 				return nil
 			},
 		}
@@ -115,7 +115,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 
 			Convey("Then the job is marked as failed", func() {
 				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
-				So(mockJobService.UpdateJobStateCalls()[0].Job.ID, ShouldEqual, fakeJobID)
+				So(mockJobService.UpdateJobStateCalls()[0].JobID, ShouldEqual, fakeJobID)
 				So(mockJobService.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.JobStateFailedMigration)
 			})
 		})
@@ -135,7 +135,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 		}
 
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateJobStateFunc: func(ctx context.Context, job *domain.Job, newState domain.JobState) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobID string, state domain.JobState) error {
 				return nil
 			},
 		}
@@ -170,7 +170,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 func TestMigratorFailJob(t *testing.T) {
 	Convey("Given a migrator with a mock job service", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateJobStateFunc: func(ctx context.Context, job *domain.Job, state domain.JobState) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobID string, state domain.JobState) error {
 				return nil
 			},
 		}
@@ -192,7 +192,7 @@ func TestMigratorFailJob(t *testing.T) {
 			Convey("Then the job service is called to update the job state to failed", func() {
 				So(err, ShouldBeNil)
 				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
-				So(mockJobService.UpdateJobStateCalls()[0].Job.ID, ShouldEqual, fakeJobID)
+				So(mockJobService.UpdateJobStateCalls()[0].JobID, ShouldEqual, fakeJobID)
 				So(mockJobService.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.JobStateFailedMigration)
 			})
 		})
@@ -214,7 +214,7 @@ func TestMigratorFailJob(t *testing.T) {
 
 	Convey("Given a migrator with a mock job service that errors when updating job state", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateJobStateFunc: func(ctx context.Context, job *domain.Job, state domain.JobState) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobID string, state domain.JobState) error {
 				return nil
 			},
 		}
@@ -250,7 +250,7 @@ func TestMigratorFailJobByID(t *testing.T) {
 					State: domain.JobStateMigrating,
 				}, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, job *domain.Job, state domain.JobState) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobID string, state domain.JobState) error {
 				return nil
 			},
 		}
@@ -268,7 +268,7 @@ func TestMigratorFailJobByID(t *testing.T) {
 				So(len(mockJobService.GetJobCalls()), ShouldEqual, 1)
 				So(mockJobService.GetJobCalls()[0].JobID, ShouldEqual, "test-job-id")
 				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
-				So(mockJobService.UpdateJobStateCalls()[0].Job.ID, ShouldEqual, "test-job-id")
+				So(mockJobService.UpdateJobStateCalls()[0].JobID, ShouldEqual, "test-job-id")
 				So(mockJobService.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.JobStateFailedMigration)
 			})
 		})

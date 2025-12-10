@@ -63,8 +63,8 @@ var _ store.Storer = &StorerMock{}
 //			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit int, offset int) ([]*domain.Job, error) {
 //				panic("mock out the GetJobsByConfigAndState method")
 //			},
-//			GetJobsByStateFunc: func(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error) {
-//				panic("mock out the GetJobsByState method")
+//			GetTaskFunc: func(ctx context.Context, taskID string) (*domain.Task, error) {
+//				panic("mock out the GetTask method")
 //			},
 //			UpdateJobFunc: func(ctx context.Context, job *domain.Job) error {
 //				panic("mock out the UpdateJob method")
@@ -121,8 +121,8 @@ type StorerMock struct {
 	// GetJobsByConfigAndStateFunc mocks the GetJobsByConfigAndState method.
 	GetJobsByConfigAndStateFunc func(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit int, offset int) ([]*domain.Job, error)
 
-	// GetJobsByStateFunc mocks the GetJobsByState method.
-	GetJobsByStateFunc func(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error)
+	// GetTaskFunc mocks the GetTask method.
+	GetTaskFunc func(ctx context.Context, taskID string) (*domain.Task, error)
 
 	// UpdateJobFunc mocks the UpdateJob method.
 	UpdateJobFunc func(ctx context.Context, job *domain.Job) error
@@ -250,16 +250,12 @@ type StorerMock struct {
 			// Offset is the offset argument value.
 			Offset int
 		}
-		// GetJobsByState holds details about calls to the GetJobsByState method.
-		GetJobsByState []struct {
+		// GetTask holds details about calls to the GetTask method.
+		GetTask []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// States is the states argument value.
-			States []domain.JobState
-			// Limit is the limit argument value.
-			Limit int
-			// Offset is the offset argument value.
-			Offset int
+			// TaskID is the taskID argument value.
+			TaskID string
 		}
 		// UpdateJob holds details about calls to the UpdateJob method.
 		UpdateJob []struct {
@@ -290,7 +286,7 @@ type StorerMock struct {
 	lockGetJobTasks             sync.RWMutex
 	lockGetJobs                 sync.RWMutex
 	lockGetJobsByConfigAndState sync.RWMutex
-	lockGetJobsByState          sync.RWMutex
+	lockGetTask                 sync.RWMutex
 	lockUpdateJob               sync.RWMutex
 	lockUpdateTask              sync.RWMutex
 }
@@ -839,47 +835,39 @@ func (mock *StorerMock) GetJobsByConfigAndStateCalls() []struct {
 	return calls
 }
 
-// GetJobsByState calls GetJobsByStateFunc.
-func (mock *StorerMock) GetJobsByState(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error) {
-	if mock.GetJobsByStateFunc == nil {
-		panic("StorerMock.GetJobsByStateFunc: method is nil but Storer.GetJobsByState was just called")
+// GetTask calls GetTaskFunc.
+func (mock *StorerMock) GetTask(ctx context.Context, taskID string) (*domain.Task, error) {
+	if mock.GetTaskFunc == nil {
+		panic("StorerMock.GetTaskFunc: method is nil but Storer.GetTask was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
-		States []domain.JobState
-		Limit  int
-		Offset int
+		TaskID string
 	}{
 		Ctx:    ctx,
-		States: states,
-		Limit:  limit,
-		Offset: offset,
+		TaskID: taskID,
 	}
-	mock.lockGetJobsByState.Lock()
-	mock.calls.GetJobsByState = append(mock.calls.GetJobsByState, callInfo)
-	mock.lockGetJobsByState.Unlock()
-	return mock.GetJobsByStateFunc(ctx, states, limit, offset)
+	mock.lockGetTask.Lock()
+	mock.calls.GetTask = append(mock.calls.GetTask, callInfo)
+	mock.lockGetTask.Unlock()
+	return mock.GetTaskFunc(ctx, taskID)
 }
 
-// GetJobsByStateCalls gets all the calls that were made to GetJobsByState.
+// GetTaskCalls gets all the calls that were made to GetTask.
 // Check the length with:
 //
-//	len(mockedStorer.GetJobsByStateCalls())
-func (mock *StorerMock) GetJobsByStateCalls() []struct {
+//	len(mockedStorer.GetTaskCalls())
+func (mock *StorerMock) GetTaskCalls() []struct {
 	Ctx    context.Context
-	States []domain.JobState
-	Limit  int
-	Offset int
+	TaskID string
 } {
 	var calls []struct {
 		Ctx    context.Context
-		States []domain.JobState
-		Limit  int
-		Offset int
+		TaskID string
 	}
-	mock.lockGetJobsByState.RLock()
-	calls = mock.calls.GetJobsByState
-	mock.lockGetJobsByState.RUnlock()
+	mock.lockGetTask.RLock()
+	calls = mock.calls.GetTask
+	mock.lockGetTask.RUnlock()
 	return calls
 }
 

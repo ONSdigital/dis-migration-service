@@ -89,7 +89,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 		}
 
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.TaskState) error {
 				return nil
 			},
 		}
@@ -112,8 +112,8 @@ func TestMigratorExecuteTask(t *testing.T) {
 			mig.wg.Wait()
 
 			Convey("Then the task is failed", func() {
-				So(len(mockJobService.UpdateTaskCalls()), ShouldEqual, 1)
-				So(mockJobService.UpdateTaskCalls()[0].Task.State, ShouldEqual, domain.TaskStateFailedMigration)
+				So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+				So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.TaskStateFailedMigration)
 			})
 		})
 	})
@@ -132,7 +132,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 		}
 
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.TaskState) error {
 				return nil
 			},
 			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
@@ -141,7 +141,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 					State: domain.JobStateMigrating,
 				}, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, job *domain.Job, newState domain.JobState) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobID string, newState domain.JobState) error {
 				return nil
 			},
 		}
@@ -164,8 +164,8 @@ func TestMigratorExecuteTask(t *testing.T) {
 			mig.wg.Wait()
 
 			Convey("Then the task is failed", func() {
-				So(len(mockJobService.UpdateTaskCalls()), ShouldEqual, 1)
-				So(mockJobService.UpdateTaskCalls()[0].Task.State, ShouldEqual, domain.TaskStateFailedMigration)
+				So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+				So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.TaskStateFailedMigration)
 
 				Convey("And the job is failed", func() {
 					So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
@@ -179,7 +179,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 func TestMigratorFailTask(t *testing.T) {
 	Convey("Given a migrator with a mock job service", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.TaskState) error {
 				return nil
 			},
 		}
@@ -192,7 +192,7 @@ func TestMigratorFailTask(t *testing.T) {
 
 		Convey("When failTask is called for a task with an active state", func() {
 			task := &domain.Task{
-				Type:  fakeTaskType,
+				ID:    fakeTaskID,
 				State: domain.TaskStateMigrating,
 			}
 
@@ -200,9 +200,9 @@ func TestMigratorFailTask(t *testing.T) {
 
 			Convey("Then the job service is called to update the task state to failed", func() {
 				So(err, ShouldBeNil)
-				So(len(mockJobService.UpdateTaskCalls()), ShouldEqual, 1)
-				So(mockJobService.UpdateTaskCalls()[0].Task.Type, ShouldEqual, fakeTaskType)
-				So(mockJobService.UpdateTaskCalls()[0].Task.State, ShouldEqual, domain.TaskStateFailedMigration)
+				So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+				So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, fakeTaskID)
+				So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.TaskStateFailedMigration)
 			})
 		})
 
@@ -216,14 +216,14 @@ func TestMigratorFailTask(t *testing.T) {
 
 			Convey("Then the job service is not called to update the task", func() {
 				So(err, ShouldNotBeNil)
-				So(len(mockJobService.UpdateTaskCalls()), ShouldEqual, 0)
+				So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 0)
 			})
 		})
 	})
 
 	Convey("Given a migrator with a mock job service that errors when updating task state", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.TaskState) error {
 				return errors.New("update error")
 			},
 		}

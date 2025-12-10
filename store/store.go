@@ -17,7 +17,6 @@ type Datastore struct {
 }
 
 type dataMongoDB interface {
-
 	// Jobs
 	CreateJob(ctx context.Context, job *domain.Job) error
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
@@ -28,6 +27,7 @@ type dataMongoDB interface {
 
 	// Tasks
 	CreateTask(ctx context.Context, task *domain.Task) error
+	GetTask(ctx context.Context, taskID string) (*domain.Task, error)
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
 	UpdateTask(ctx context.Context, task *domain.Task) error
@@ -90,6 +90,11 @@ func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.Job
 // CreateTask creates a new migration task.
 func (ds *Datastore) CreateTask(ctx context.Context, task *domain.Task) error {
 	return ds.Backend.CreateTask(ctx, task)
+}
+
+// GetTask retrieves a migration task by its ID.
+func (ds *Datastore) GetTask(ctx context.Context, taskID string) (*domain.Task, error) {
+	return ds.Backend.GetTask(ctx, taskID)
 }
 
 // UpdateTask updates an existing migration task.

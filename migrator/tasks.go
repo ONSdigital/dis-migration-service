@@ -114,9 +114,7 @@ func (mig *migrator) failTask(ctx context.Context, task *domain.Task) error {
 
 	logData["failureState"] = failureState
 
-	task.State = failureState
-
-	err = mig.jobService.UpdateTask(ctx, task)
+	err = mig.jobService.UpdateTaskState(ctx, task.ID, failureState)
 	if err != nil {
 		log.Error(ctx, "failed to update task state to failed", err, logData)
 		return err

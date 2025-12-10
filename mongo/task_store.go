@@ -24,6 +24,19 @@ func (m *Mongo) CreateTask(ctx context.Context, task *domain.Task) error {
 	return nil
 }
 
+// GetTask retrieves a task by its ID.
+func (m *Mongo) GetTask(ctx context.Context, taskID string) (*domain.Task, error) {
+	var task domain.Task
+	if err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
+		FindOne(ctx, bson.M{"_id": taskID}, &task); err != nil {
+		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, appErrors.ErrTaskNotFound
+		}
+		return nil, appErrors.ErrInternalServerError
+	}
+	return &task, nil
+}
+
 // UpdateTask updates an existing migration task.
 func (m *Mongo) UpdateTask(ctx context.Context, task *domain.Task) error {
 	filter := bson.M{"_id": task.ID}

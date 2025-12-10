@@ -17,11 +17,12 @@ type JobService interface {
 	CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error)
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
 	ClaimJob(ctx context.Context) (*domain.Job, error)
-	UpdateJobState(ctx context.Context, job *domain.Job, newState domain.JobState) error
+	UpdateJobState(ctx context.Context, jobID string, newState domain.JobState) error
 	GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error)
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CreateTask(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error)
 	UpdateTask(ctx context.Context, task *domain.Task) error
+	UpdateTaskState(ctx context.Context, taskID string, newState domain.TaskState) error
 	ClaimTask(ctx context.Context) (*domain.Task, error)
 	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
 	CreateEvent(ctx context.Context, jobID string, event *domain.Event) (*domain.Event, error)
@@ -80,11 +81,15 @@ func (js *jobService) GetJob(ctx context.Context, jobID string) (*domain.Job, er
 }
 
 // UpdateJobState updates the state of a migration job.
-func (js *jobService) UpdateJobState(ctx context.Context, job *domain.Job, newState domain.JobState) error {
+func (js *jobService) UpdateJobState(ctx context.Context, jobID string, newState domain.JobState) error {
 	//TODO: validate state transition
+	job, err := js.store.GetJob(ctx, jobID)
+	if err != nil {
+		return err
+	}
 	job.State = newState
 
-	err := js.store.UpdateJob(ctx, job)
+	err = js.store.UpdateJob(ctx, job)
 	if err != nil {
 		log.Error(ctx, "failed to update job", err, log.Data{
 			"job_id":    job.ID,
@@ -147,6 +152,26 @@ func (js *jobService) UpdateTask(ctx context.Context, task *domain.Task) error {
 	if err != nil {
 		log.Error(ctx, "failed to update task", err, log.Data{
 			"task_id": task.ID,
+		})
+		return appErrors.ErrInternalServerError
+	}
+
+	return nil
+}
+
+// UpdateTaskState updates the state of a migration task.
+func (js *jobService) UpdateTaskState(ctx context.Context, taskID string, newState domain.TaskState) error {
+	//TODO: validate state transition
+	task, err := js.store.GetTask(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	task.State = newState
+	err = js.store.UpdateTask(ctx, task)
+	if err != nil {
+		log.Error(ctx, "failed to update task", err, log.Data{
+			"task_id":   task.ID,
+			"new_state": newState,
 		})
 		return appErrors.ErrInternalServerError
 	}
