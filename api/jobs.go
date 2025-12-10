@@ -113,7 +113,16 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bytes, err := json.Marshal(job)
+	// we don't want to include the Job ID in the API response, so this needs to be temporarily removed
+	jobResponse := domain.ResponseJob{
+		Config:      job.Config,
+		JobNumber:   job.JobNumber,
+		LastUpdated: job.LastUpdated,
+		Links:       job.Links,
+		State:       job.State,
+	}
+
+	bytes, err := json.Marshal(jobResponse)
 	if err != nil {
 		log.Error(ctx, "failed to marshal response", err)
 		handleError(ctx, w, r, err)

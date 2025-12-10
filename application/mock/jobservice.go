@@ -26,9 +26,6 @@ var _ application.JobService = &JobServiceMock{}
 // 			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error) {
 // 				panic("mock out the CreateJob method")
 // 			},
-// 			CreateJobNumberCounterFunc: func(ctx context.Context) error {
-// 				panic("mock out the CreateJobNumberCounter method")
-// 			},
 // 			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
 // 				panic("mock out the GetJob method")
 // 			},
@@ -56,9 +53,6 @@ type JobServiceMock struct {
 
 	// CreateJobFunc mocks the CreateJob method.
 	CreateJobFunc func(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error)
-
-	// CreateJobNumberCounterFunc mocks the CreateJobNumberCounter method.
-	CreateJobNumberCounterFunc func(ctx context.Context) error
 
 	// GetJobFunc mocks the GetJob method.
 	GetJobFunc func(ctx context.Context, jobID string) (*domain.Job, error)
@@ -92,11 +86,6 @@ type JobServiceMock struct {
 			JobConfig *domain.JobConfig
 			// JobNumberCounterValue is the jobNumberCounterValue argument value.
 			JobNumberCounterValue int
-		}
-		// CreateJobNumberCounter holds details about calls to the CreateJobNumberCounter method.
-		CreateJobNumberCounter []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
 		}
 		// GetJob holds details about calls to the GetJob method.
 		GetJob []struct {
@@ -138,7 +127,6 @@ type JobServiceMock struct {
 	}
 	lockCountTasksByJobID      sync.RWMutex
 	lockCreateJob              sync.RWMutex
-	lockCreateJobNumberCounter sync.RWMutex
 	lockGetJob                 sync.RWMutex
 	lockGetJobNumberCounter    sync.RWMutex
 	lockGetJobTasks            sync.RWMutex
@@ -217,37 +205,6 @@ func (mock *JobServiceMock) CreateJobCalls() []struct {
 	mock.lockCreateJob.RLock()
 	calls = mock.calls.CreateJob
 	mock.lockCreateJob.RUnlock()
-	return calls
-}
-
-// CreateJobNumberCounter calls CreateJobNumberCounterFunc.
-func (mock *JobServiceMock) CreateJobNumberCounter(ctx context.Context) error {
-	if mock.CreateJobNumberCounterFunc == nil {
-		panic("JobServiceMock.CreateJobNumberCounterFunc: method is nil but JobService.CreateJobNumberCounter was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-	}{
-		Ctx: ctx,
-	}
-	mock.lockCreateJobNumberCounter.Lock()
-	mock.calls.CreateJobNumberCounter = append(mock.calls.CreateJobNumberCounter, callInfo)
-	mock.lockCreateJobNumberCounter.Unlock()
-	return mock.CreateJobNumberCounterFunc(ctx)
-}
-
-// CreateJobNumberCounterCalls gets all the calls that were made to CreateJobNumberCounter.
-// Check the length with:
-//     len(mockedJobService.CreateJobNumberCounterCalls())
-func (mock *JobServiceMock) CreateJobNumberCounterCalls() []struct {
-	Ctx context.Context
-} {
-	var calls []struct {
-		Ctx context.Context
-	}
-	mock.lockCreateJobNumberCounter.RLock()
-	calls = mock.calls.CreateJobNumberCounter
-	mock.lockCreateJobNumberCounter.RUnlock()
 	return calls
 }
 

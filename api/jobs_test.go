@@ -290,26 +290,33 @@ func TestCreateJob(t *testing.T) {
 			Type:     testType,
 		}
 
-		createdJob := &domain.Job{
+		createdJob := domain.Job{
 			Config:      &testConfig,
 			ID:          testID,
 			LastUpdated: time.Now().UTC(),
+			JobNumber:   1,
 		}
 
-		testCounter := &domain.Counter{
+		responseJob := domain.Job{
+			Config:      createdJob.Config,
+			LastUpdated: createdJob.LastUpdated,
+			JobNumber:   createdJob.JobNumber,
+		}
+
+		testCounter := domain.Counter{
 			CounterName:  "job_number_counter",
 			CounterValue: 0,
 		}
 
 		mockService := applicationMock.JobServiceMock{
 			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error) {
-				return createdJob, nil
+				return &createdJob, nil
 			},
 			UpdateJobNumberCounterFunc: func(ctx context.Context) error {
 				return nil
 			},
 			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
-				return testCounter, nil
+				return &testCounter, nil
 			},
 		}
 
@@ -340,7 +347,7 @@ func TestCreateJob(t *testing.T) {
 
 			api.Router.ServeHTTP(resp, req)
 
-			Convey("Then a created job is returned", func() {
+			Convey("Then a created job is returned, without showing its job ID", func() {
 				So(resp.Code, ShouldEqual, http.StatusAccepted)
 
 				bodyString := resp.Body.Bytes()
@@ -350,7 +357,11 @@ func TestCreateJob(t *testing.T) {
 				err := json.Unmarshal(bodyString, &job)
 				So(err, ShouldBeNil)
 
-				So(&job, ShouldEqual, createdJob)
+				So(job.JobNumber, ShouldEqual, responseJob.JobNumber)
+				So(job.State, ShouldEqual, responseJob.State)
+				So(job.LastUpdated, ShouldEqual, responseJob.LastUpdated)
+				So(job.Links, ShouldEqual, responseJob.Links)
+				So(job.Config, ShouldEqual, responseJob.Config)
 
 				Convey("And the Migrator is called to start", func() {
 					So(len(mockMigrator.MigrateCalls()), ShouldEqual, 1)

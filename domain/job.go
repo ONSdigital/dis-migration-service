@@ -17,6 +17,16 @@ type Job struct {
 	Links       JobLinks   `json:"links" bson:"links"`
 }
 
+// ResponseJob represents a migration job to be shown in API responses.
+// It includes all the Job fields except for ID.
+type ResponseJob struct {
+	JobNumber   int        `json:"job_number" bson:"job_number"`
+	LastUpdated time.Time  `json:"last_updated" bson:"last_updated"`
+	State       JobState   `json:"state" bson:"state"`
+	Config      *JobConfig `json:"config" bson:"config"`
+	Links       JobLinks   `json:"links" bson:"links"`
+}
+
 // JobLinks contains HATEOS links for a migration job
 type JobLinks struct {
 	Self *LinkObject `bson:"self,omitempty"       json:"self,omitempty"`
