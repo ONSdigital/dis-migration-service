@@ -33,26 +33,26 @@ func New(err error) Error {
 
 // Predefined errors
 var (
-	ErrJobNotFound                   = errors.New("job not found")
-	ErrJobNumberCounterNotFound      = errors.New("job number counter not found")
-	ErrUnableToParseBody             = errors.New("unable to read submitted body")
-	ErrJobIDNotProvided              = errors.New("job ID not provided")
-	ErrSourceIDNotProvided           = errors.New("source ID not provided")
-	ErrTargetIDNotProvided           = errors.New("target ID not provided")
-	ErrJobTypeNotProvided            = errors.New("job type not provided")
-	ErrSourceIDInvalid               = errors.New("source ID is invalid")
-	ErrTargetIDInvalid               = errors.New("target ID is invalid")
-	ErrJobTypeInvalid                = errors.New("job type is invalid")
-	ErrInternalServerError           = errors.New("an unexpected error occurred")
-	ErrSourceIDValidation            = errors.New("source ID failed to validate")
-	ErrTargetIDValidation            = errors.New("target ID failed to validate")
-	ErrJobAlreadyRunning             = errors.New("job already running")
-	ErrJobNumberCounterAlreadyExists = errors.New("job number counter already exists")
-
-	ErrOffsetInvalid = errors.New("offset parameter is invalid")
-	ErrLimitInvalid  = errors.New("limit parameter is invalid")
-	ErrLimitExceeded = errors.New("limit parameter exceeds maximum allowed")
-
+	ErrJobNumberCounterNotFound  = errors.New("job number counter not found")
+	ErrJobNotFound               = errors.New("job not found")
+	ErrUnableToParseBody         = errors.New("unable to read submitted body")
+	ErrJobIDNotProvided          = errors.New("job ID not provided")
+	ErrSourceIDNotProvided       = errors.New("source ID not provided")
+	ErrTargetIDNotProvided       = errors.New("target ID not provided")
+	ErrJobTypeNotProvided        = errors.New("job type not provided")
+	ErrSourceTitleNotFound       = errors.New("source title not found or empty")
+	ErrSourceIDInvalid           = errors.New("source ID is invalid")
+	ErrTargetIDInvalid           = errors.New("target ID is invalid")
+	ErrJobTypeInvalid            = errors.New("job type is invalid")
+	ErrInternalServerError       = errors.New("an unexpected error occurred")
+	ErrSourceIDValidation        = errors.New("source ID failed to validate")
+	ErrTargetIDValidation        = errors.New("target ID failed to validate")
+	ErrJobAlreadyRunning         = errors.New("job already running")
+	ErrJobStateInvalid           = errors.New("job state parameter is invalid")
+	ErrTaskNotFound              = errors.New("task not found")
+	ErrOffsetInvalid             = errors.New("offset parameter is invalid")
+	ErrLimitInvalid              = errors.New("limit parameter is invalid")
+	ErrLimitExceeded             = errors.New("limit parameter exceeds maximum allowed")
 	ErrSourceIDZebedeeURIInvalid = errors.New("source ID URI path must start with '/', not end with '/', not contain query strings or hashbangs")
 	ErrTargetIDDatasetIDInvalid  = errors.New("target id must be lowercase alphanumeric with optional hyphen separators")
 
@@ -64,6 +64,7 @@ var (
 		ErrTargetIDNotProvided:       http.StatusBadRequest,
 		ErrJobTypeNotProvided:        http.StatusBadRequest,
 		ErrInternalServerError:       http.StatusInternalServerError,
+		ErrSourceTitleNotFound:       http.StatusInternalServerError,
 		ErrSourceIDValidation:        http.StatusInternalServerError,
 		ErrTargetIDValidation:        http.StatusInternalServerError,
 		ErrJobAlreadyRunning:         http.StatusConflict,
@@ -72,6 +73,7 @@ var (
 		ErrJobTypeInvalid:            http.StatusBadRequest,
 		ErrSourceIDZebedeeURIInvalid: http.StatusBadRequest,
 		ErrTargetIDDatasetIDInvalid:  http.StatusBadRequest,
+		ErrJobStateInvalid:           http.StatusBadRequest,
 		ErrOffsetInvalid:             http.StatusBadRequest,
 		ErrLimitInvalid:              http.StatusBadRequest,
 		ErrLimitExceeded:             http.StatusBadRequest,

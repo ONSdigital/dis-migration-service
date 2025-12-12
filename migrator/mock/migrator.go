@@ -5,7 +5,6 @@ package mock
 
 import (
 	"context"
-	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"sync"
 )
@@ -20,11 +19,11 @@ var _ migrator.Migrator = &MigratorMock{}
 //
 // 		// make and configure a mocked migrator.Migrator
 // 		mockedMigrator := &MigratorMock{
-// 			MigrateFunc: func(ctx context.Context, job *domain.Job)  {
-// 				panic("mock out the Migrate method")
-// 			},
 // 			ShutdownFunc: func(ctx context.Context) error {
 // 				panic("mock out the Shutdown method")
+// 			},
+// 			StartFunc: func(ctx context.Context)  {
+// 				panic("mock out the Start method")
 // 			},
 // 		}
 //
@@ -33,64 +32,27 @@ var _ migrator.Migrator = &MigratorMock{}
 //
 // 	}
 type MigratorMock struct {
-	// MigrateFunc mocks the Migrate method.
-	MigrateFunc func(ctx context.Context, job *domain.Job)
-
 	// ShutdownFunc mocks the Shutdown method.
 	ShutdownFunc func(ctx context.Context) error
 
+	// StartFunc mocks the Start method.
+	StartFunc func(ctx context.Context)
+
 	// calls tracks calls to the methods.
 	calls struct {
-		// Migrate holds details about calls to the Migrate method.
-		Migrate []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Job is the job argument value.
-			Job *domain.Job
-		}
 		// Shutdown holds details about calls to the Shutdown method.
 		Shutdown []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
+		// Start holds details about calls to the Start method.
+		Start []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
 	}
-	lockMigrate  sync.RWMutex
 	lockShutdown sync.RWMutex
-}
-
-// Migrate calls MigrateFunc.
-func (mock *MigratorMock) Migrate(ctx context.Context, job *domain.Job) {
-	if mock.MigrateFunc == nil {
-		panic("MigratorMock.MigrateFunc: method is nil but Migrator.Migrate was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		Job *domain.Job
-	}{
-		Ctx: ctx,
-		Job: job,
-	}
-	mock.lockMigrate.Lock()
-	mock.calls.Migrate = append(mock.calls.Migrate, callInfo)
-	mock.lockMigrate.Unlock()
-	mock.MigrateFunc(ctx, job)
-}
-
-// MigrateCalls gets all the calls that were made to Migrate.
-// Check the length with:
-//     len(mockedMigrator.MigrateCalls())
-func (mock *MigratorMock) MigrateCalls() []struct {
-	Ctx context.Context
-	Job *domain.Job
-} {
-	var calls []struct {
-		Ctx context.Context
-		Job *domain.Job
-	}
-	mock.lockMigrate.RLock()
-	calls = mock.calls.Migrate
-	mock.lockMigrate.RUnlock()
-	return calls
+	lockStart    sync.RWMutex
 }
 
 // Shutdown calls ShutdownFunc.
@@ -121,5 +83,36 @@ func (mock *MigratorMock) ShutdownCalls() []struct {
 	mock.lockShutdown.RLock()
 	calls = mock.calls.Shutdown
 	mock.lockShutdown.RUnlock()
+	return calls
+}
+
+// Start calls StartFunc.
+func (mock *MigratorMock) Start(ctx context.Context) {
+	if mock.StartFunc == nil {
+		panic("MigratorMock.StartFunc: method is nil but Migrator.Start was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockStart.Lock()
+	mock.calls.Start = append(mock.calls.Start, callInfo)
+	mock.lockStart.Unlock()
+	mock.StartFunc(ctx)
+}
+
+// StartCalls gets all the calls that were made to Start.
+// Check the length with:
+//     len(mockedMigrator.StartCalls())
+func (mock *MigratorMock) StartCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockStart.RLock()
+	calls = mock.calls.Start
+	mock.lockStart.RUnlock()
 	return calls
 }

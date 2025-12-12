@@ -8,17 +8,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
-
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/service/mock"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+	"github.com/ONSdigital/log.go/v2/log"
+	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/migrator"
-	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 
-	"github.com/ONSdigital/dp-component-test/utils"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 
 	"github.com/ONSdigital/dis-migration-service/mongo"
@@ -69,6 +67,8 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *comp
 		return &MigrationComponent{}, fmt.Errorf("failed to get config: %w", err)
 	}
 
+	c.Config.MigratorPollInterval = 2 * time.Second
+
 	mongoURI, err := mongoFeat.GetConnectionString()
 	if err != nil {
 		panic(err)
@@ -100,8 +100,8 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *comp
 	c.MongoClient = mongodb
 
 	c.FakeAPIRouter = NewFakeAPI()
-	c.Config.DatasetAPIURL = c.FakeAPIRouter.fakeHTTP.ResolveURL("")
-	c.Config.ZebedeeURL = c.FakeAPIRouter.fakeHTTP.ResolveURL("")
+	c.Config.ZebedeeURL = c.FakeAPIRouter.fakeHTTP.Server.URL
+	c.Config.DatasetAPIURL = c.FakeAPIRouter.fakeHTTP.Server.URL
 
 	initMock := &mock.InitialiserMock{
 		DoGetHealthCheckFunc:             c.DoGetHealthcheckOk,
@@ -130,9 +130,6 @@ func (c *MigrationComponent) InitAPIFeature() *componenttest.APIFeature {
 }
 
 func (c *MigrationComponent) Reset() error {
-	c.MongoClient.Database = utils.RandomDatabase()
-	c.apiFeature.Reset()
-
 	return nil
 }
 
@@ -156,6 +153,24 @@ func (c *MigrationComponent) Start() error {
 		c.ServiceRunning = true
 	}
 
+	return nil
+}
+
+func (c *MigrationComponent) SeedDatabase() error {
+	for key, value := range c.Config.Collections {
+		log.Info(context.Background(), "creating collection", log.Data{"wellknown": key, "actual": value})
+		cmd := bson.D{{Key: "create", Value: value}}
+		err := c.MongoClient.Connection.RunCommand(context.Background(), cmd)
+		if err != nil {
+			return fmt.Errorf("failed to create collection %s: %w", value, err)
+		}
+	}
+
+	colls, err := c.MongoClient.Connection.ListCollectionsFor(context.Background(), c.MongoClient.Database)
+	if err != nil {
+		return fmt.Errorf("failed to list collections: %w", err)
+	}
+	log.Info(context.Background(), "existing collections after seeding", log.Data{"collections": colls, "database": c.MongoClient.Database})
 	return nil
 }
 
@@ -194,14 +209,8 @@ func (c *MigrationComponent) DoGetMongoDB(ctx context.Context, cfg config.MongoC
 	return c.MongoClient, nil
 }
 
-func (c *MigrationComponent) DoGetMigrator(ctx context.Context, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig := &migratorMock.MigratorMock{
-		MigrateFunc: func(ctx context.Context, job *domain.Job) {
-			// mock no-op function
-		},
-		ShutdownFunc: func(ctx context.Context) error { return nil },
-	}
-
+func (c *MigrationComponent) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+	mig := migrator.NewDefaultMigrator(cfg, jobService, clientList)
 	return mig, nil
 }
 

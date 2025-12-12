@@ -12,13 +12,14 @@ Feature: Get list of jobs
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
               "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
             }
           },
-          "state": "submitted",
+          "state": "migrating",
           "config": {
             "source_id": "test-source-id",
             "target_id": "test-target-id",
@@ -34,13 +35,14 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "label": "Labour Market statistics",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {
                 "self": {
                   "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
                 }
               },
-              "state": "submitted",
+              "state": "migrating",
               "config": {
                 "source_id": "test-source-id",
                 "target_id": "test-target-id",
@@ -60,13 +62,14 @@ Feature: Get list of jobs
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
               "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
             }
           },
-          "state": "submitted",
+          "state": "migrating",
           "config": {
             "source_id": "test-source-id",
             "target_id": "test-target-id",
@@ -78,6 +81,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "label": "Retail Sales Index",
           "last_updated": "2025-11-20T10:15:00Z",
           "links": {
             "self": {
@@ -100,6 +104,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "label": "Retail Sales Index",
               "last_updated": "2025-11-20T10:15:00Z",
               "links": {
                 "self": {
@@ -115,13 +120,14 @@ Feature: Get list of jobs
             },
             {
               "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "label": "Labour Market statistics",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {
                 "self": {
                   "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
                 }
               },
-              "state": "submitted",
+              "state": "migrating",
               "config": {
                 "source_id": "test-source-id",
                 "target_id": "test-target-id",
@@ -142,13 +148,14 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "label": "Labour Market statistics",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {
                 "self": {
                   "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
                 }
               },
-              "state": "submitted",
+              "state": "migrating",
               "config": {
                 "source_id": "test-source-id",
                 "target_id": "test-target-id",
@@ -169,6 +176,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "label": "Retail Sales Index",
               "last_updated": "2025-11-20T10:15:00Z",
               "links": {
                 "self": {
@@ -186,6 +194,167 @@ Feature: Get list of jobs
           "limit": 1,
           "offset": 0,
           "total_count": 2
+        }
+        """
+
+    Scenario: Get a list of jobs filtered by a single state
+      Given the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "job-submitted-1",
+          "label": "job-submitted-1",
+          "last_updated": "2025-11-19T13:28:00Z",
+          "state": "migrating",
+          "config": {"source_id":"s1","target_id":"t1","type":"type1"}
+        }
+        """
+      And the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "job-approved-1",
+          "label": "job-approved-1",
+          "last_updated": "2025-11-19T14:00:00Z",
+          "state": "approved",
+          "config": {"source_id":"s2","target_id":"t2","type":"type2"}
+        }
+        """
+      When I GET "/v1/migration-jobs?state=migrating"
+      Then I should receive the following JSON response with status "200":
+        """
+        {
+          "count": 1,
+          "items": [
+            {
+              "id": "job-submitted-1",
+              "label": "job-submitted-1",
+              "state": "migrating",
+              "config": {
+                "source_id": "s1",
+                "target_id": "t1",
+                "type": "type1"
+              },
+              "last_updated": "2025-11-19T13:28:00Z",
+              "links": {}
+            }
+          ],
+          "limit": 10,
+          "offset": 0,
+          "total_count": 1
+        }
+        """
+
+    Scenario: Get a list of jobs filtered by multiple states using repeated query param
+      Given the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "job-submitted-1",
+          "label": "job-submitted-1",
+          "last_updated": "2025-11-19T13:28:00Z",
+          "state": "migrating",
+          "config": {"source_id":"s1","target_id":"t1","type":"type1"}
+        }
+        """
+      And the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "job-approved-1",
+          "label": "job-approved-1",
+          "last_updated": "2025-11-19T14:00:00Z",
+          "state": "approved",
+          "config": {"source_id":"s2","target_id":"t2","type":"type2"}
+        }
+        """
+      When I GET "/v1/migration-jobs?state=migrating&state=approved"
+      Then I should receive the following JSON response with status "200":
+        """
+        {
+          "count": 2,
+          "items": [
+            {
+              "id": "job-approved-1",
+              "label": "job-approved-1",
+              "last_updated": "2025-11-19T14:00:00Z",
+              "links": {},
+              "state": "approved",
+              "config": {"source_id":"s2","target_id":"t2","type":"type2"}
+            },
+            {
+              "id": "job-submitted-1",
+              "label": "job-submitted-1",
+              "last_updated": "2025-11-19T13:28:00Z",
+              "links": {},
+              "state": "migrating",
+              "config": {"source_id":"s1","target_id":"t1","type":"type1"}
+            }
+          ],
+          "limit": 10,
+          "offset": 0,
+          "total_count": 2
+        }
+        """
+
+    Scenario: Get a list of jobs filtered by multiple states using comma-separated values
+      Given the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "job-submitted-1",
+          "label": "job-submitted-1",
+          "last_updated": "2025-11-19T13:28:00Z",
+          "state": "migrating",
+          "config": {"source_id":"s1","target_id":"t1","type":"type1"}
+        }
+        """
+      And the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "job-approved-1",
+          "label": "job-approved-1",
+          "last_updated": "2025-11-19T14:00:00Z",
+          "state": "approved",
+          "config": {"source_id":"s2","target_id":"t2","type":"type2"}
+        }
+        """
+      When I GET "/v1/migration-jobs?state=migrating,approved"
+      Then I should receive the following JSON response with status "200":
+        """
+        {
+          "count": 2,
+          "items": [
+            {
+              "id": "job-approved-1",
+              "label": "job-approved-1",
+              "last_updated": "2025-11-19T14:00:00Z",
+              "links": {},
+              "state": "approved",
+              "config": {"source_id":"s2","target_id":"t2","type":"type2"}
+            },
+            {
+              "id": "job-submitted-1",
+              "label": "job-submitted-1",
+              "last_updated": "2025-11-19T13:28:00Z",
+              "links": {},
+              "state": "migrating",
+              "config": {"source_id":"s1","target_id":"t1","type":"type1"}
+            }
+          ],
+          "limit": 10,
+          "offset": 0,
+          "total_count": 2
+        }
+        """
+
+    @InvalidInput
+    Scenario: Get a list of jobs with an invalid state
+      When I GET "/v1/migration-jobs?state=unknown"
+      Then I should receive the following JSON response with status "400":
+        """
+        {
+          "errors": [
+            {
+              "code": 400,
+              "description": "job state parameter is invalid"
+            }
+          ]
         }
         """
 

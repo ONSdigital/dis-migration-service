@@ -1,11 +1,11 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
@@ -39,7 +39,19 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 
 // getJobs is an implementation of PaginatedHandler for retrieving jobs.
 func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
-	return api.JobService.GetJobs(r.Context(), limit, offset)
+	statesParam := r.URL.Query()["state"] // supports ?state=a&state=b and ?state=a,b
+	states := make([]domain.JobState, 0, len(statesParam))
+
+	for _, s := range statesParam {
+		for _, p := range strings.Split(s, ",") {
+			state := domain.JobState(strings.TrimSpace(p))
+			if !domain.IsValidJobState(state) {
+				return nil, 0, appErrors.ErrJobStateInvalid
+			}
+			states = append(states, state)
+		}
+	}
+	return api.JobService.GetJobs(r.Context(), states, limit, offset)
 }
 
 // getJobTasks is an implementation of PaginatedHandler for retrieving
@@ -130,6 +142,28 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handleSuccess(ctx, w, r, http.StatusAccepted, bytes)
+}
 
-	api.Migrator.Migrate(context.Background(), job)
+// getJobEvents is an implementation for retrieving job events.
+func (api *MigrationAPI) getJobEvents(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
+	ctx := r.Context()
+	vars := mux.Vars(r)
+	jobID := vars[PathParameterJobID]
+
+	if jobID == "" {
+		return nil, 0, appErrors.ErrJobIDNotProvided
+	}
+
+	// Ensure job exists -> return 404 if not found
+	if _, err := api.JobService.GetJob(ctx, jobID); err != nil {
+		return nil, 0, err
+	}
+
+	// Fetch events for the job
+	events, totalCount, err := api.JobService.GetJobEvents(ctx, jobID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return events, totalCount, nil
 }

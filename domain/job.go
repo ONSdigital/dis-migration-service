@@ -11,6 +11,7 @@ import (
 type Job struct {
 	ID          string     `json:"id" bson:"_id"`
 	JobNumber   int        `json:"job_number" bson:"job_number"`
+	Label       string     `json:"label" bson:"label"`
 	LastUpdated time.Time  `json:"last_updated" bson:"last_updated"`
 	State       JobState   `json:"state" bson:"state"`
 	Config      *JobConfig `json:"config" bson:"config"`
@@ -21,6 +22,7 @@ type Job struct {
 // It includes all the Job fields except for ID.
 type ResponseJob struct {
 	JobNumber   int        `json:"job_number" bson:"job_number"`
+	Label       string     `json:"label" bson:"label"`
 	LastUpdated time.Time  `json:"last_updated" bson:"last_updated"`
 	State       JobState   `json:"state" bson:"state"`
 	Config      *JobConfig `json:"config" bson:"config"`
@@ -33,7 +35,7 @@ type JobLinks struct {
 }
 
 // NewJob creates a new Job instance with the provided configuration
-func NewJob(cfg *JobConfig, jobNumber int) Job {
+func NewJob(cfg *JobConfig, jobNumber int, label string) Job {
 	id := uuid.New().String()
 
 	links := NewJobLinks(id)
@@ -42,6 +44,7 @@ func NewJob(cfg *JobConfig, jobNumber int) Job {
 		Config:      cfg,
 		ID:          id,
 		JobNumber:   jobNumber,
+		Label:       label,
 		LastUpdated: time.Now().UTC(),
 		Links:       links,
 		State:       JobStateSubmitted,

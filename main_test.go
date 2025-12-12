@@ -37,6 +37,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 
 	godogCtx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		f.Mongo.Reset()
+		migrationComponent.SeedDatabase()
 		apiFeature.Reset()
 		f.Auth.Reset()
 
@@ -44,6 +45,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	})
 
 	godogCtx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+		migrationComponent.Close()
 		f.Mongo.Reset()
 		apiFeature.Reset()
 		f.Auth.Reset()

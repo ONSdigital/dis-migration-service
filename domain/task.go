@@ -3,39 +3,56 @@ package domain
 import (
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Task represents a migration task
 type Task struct {
-	ID          string            `json:"id" bson:"_id"`
-	JobID       string            `json:"job_id" bson:"job_id"`
-	LastUpdated time.Time         `json:"last_updated" bson:"last_updated"`
-	Source      *TaskMetadata     `json:"source" bson:"source"`
-	State       JobState          `json:"state" bson:"state"`
-	Target      *TaskMetadata     `json:"target" bson:"target"`
-	Type        MigrationTaskType `json:"type" bson:"type"`
-	Links       TaskLinks         `json:"links" bson:"links"`
+	ID          string        `json:"id" bson:"_id"`
+	JobID       string        `json:"job_id" bson:"job_id"`
+	LastUpdated time.Time     `json:"last_updated" bson:"last_updated"`
+	Source      *TaskMetadata `json:"source" bson:"source"`
+	State       TaskState     `json:"state" bson:"state"`
+	Target      *TaskMetadata `json:"target" bson:"target"`
+	Type        TaskType      `json:"type" bson:"type"`
+	Links       TaskLinks     `json:"links" bson:"links"`
+}
+
+// NewTask creates a new Task instance with the provided configuration
+func NewTask(jobID string) Task {
+	id := uuid.New().String()
+
+	links := NewTaskLinks(id, jobID)
+
+	return Task{
+		ID:          id,
+		JobID:       jobID,
+		LastUpdated: time.Now().UTC(),
+		Links:       links,
+		State:       TaskStateSubmitted,
+	}
 }
 
 // TaskMetadata represents metadata about a task's source or target
 type TaskMetadata struct {
-	ID    string `json:"id" bson:"id"`
-	Label string `json:"label" bson:"label"`
-	URI   string `json:"uri" bson:"uri"`
+	ID        string `json:"id" bson:"id"`
+	DatasetID string `json:"dataset_id,omitempty" bson:"dataset_id"`
+	Label     string `json:"label" bson:"label"`
 }
 
-// MigrationTaskType represents the type of migration task
-type MigrationTaskType string
+// TaskType represents the type of migration task
+type TaskType string
 
 const (
-	// MigrationTaskTypeDataset indicates a dataset task
-	MigrationTaskTypeDataset MigrationTaskType = "dataset"
-	// MigrationTaskTypeDatasetEdition indicates a dataset edition task
-	MigrationTaskTypeDatasetEdition MigrationTaskType = "dataset_edition"
-	// MigrationTaskTypeDatasetVersion indicates a dataset version task
-	MigrationTaskTypeDatasetVersion MigrationTaskType = "dataset_version"
-	// MigrationTaskTypeDatasetDownload indicates a dataset download task
-	MigrationTaskTypeDatasetDownload MigrationTaskType = "dataset_download"
+	// TaskTypeDatasetSeries indicates a dataset series task
+	TaskTypeDatasetSeries TaskType = "dataset_series"
+	// TaskTypeDatasetEdition indicates a dataset edition task
+	TaskTypeDatasetEdition TaskType = "dataset_edition"
+	// TaskTypeDatasetVersion indicates a dataset version task
+	TaskTypeDatasetVersion TaskType = "dataset_version"
+	// TaskTypeDatasetDownload indicates a dataset download task
+	TaskTypeDatasetDownload TaskType = "dataset_download"
 )
 
 // TaskLinks contains HATEOAS links for a migration task
@@ -45,13 +62,13 @@ type TaskLinks struct {
 }
 
 // NewTaskLinks creates TaskLinks for a task
-func NewTaskLinks(id, jobID, host string) TaskLinks {
+func NewTaskLinks(id, jobID string) TaskLinks {
 	return TaskLinks{
 		Self: &LinkObject{
-			HRef: fmt.Sprintf("%s/v1/migration-jobs/%s/tasks/%s", host, jobID, id),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s/tasks/%s", jobID, id),
 		},
 		Job: &LinkObject{
-			HRef: fmt.Sprintf("%s/v1/migration-jobs/%s", host, jobID),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s", jobID),
 		},
 	}
 }

@@ -15,25 +15,26 @@ type MongoConfig struct {
 
 // Config represents service configuration for dis-migration-service
 type Config struct {
-	BindAddr                   string        `envconfig:"BIND_ADDR"`
-	DatasetAPIURL              string        `envconfig:"DATASET_API_URL"`
-	DefaultLimit               int           `envconfig:"DEFAULT_LIMIT"`
-	DefaultOffset              int           `envconfig:"DEFAULT_OFFSET"`
-	DefaultMaxLimit            int           `envconfig:"DEFAULT_MAX_LIMIT"`
-	EnableMockClients          bool          `envconfig:"ENABLE_MOCK_CLIENTS"`
-	FilesAPIURL                string        `envconfig:"FILES_API_URL"`
-	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
-	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
-	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
-	MigrationServiceURL        string        `envconfig:"MIGRATION_SERVICE_URL"`
-	OTBatchTimeout             time.Duration `encconfig:"OTEL_BATCH_TIMEOUT"`
-	OTExporterOTLPEndpoint     string        `envconfig:"OTEL_EXPORTER_OTLP_ENDPOINT"`
-	OTServiceName              string        `envconfig:"OTEL_SERVICE_NAME"`
-	OtelEnabled                bool          `envconfig:"OTEL_ENABLED"`
-	RedirectAPIURL             string        `envconfig:"REDIRECT_API_URL"`
-	ServiceAuthToken           string        `envconfig:"SERVICE_AUTH_TOKEN"`
-	UploadServiceURL           string        `envconfig:"UPLOAD_SERVICE_URL"`
-	ZebedeeURL                 string        `envconfig:"ZEBEDEE_URL"`
+	BindAddr                        string        `envconfig:"BIND_ADDR"`
+	DatasetAPIURL                   string        `envconfig:"DATASET_API_URL"`
+	DefaultLimit                    int           `envconfig:"DEFAULT_LIMIT"`
+	DefaultOffset                   int           `envconfig:"DEFAULT_OFFSET"`
+	DefaultMaxLimit                 int           `envconfig:"DEFAULT_MAX_LIMIT"`
+	EnableMockClients               bool          `envconfig:"ENABLE_MOCK_CLIENTS"`
+	FilesAPIURL                     string        `envconfig:"FILES_API_URL"`
+	GracefulShutdownTimeout         time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
+	HealthCheckInterval             time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
+	HealthCheckCriticalTimeout      time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
+	MigratorMaxConcurrentExecutions int           `envconfig:"MIGRATOR_MAX_CONCURRENT_EXECUTIONS"`
+	MigratorPollInterval            time.Duration `envconfig:"MIGRATOR_POLL_INTERVAL"`
+	OTBatchTimeout                  time.Duration `envconfig:"OTEL_BATCH_TIMEOUT"`
+	OTExporterOTLPEndpoint          string        `envconfig:"OTEL_EXPORTER_OTLP_ENDPOINT"`
+	OTServiceName                   string        `envconfig:"OTEL_SERVICE_NAME"`
+	OtelEnabled                     bool          `envconfig:"OTEL_ENABLED"`
+	RedirectAPIURL                  string        `envconfig:"REDIRECT_API_URL"`
+	ServiceAuthToken                string        `envconfig:"SERVICE_AUTH_TOKEN"`
+	UploadServiceURL                string        `envconfig:"UPLOAD_SERVICE_URL"`
+	ZebedeeURL                      string        `envconfig:"ZEBEDEE_URL"`
 	MongoConfig
 	AuthConfig *authorisation.Config
 }
@@ -75,20 +76,22 @@ func Get() (*Config, error) {
 	}
 
 	cfg = &Config{
-		BindAddr:                   "localhost:30100",
-		DatasetAPIURL:              "http://localhost:22000",
-		DefaultLimit:               10,
-		DefaultOffset:              0,
-		DefaultMaxLimit:            100,
-		EnableMockClients:          false,
-		FilesAPIURL:                "http://localhost:26900",
-		GracefulShutdownTimeout:    5 * time.Second,
-		HealthCheckInterval:        30 * time.Second,
-		HealthCheckCriticalTimeout: 90 * time.Second,
-		OTBatchTimeout:             5 * time.Second,
-		OTExporterOTLPEndpoint:     "localhost:4317",
-		OTServiceName:              "dis-migration-service",
-		OtelEnabled:                false,
+		BindAddr:                        "localhost:30100",
+		DatasetAPIURL:                   "http://localhost:22000",
+		DefaultLimit:                    10,
+		DefaultOffset:                   0,
+		DefaultMaxLimit:                 100,
+		EnableMockClients:               false,
+		FilesAPIURL:                     "http://localhost:26900",
+		GracefulShutdownTimeout:         5 * time.Second,
+		HealthCheckInterval:             30 * time.Second,
+		HealthCheckCriticalTimeout:      90 * time.Second,
+		MigratorMaxConcurrentExecutions: 5,
+		MigratorPollInterval:            5 * time.Second,
+		OTBatchTimeout:                  5 * time.Second,
+		OTExporterOTLPEndpoint:          "localhost:4317",
+		OTServiceName:                   "dis-migration-service",
+		OtelEnabled:                     false,
 		MongoConfig: MongoConfig{
 			MongoDriverConfig: dpMongo.MongoDriverConfig{
 				ClusterEndpoint:               "localhost:27017",

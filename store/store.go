@@ -17,21 +17,28 @@ type Datastore struct {
 }
 
 type dataMongoDB interface {
-
 	// Jobs
 	CreateJob(ctx context.Context, job *domain.Job) error
 	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
-	GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error)
+	GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error)
+	ClaimJob(ctx context.Context, pendingState domain.JobState, activeState domain.JobState) (*domain.Job, error)
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
 	GetJobNumberCounter(ctx context.Context) (*domain.Counter, error)
 	UpdateJobNumberCounter(ctx context.Context) error
+	UpdateJob(ctx context.Context, job *domain.Job) error
 
 	// Tasks
+	CreateTask(ctx context.Context, task *domain.Task) error
+	GetTask(ctx context.Context, taskID string) (*domain.Task, error)
 	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
+	UpdateTask(ctx context.Context, task *domain.Task) error
+	ClaimTask(ctx context.Context, pendingState domain.TaskState, activeState domain.TaskState) (*domain.Task, error)
 
 	// Events
 	CreateEvent(ctx context.Context, event *domain.Event) error
+	GetJobEvents(ctx context.Context, jobID string, limit, offset int) ([]*domain.Event, int, error)
+	CountEventsByJobID(ctx context.Context, jobID string) (int, error)
 
 	// Other
 	Checker(ctx context.Context, state *healthcheck.CheckState) error
@@ -61,15 +68,45 @@ func (ds *Datastore) GetJob(ctx context.Context, jobID string) (*domain.Job, err
 	return ds.Backend.GetJob(ctx, jobID)
 }
 
+// ClaimJob claims a pending job for processing.
+func (ds *Datastore) ClaimJob(ctx context.Context, pendingState, activeState domain.JobState) (*domain.Job, error) {
+	return ds.Backend.ClaimJob(ctx, pendingState, activeState)
+}
+
+// UpdateJob updates an existing migration job.
+func (ds *Datastore) UpdateJob(ctx context.Context, job *domain.Job) error {
+	return ds.Backend.UpdateJob(ctx, job)
+}
+
 // GetJobs retrieves a list of migration jobs with pagination.
-func (ds *Datastore) GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
-	return ds.Backend.GetJobs(ctx, limit, offset)
+func (ds *Datastore) GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
+	return ds.Backend.GetJobs(ctx, states, limit, offset)
 }
 
 // GetJobsByConfigAndState retrieves jobs based on the provided job
 // configuration and states.
 func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error) {
 	return ds.Backend.GetJobsByConfigAndState(ctx, jc, states, limit, offset)
+}
+
+// CreateTask creates a new migration task.
+func (ds *Datastore) CreateTask(ctx context.Context, task *domain.Task) error {
+	return ds.Backend.CreateTask(ctx, task)
+}
+
+// GetTask retrieves a migration task by its ID.
+func (ds *Datastore) GetTask(ctx context.Context, taskID string) (*domain.Task, error) {
+	return ds.Backend.GetTask(ctx, taskID)
+}
+
+// UpdateTask updates an existing migration task.
+func (ds *Datastore) UpdateTask(ctx context.Context, task *domain.Task) error {
+	return ds.Backend.UpdateTask(ctx, task)
+}
+
+// ClaimTask claims a pending task for processing.
+func (ds *Datastore) ClaimTask(ctx context.Context, pendingState, activeState domain.TaskState) (*domain.Task, error) {
+	return ds.Backend.ClaimTask(ctx, pendingState, activeState)
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
@@ -91,4 +128,19 @@ func (ds *Datastore) GetJobNumberCounter(ctx context.Context) (*domain.Counter, 
 // UpdateJobNumberCounter increments the job number counter, in mongoDB, by 1.
 func (ds *Datastore) UpdateJobNumberCounter(ctx context.Context) error {
 	return ds.Backend.UpdateJobNumberCounter(ctx)
+}
+
+// CreateEvent creates a new migration event.
+func (ds *Datastore) CreateEvent(ctx context.Context, event *domain.Event) error {
+	return ds.Backend.CreateEvent(ctx, event)
+}
+
+// GetJobEvents retrieves a list of migration events for a job with pagination.
+func (ds *Datastore) GetJobEvents(ctx context.Context, jobID string, limit, offset int) ([]*domain.Event, int, error) {
+	return ds.Backend.GetJobEvents(ctx, jobID, limit, offset)
+}
+
+// CountEventsByJobID returns the total count of events for a job.
+func (ds *Datastore) CountEventsByJobID(ctx context.Context, jobID string) (int, error) {
+	return ds.Backend.CountEventsByJobID(ctx, jobID)
 }

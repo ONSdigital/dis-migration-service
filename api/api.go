@@ -25,11 +25,10 @@ type MigrationAPI struct {
 
 // Setup function sets up the api and returns an api
 // context has been blanked here for now in anticipation of future use
-func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService application.JobService, dataMigrator migrator.Migrator, authMiddleware auth.Middleware) *MigrationAPI {
+func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService application.JobService, authMiddleware auth.Middleware) *MigrationAPI {
 	paginator := NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
 
 	api := &MigrationAPI{
-		Migrator:   dataMigrator,
 		Router:     router,
 		JobService: jobService,
 		Paginator:  paginator,
@@ -51,6 +50,10 @@ func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService
 
 	api.get(fmt.Sprintf("/v1/migration-jobs/{%s}/tasks", PathParameterJobID),
 		authMiddleware.Require("migrations:read", paginator.Paginate(api.getJobTasks)),
+	)
+
+	api.get(fmt.Sprintf("/v1/migration-jobs/{%s}/events", PathParameterJobID),
+		authMiddleware.Require("migrations:read", paginator.Paginate(api.getJobEvents)),
 	)
 
 	return api

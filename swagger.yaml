@@ -15,7 +15,7 @@ tags:
 paths:
   /migration-jobs:
     get:
-      security: 
+      security:
         - Authorization: [migration:read]
       tags:
         - private
@@ -28,7 +28,7 @@ paths:
         - $ref: "#/parameters/offset"
         - $ref: "#/parameters/state"
       responses:
-        200: 
+        200:
           description: "Successful response"
           schema:
             $ref: "#/definitions/MigrationJobList"
@@ -38,14 +38,13 @@ paths:
             $ref: "#/definitions/ErrorList"
         401:
           $ref: "#/responses/Unauthenticated"
-        403: 
+        403:
           $ref: "#/responses/Forbidden"
-        500: 
+        500:
           $ref: "#/responses/Error"
 
-
     post:
-      security: 
+      security:
         - Authorization: [migration:create]
       tags:
         - private
@@ -59,32 +58,32 @@ paths:
         - $ref: "#/parameters/dry_run"
         - $ref: "#/parameters/MigrationJobPostBody"
       responses:
-        200: 
+        200:
           description: "Successful dry run response"
           schema:
             $ref: "#/definitions/MigrationJobPreview"
-        202: 
+        202:
           description: "Successful task acceptance"
           schema:
             $ref: "#/definitions/MigrationJob"
         400:
-          description: "Invalid request body"
+          description: "Invalid request body or source title not found"
           schema:
             $ref: "#/definitions/ErrorList"
         401:
           $ref: "#/responses/Unauthenticated"
-        403: 
+        403:
           $ref: "#/responses/Forbidden"
         409:
           description: "Already running job with these parameters"
           schema:
             $ref: "#/definitions/ErrorList"
-        500: 
+        500:
           $ref: "#/responses/Error"
 
   /migration-jobs/{job_number}:
     get:
-      security: 
+      security:
         - Authorization: [migration:read]
       tags:
         - private
@@ -95,24 +94,24 @@ paths:
       parameters:
         - $ref: "#/parameters/job_number"
       responses:
-        200: 
+        200:
           description: "Successful response"
           schema:
             $ref: "#/definitions/MigrationJob"
         401:
           $ref: "#/responses/Unauthenticated"
-        403: 
+        403:
           $ref: "#/responses/Forbidden"
         404:
           description: "Migration Job not found"
           schema:
             $ref: "#/definitions/ErrorList"
-        500: 
+        500:
           $ref: "#/responses/Error"
 
   /migration-jobs/{job_number}/state:
     put:
-      security: 
+      security:
         - Authorization: [migration:edit]
       tags:
         - private
@@ -126,7 +125,7 @@ paths:
         - $ref: "#/parameters/job_number"
         - $ref: "#/parameters/MigrationJobState"
       responses:
-        204: 
+        204:
           description: "Successful state change"
         400:
           description: "Invalid state supplied"
@@ -134,7 +133,7 @@ paths:
             $ref: "#/definitions/ErrorList"
         401:
           $ref: "#/responses/Unauthenticated"
-        403: 
+        403:
           $ref: "#/responses/Forbidden"
         404:
           description: "Migration job not found"
@@ -144,12 +143,12 @@ paths:
           description: "State change is not allowed"
           schema:
             $ref: "#/definitions/ErrorList"
-        500: 
+        500:
           $ref: "#/responses/Error"
 
   /migration-jobs/{job_number}/events:
     get:
-      security: 
+      security:
         - Authorization: [migration:read]
       tags:
         - private
@@ -164,7 +163,7 @@ paths:
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
       responses:
-        200: 
+        200:
           description: "Successful response"
           schema:
             $ref: "#/definitions/MigrationJobEventList"
@@ -174,18 +173,18 @@ paths:
             $ref: "#/definitions/ErrorList"
         401:
           $ref: "#/responses/Unauthenticated"
-        403: 
+        403:
           $ref: "#/responses/Forbidden"
         404:
           description: "Migration job not found"
           schema:
             $ref: "#/definitions/ErrorList"
-        500: 
+        500:
           $ref: "#/responses/Error"
-  
+
   /migration-jobs/{job_number}/tasks:
     get:
-      security: 
+      security:
         - Authorization: [migration:read]
       tags:
         - private
@@ -201,7 +200,7 @@ paths:
         - $ref: "#/parameters/offset"
         - $ref: "#/parameters/state"
       responses:
-        200: 
+        200:
           description: "Successful response"
           schema:
             $ref: "#/definitions/MigrationTaskList"
@@ -211,15 +210,15 @@ paths:
             $ref: "#/definitions/ErrorList"
         401:
           $ref: "#/responses/Unauthenticated"
-        403: 
+        403:
           $ref: "#/responses/Forbidden"
         404:
           description: "Migration job not found"
           schema:
             $ref: "#/definitions/ErrorList"
-        500: 
+        500:
           $ref: "#/responses/Error"
-  
+
   /health:
     get:
       security: []
@@ -284,7 +283,7 @@ parameters:
     type: string
     enum: &STATE
       - submitted
-      - in_review 
+      - in_review
       - approved
       - published
       - completed
@@ -322,7 +321,7 @@ parameters:
       properties:
         state:
           type: string
-          enum: 
+          enum:
             - approved
             - cancelled
 
@@ -331,7 +330,7 @@ responses:
     description: "Request is not authenticated"
     schema:
       $ref: "#/definitions/ErrorList"
-  Forbidden: 
+  Forbidden:
     description: "Request is not authorised"
     schema:
       $ref: "#/definitions/ErrorList"
@@ -347,7 +346,7 @@ definitions:
       status:
         type: string
         description: "The status of the API"
-        enum: 
+        enum:
           - OK
           - WARNING
           - CRITICAL
@@ -393,12 +392,12 @@ definitions:
       name:
         type: string
         description: "The name of external service used by API"
-        enum: 
+        enum:
           - mongodb
       status:
         type: string
         description: "The status of the external service"
-        enum: 
+        enum:
           - OK
           - WARNING
           - CRITICAL
@@ -427,11 +426,15 @@ definitions:
     properties:
       job_number:
         type: string
-        example: 1
+        example: "550e8400-e29b-41d4-a716-446655440000"
       last_updated:
         type: string
         format: date-time
         example: "2020-06-11T12:49:20+01:00"
+      label:
+        type: string
+        description: "The title of the source dataset, automatically populated during job creation"
+        example: "Consumer Price Index: All Items"
       links:
         type: object
         properties:
@@ -442,7 +445,7 @@ definitions:
               href:
                 description: "A fully qualified URL to the migration job's events API response"
                 type: string
-                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/1/events"
+                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/550e8400-e29b-41d4-a716-446655440000/events"
           self:
             description: "A link to the individual migration job"
             type: object
@@ -452,6 +455,7 @@ definitions:
                 type: string
                 example: "https://api.beta.ons.gov.uk/v1/migration-jobs/1"
               job_number:
+
                 type: string
           tasks:
             description: "A link to all the tasks for the migration job"
@@ -460,7 +464,7 @@ definitions:
               href:
                 description: "A fully qualified URL to the migration job's tasks API response"
                 type: string
-                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/1/tasks"
+                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/550e8400-e29b-41d4-a716-446655440000/tasks"
       config:
         description: "Config for the job"
         $ref: "#/definitions/MigrationJobConfig"
@@ -472,7 +476,7 @@ definitions:
   MigrationJobConfig:
     type: object
     properties:
-      source_id: 
+      source_id:
         type: string
         example: "/economy/inflationandpriceindices"
       target_id:
@@ -494,7 +498,7 @@ definitions:
   MigrationTask:
     type: object
     properties:
-      id: 
+      id:
         type: string
         example: 1
       last_updated:
@@ -509,7 +513,7 @@ definitions:
         $ref: "#/definitions/MigrationTaskMetadata"
       type:
         $ref: "#/definitions/MigrationTaskType"
-  
+
   MigrationTaskMetadata:
     type: object
     properties:
@@ -519,19 +523,19 @@ definitions:
       label:
         type: string
         example: "Consumer price inflation tables"
-      uri:
+      dataset_id:
         type: string
-        example: "/data?uri=/economy/inflationandpriceindices/datasets/consumerpriceinflation/data"
+        example: "consumer-price-inflation"
 
   MigrationJobList:
     allOf:
       - $ref: "#/definitions/List"
       - type: object
-        properties:      
+        properties:
           items:
             type: array
             description: Array containing results.
-            items: 
+            items:
               $ref: "#/definitions/MigrationJob"
 
   MigrationTaskList:
@@ -542,18 +546,18 @@ definitions:
           items:
             type: array
             description: Array containing results.
-            items: 
+            items:
               $ref: "#/definitions/MigrationTask"
 
   MigrationJobEventList:
     allOf:
       - $ref: "#/definitions/List"
       - type: object
-        properties:      
+        properties:
           items:
             type: array
             description: Array containing results.
-            items: 
+            items:
               $ref: "#/definitions/MigrationJobEvent"
 
   MigrationJobEvent:
@@ -609,17 +613,17 @@ definitions:
 
   MigrationJobType:
     type: string
-    enum: 
+    enum:
       - static_dataset
 
   MigrationTaskType:
     type: string
     enum:
-      - dataset
+      - dataset_series
       - dataset_edition
       - dataset_version
       - dataset_download
-    
+
   ErrorList:
     type: object
     properties:

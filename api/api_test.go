@@ -8,7 +8,6 @@ import (
 
 	applicationMock "github.com/ONSdigital/dis-migration-service/application/mock"
 	"github.com/ONSdigital/dis-migration-service/config"
-	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
 
 	"github.com/gorilla/mux"
@@ -17,7 +16,6 @@ import (
 
 func TestSetup(t *testing.T) {
 	mockService := applicationMock.JobServiceMock{}
-	mockMigrator := migratorMock.MigratorMock{}
 
 	mockAuthMiddleware := &authorisationMock.MiddlewareMock{
 		RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
@@ -33,12 +31,13 @@ func TestSetup(t *testing.T) {
 		ctx := context.Background()
 		cfg := &config.Config{}
 
-		api := Setup(ctx, cfg, r, &mockService, &mockMigrator, mockAuthMiddleware)
+		api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/v1/migration-jobs", "POST"), ShouldBeTrue)
 			So(hasRoute(api.Router, "/v1/migration-jobs/myJob", "GET"), ShouldBeTrue)
 			So(hasRoute(api.Router, "/v1/migration-jobs/myJob/tasks", "GET"), ShouldBeTrue)
+			So(hasRoute(api.Router, "/v1/migration-jobs/myJob/events", "GET"), ShouldBeTrue)
 		})
 	})
 }

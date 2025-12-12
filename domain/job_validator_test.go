@@ -9,6 +9,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetError "github.com/ONSdigital/dp-dataset-api/apierrors"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
@@ -19,10 +20,13 @@ import (
 )
 
 const (
-	zebedeeErrorPath    = "/error"
-	zebedeeNotFoundPath = "/not-found"
-	zebedeeWrongType    = "/wrong-type"
-	zebedeeValidPath    = "/found"
+	testTitle = "Test Dataset Title"
+
+	zebedeeErrorPath      = "/error"
+	zebedeeNotFoundPath   = "/not-found"
+	zebedeeWrongType      = "/wrong-type"
+	zebedeeValidPath      = "/found"
+	zebedeeEmptyTitlePath = "/empty-title"
 
 	datasetErrorID    = "error"
 	datasetNotFoundID = "not-found"
@@ -36,11 +40,28 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 			case zebedeeErrorPath:
 				return zebedee.PageData{}, errors.New("unexpected error")
 			case zebedeeValidPath:
-				return zebedee.PageData{Type: zebedee.PageTypeDatasetLandingPage}, nil
+				return zebedee.PageData{
+					Type: zebedee.PageTypeDatasetLandingPage,
+					Description: zebedee.Description{
+						Title: testTitle,
+					},
+				}, nil
 			case zebedeeWrongType:
-				return zebedee.PageData{Type: zebedee.PageTypeBulletin}, nil
+				return zebedee.PageData{
+					Type: zebedee.PageTypeBulletin,
+					Description: zebedee.Description{
+						Title: testTitle,
+					},
+				}, nil
 			case zebedeeNotFoundPath:
 				return zebedee.PageData{}, zebedee.ErrInvalidZebedeeResponse{ActualCode: http.StatusNotFound}
+			case zebedeeEmptyTitlePath:
+				return zebedee.PageData{
+					Type: zebedee.PageTypeDatasetLandingPage,
+					Description: zebedee.Description{
+						Title: "",
+					},
+				}, nil
 			}
 			return zebedee.PageData{}, errors.New("unexpected mock path")
 		},
@@ -67,13 +88,35 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 
 	ctx := context.Background()
 
-	Convey("Given a valid zebedee source ID", t, func() {
+	Convey("Given a valid zebedee source ID with a title", t, func() {
 		validator := domain.StaticDatasetValidator{}
 
 		Convey("When the source is validated", func() {
-			err := validator.ValidateSourceIDWithExternal(ctx, zebedeeValidPath, &mockClientlist)
-			Convey("Then no error should be returend", func() {
+			title, err := validator.ValidateSourceIDWithExternal(ctx, zebedeeValidPath, &mockClientlist)
+
+			Convey("Then no error should be returned", func() {
 				So(err, ShouldBeNil)
+
+				Convey("And the title should be returned", func() {
+					So(title, ShouldEqual, testTitle)
+				})
+			})
+		})
+	})
+
+	Convey("Given a zebedee source ID with an empty title", t, func() {
+		validator := domain.StaticDatasetValidator{}
+
+		Convey("When the source is validated", func() {
+			title, err := validator.ValidateSourceIDWithExternal(ctx, zebedeeEmptyTitlePath, &mockClientlist)
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrSourceTitleNotFound)
+
+				Convey("And the title should be empty", func() {
+					So(title, ShouldEqual, "")
+				})
 			})
 		})
 	})
@@ -82,10 +125,14 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 		validator := domain.StaticDatasetValidator{}
 
 		Convey("When the source is validated", func() {
-			err := validator.ValidateSourceIDWithExternal(ctx, zebedeeErrorPath, &mockClientlist)
+			title, err := validator.ValidateSourceIDWithExternal(ctx, zebedeeErrorPath, &mockClientlist)
 
-			Convey("Then an error should be returend", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
+
+				Convey("And the title should be empty", func() {
+					So(title, ShouldEqual, "")
+				})
 			})
 		})
 	})
@@ -94,10 +141,14 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 		validator := domain.StaticDatasetValidator{}
 
 		Convey("When the source is validated", func() {
-			err := validator.ValidateSourceIDWithExternal(ctx, zebedeeNotFoundPath, &mockClientlist)
+			title, err := validator.ValidateSourceIDWithExternal(ctx, zebedeeNotFoundPath, &mockClientlist)
 
-			Convey("Then an error should be returend", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
+
+				Convey("And the title should be empty", func() {
+					So(title, ShouldEqual, "")
+				})
 			})
 		})
 	})
@@ -106,10 +157,14 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 		validator := domain.StaticDatasetValidator{}
 
 		Convey("When the source is validated", func() {
-			err := validator.ValidateSourceIDWithExternal(ctx, zebedeeWrongType, &mockClientlist)
+			title, err := validator.ValidateSourceIDWithExternal(ctx, zebedeeWrongType, &mockClientlist)
 
-			Convey("Then an error should be returend", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
+
+				Convey("And the title should be empty", func() {
+					So(title, ShouldEqual, "")
+				})
 			})
 		})
 	})
@@ -120,7 +175,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 		Convey("When the target ID is validated", func() {
 			err := validator.ValidateTargetIDWithExternal(ctx, datasetNotFoundID, &mockClientlist)
 
-			Convey("Then no error should be returend", func() {
+			Convey("Then no error should be returned", func() {
 				So(err, ShouldBeNil)
 			})
 		})
@@ -132,7 +187,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 		Convey("When the target is validated", func() {
 			err := validator.ValidateTargetIDWithExternal(ctx, datasetValidID, &mockClientlist)
 
-			Convey("Then an error should be returend", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
 			})
 		})
@@ -144,7 +199,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 		Convey("When the target ID is validated", func() {
 			err := validator.ValidateTargetIDWithExternal(ctx, datasetErrorID, &mockClientlist)
 
-			Convey("Then an error should be returend", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
 			})
 		})

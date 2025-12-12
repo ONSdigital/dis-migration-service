@@ -3,12 +3,15 @@ package mongo
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // CreateJob creates a new migration job.
@@ -26,7 +29,7 @@ func (m *Mongo) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 	var job domain.Job
 	if err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		FindOne(ctx, bson.M{"_id": jobID}, &job); err != nil {
-		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
+		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, appErrors.ErrJobNotFound
 		}
 		return nil, appErrors.ErrInternalServerError
@@ -35,16 +38,24 @@ func (m *Mongo) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (m *Mongo) GetJobs(ctx context.Context, limit, offset int) ([]*domain.Job, int, error) {
+func (m *Mongo) GetJobs(ctx context.Context, stateFilter []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
 	var results []*domain.Job
+
+	filter := bson.M{}
+	if len(stateFilter) > 0 {
+		filter["state"] = bson.M{"$in": stateFilter}
+	}
 
 	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		Find(
-			ctx, bson.M{},
+			ctx,
+			filter,
 			&results,
-			mongodriver.Limit(limit), mongodriver.Offset(offset),
+			mongodriver.Limit(limit),
+			mongodriver.Offset(offset),
 			mongodriver.Sort(bson.M{"last_updated": -1}),
 		)
+
 	return results, totalCount, err
 }
 
@@ -69,46 +80,67 @@ func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfi
 	return results, err
 }
 
+// GetJobsByState retrieves a list of migration jobs filtered by their states.
+func (m *Mongo) GetJobsByState(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
+	var results []*domain.Job
+
+	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
+		Find(
+			ctx,
+			bson.M{
+				"state": bson.M{"$in": states},
+			},
+			&results,
+			mongodriver.Limit(limit), mongodriver.Offset(offset),
+			mongodriver.Sort(bson.M{"last_updated": -1}),
+		)
+	return results, totalCount, err
+}
+
+// ClaimJob claims a pending job for processing.
+func (m *Mongo) ClaimJob(ctx context.Context, pendingState, activeState domain.JobState) (*domain.Job, error) {
+	var job domain.Job
+
+	filter := bson.M{"state": pendingState}
+	update := bson.M{
+		"$set": bson.M{
+			"state":        activeState,
+			"last_updated": time.Now(),
+		},
+	}
+
+	err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
+		FindOneAndUpdate(ctx, filter, update, &job, mongodriver.ReturnDocument(options.After), mongodriver.Sort(bson.M{"last_updated": 1}))
+	if err != nil {
+		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
+			// If no pending jobs, no error.
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &job, nil
+}
+
 // GetJobsByConfig retrieves jobs based on the provided job configuration.
 func (m *Mongo) GetJobsByConfig(ctx context.Context, jc *domain.JobConfig, limit, offset int) ([]*domain.Job, error) {
 	return m.GetJobsByConfigAndState(ctx, jc, []domain.JobState{}, limit, offset)
 }
 
-// GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (m *Mongo) GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
-	var results []*domain.Task
+// UpdateJob updates an existing migration job.
+func (m *Mongo) UpdateJob(ctx context.Context, job *domain.Job) error {
+	filter := bson.M{"_id": job.ID}
+	update := bson.M{"$set": job}
 
-	filter := bson.M{"job_id": jobID}
-
-	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
-		Find(
-			ctx,
-			filter,
-			&results,
-			mongodriver.Limit(limit),
-			mongodriver.Offset(offset),
-			mongodriver.Sort(bson.M{"last_updated": -1}),
-		)
-
+	result, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
+		UpdateOne(ctx, filter, update)
 	if err != nil {
-		return nil, 0, appErrors.ErrInternalServerError
+		return appErrors.ErrInternalServerError
 	}
 
-	return results, totalCount, nil
-}
-
-// CountTasksByJobID returns the total count of tasks for a job.
-func (m *Mongo) CountTasksByJobID(ctx context.Context, jobID string) (int, error) {
-	filter := bson.M{"job_id": jobID}
-
-	// Use Find to get the total count without actually retrieving documents
-	var results []*domain.Task
-	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
-		Find(ctx, filter, &results, mongodriver.Limit(1))
-
-	if err != nil {
-		return 0, appErrors.ErrInternalServerError
+	if result.MatchedCount == 0 {
+		return appErrors.ErrJobNotFound
 	}
 
-	return totalCount, nil
+	return nil
 }

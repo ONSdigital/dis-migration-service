@@ -8,7 +8,15 @@ Feature: Create a Job
       And the migration service is running
 
     Scenario: Create a job with valid input
-      Given a get page data request to zebedee for "/test-source-id" returns a page of type "dataset_landing_page" with status 200
+      Given a get page data request to zebedee for "/test-source-id" returns with status 200 and payload:
+        """
+        {
+          "type": "dataset_landing_page",
+          "description": {
+            "title": "Test Dataset Series"
+          }
+        }
+        """
       And a get dataset request to the dataset API for "test-target-id" returns with status 404
       When I POST "/v1/migration-jobs"
         """
@@ -23,6 +31,7 @@ Feature: Create a Job
         {
           "id": "{{DYNAMIC_UUID}}",
           "last_updated": "{{DYNAMIC_RECENT_TIMESTAMP}}",
+          "label": "Test Dataset Series",
           "state": "submitted",
           "config": {
             "source_id": "/test-source-id",
@@ -104,7 +113,15 @@ Feature: Create a Job
 
     @InvalidUpstream
     Scenario: Create a job with a target already existing
-      Given a get page data request to zebedee for "/test-source-id" returns a page of type "dataset_landing_page" with status 200
+      Given a get page data request to zebedee for "/test-source-id" returns with status 200 and payload:
+        """
+        {
+          "type": "dataset_landing_page",
+          "description": {
+            "title": "Test Dataset Series"
+          }
+        }
+        """
       And a get dataset request to the dataset API for "test-target-id" returns with status 200
       When I POST "/v1/migration-jobs"
         """
@@ -128,11 +145,19 @@ Feature: Create a Job
 
     @InvalidUpstream
     Scenario: Create a job with an invalid source type
-      Given a get page data request to zebedee for "/test-source-id" returns a page of type "bulletin" with status 200
+      Given a get page data request to zebedee for "/test-incorrect-source" returns with status 200 and payload:
+        """
+        {
+          "type": "dataset",
+          "description": {
+            "title": "Test Dataset Series"
+          }
+        }
+        """
       When I POST "/v1/migration-jobs"
         """
         {
-          "source_id": "/test-source-id",
+          "source_id": "/test-incorrect-source",
           "target_id": "test-target-id",
           "type": "static_dataset"
         }
@@ -151,7 +176,15 @@ Feature: Create a Job
 
     @InvalidUpstream
     Scenario: Create a job with a target already existing
-      Given a get page data request to zebedee for "/test-source-id" returns a page of type "dataset_landing_page" with status 200
+      Given a get page data request to zebedee for "/test-source-id" returns with status 200 and payload:
+        """
+        {
+          "type": "dataset_landing_page",
+          "description": {
+            "title": "Test Dataset Series"
+          }
+        }
+        """
       And a get dataset request to the dataset API for "test-target-id" returns with status 200
       When I POST "/v1/migration-jobs"
         """
@@ -187,7 +220,15 @@ Feature: Create a Job
           }
         }
         """
-      And a get page data request to zebedee for "/test-source-id" returns a page of type "dataset_landing_page" with status 200
+      And a get page data request to zebedee for "/test-source-id" returns with status 200 and payload:
+        """
+        {
+          "type": "dataset_landing_page",
+          "description": {
+            "title": "Test Dataset Series"
+          }
+        }
+        """
       And a get dataset request to the dataset API for "test-target-id" returns with status 404
       When I POST "/v1/migration-jobs"
         """
