@@ -28,7 +28,7 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-	dphttp "github.com/ONSdigital/dp-net/v2/http"
+	dphttp "github.com/ONSdigital/dp-net/v3/http"
 )
 
 // ExternalServiceList holds the initialiser and initialisation
