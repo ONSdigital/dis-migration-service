@@ -27,6 +27,8 @@ func TestNewJob(t *testing.T) {
 				So(job.Label, ShouldEqual, label)
 				So(uuid.Validate(job.ID), ShouldBeNil)
 				So(job.Links.Self.HRef, ShouldEqual, fmt.Sprintf("/v1/migration-jobs/%s", job.ID))
+				So(job.Links.Tasks.HRef, ShouldEqual, fmt.Sprintf("/v1/migration-jobs/%s/tasks", job.ID))
+				So(job.Links.Events.HRef, ShouldEqual, fmt.Sprintf("/v1/migration-jobs/%s/events", job.ID))
 				So(job.LastUpdated, ShouldHappenOnOrBetween, time.Now().Add(-5*time.Second), time.Now())
 			})
 		})
