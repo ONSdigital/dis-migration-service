@@ -19,7 +19,7 @@ type JobService interface {
 	ClaimJob(ctx context.Context) (*domain.Job, error)
 	UpdateJobState(ctx context.Context, jobID string, newState domain.JobState) error
 	GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error)
-	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
+	GetJobTasks(ctx context.Context, states []domain.TaskState, jobID string, limit, offset int) ([]*domain.Task, int, error)
 	CreateTask(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error)
 	UpdateTask(ctx context.Context, task *domain.Task) error
 	UpdateTaskState(ctx context.Context, taskID string, newState domain.TaskState) error
@@ -201,8 +201,8 @@ func (js *jobService) ClaimTask(ctx context.Context) (*domain.Task, error) {
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (js *jobService) GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
-	return js.store.GetJobTasks(ctx, jobID, limit, offset)
+func (js *jobService) GetJobTasks(ctx context.Context, states []domain.TaskState, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+	return js.store.GetJobTasks(ctx, states, jobID, limit, offset)
 }
 
 // CountTasksByJobID returns the total count of tasks for a job.

@@ -80,10 +80,14 @@ func (m *Mongo) ClaimTask(ctx context.Context, pendingState, activeState domain.
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (m *Mongo) GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+func (m *Mongo) GetJobTasks(ctx context.Context, stateFilter []domain.TaskState, jobID string, limit, offset int) ([]*domain.Task, int, error) {
 	var results []*domain.Task
 
 	filter := bson.M{"job_id": jobID}
+
+	if len(stateFilter) > 0 {
+		filter["state"] = bson.M{"$in": stateFilter}
+	}
 
 	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
 		Find(

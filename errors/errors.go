@@ -48,6 +48,7 @@ var (
 	ErrTargetIDValidation  = errors.New("target ID failed to validate")
 	ErrJobAlreadyRunning   = errors.New("job already running")
 	ErrJobStateInvalid     = errors.New("job state parameter is invalid")
+	ErrTaskStateInvalid    = errors.New("task state parameter is invalid")
 	ErrTaskNotFound        = errors.New("task not found")
 	ErrOffsetInvalid       = errors.New("offset parameter is invalid")
 	ErrLimitInvalid        = errors.New("limit parameter is invalid")
@@ -74,6 +75,7 @@ var (
 		ErrSourceIDZebedeeURIInvalid: http.StatusBadRequest,
 		ErrTargetIDDatasetIDInvalid:  http.StatusBadRequest,
 		ErrJobStateInvalid:           http.StatusBadRequest,
+		ErrTaskStateInvalid:          http.StatusBadRequest,
 		ErrOffsetInvalid:             http.StatusBadRequest,
 		ErrLimitInvalid:              http.StatusBadRequest,
 		ErrLimitExceeded:             http.StatusBadRequest,
