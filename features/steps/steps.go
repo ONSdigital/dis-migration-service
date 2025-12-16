@@ -2,6 +2,7 @@ package steps
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/ONSdigital/log.go/v2/log"
 
@@ -15,6 +16,7 @@ func (c *MigrationComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^mongodb stops running$`, c.mongodbStopsRunning)
 	ctx.Step(`^a get page data request to zebedee for "([^"]*)" returns with status (\d+) and payload:$`, c.getPageDataRequestToZebedeeForReturnsWithPayload)
 	ctx.Step(`^a get dataset request to the dataset API for "([^"]*)" returns with status (\d+)$`, c.getDatasetRequestToDatasetAPIForReturnsWithStatus)
+	ctx.Step(`^the Dataset API responds successfully to create dataset requests$`, c.datasetAPIrespondsSuccessfullyToCreateDatasetRequests)
 }
 
 func (c *MigrationComponent) mongodbIsHealthy() error {
@@ -57,4 +59,8 @@ func (c *MigrationComponent) getDatasetRequestToDatasetAPIForReturnsWithStatus(i
 
 func (c *MigrationComponent) restartMigrationService() error {
 	return c.Restart()
+}
+
+func (c *MigrationComponent) datasetAPIrespondsSuccessfullyToCreateDatasetRequests() {
+	c.FakeAPIRouter.setJSONResponseForCreateDataset(http.StatusCreated)
 }
