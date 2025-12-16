@@ -99,7 +99,7 @@ func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, ur
 }
 
 func checkDatasetIDDoesNotExist(ctx context.Context, client datasetSDK.Clienter, id string) error {
-	_, err := client.GetDataset(ctx, datasetSDK.Headers{}, "", id)
+	_, err := client.GetDataset(ctx, datasetSDK.Headers{}, id)
 	if err != nil {
 		if err.Error() == datasetErrors.ErrDatasetNotFound.Error() {
 			return nil

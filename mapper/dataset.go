@@ -28,10 +28,11 @@ func MapDatasetLandingPageToDatasetAPI(datasetID string, pageData zebedee.Datase
 		},
 		ID:       datasetID,
 		Keywords: pageData.Description.Keywords,
-		//TODO: confirm date format for zebedee and dataset API.
+		// Warning: NextRelease is a string in both Zebedee and Dataset API.
 		NextRelease: pageData.Description.NextRelease,
 		QMI:         getQMILink(pageData.RelatedMethodology),
 		Title:       pageData.Description.Title,
+		Type:        datasetModels.Static.String(),
 	}
 
 	return dataset, nil

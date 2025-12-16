@@ -14,13 +14,17 @@ import (
 
 // FakeAPI contains all the information for a fake component API
 type FakeAPI struct {
-	fakeHTTP *httpfake.HTTPFake
+	fakeHTTP             *httpfake.HTTPFake
+	datasetCreateHandler *httpfake.Request
 }
 
 // NewFakeAPI creates a new fake component API
 func NewFakeAPI() *FakeAPI {
+	fakeAPI := httpfake.New()
+
 	return &FakeAPI{
-		fakeHTTP: httpfake.New(),
+		fakeHTTP:             fakeAPI,
+		datasetCreateHandler: fakeAPI.NewHandler().Post("/datasets"),
 	}
 }
 
@@ -49,4 +53,23 @@ func (f *FakeAPI) setJSONResponseForGetDataset(id string, statusCode int) {
 	}
 
 	f.fakeHTTP.NewHandler().Get(path).Reply(statusCode).Body(body)
+}
+
+func (f *FakeAPI) setJSONResponseForCreateDataset(statusCode int) {
+	f.datasetCreateHandler.Lock()
+	defer f.datasetCreateHandler.Unlock()
+	var body []byte
+
+	switch statusCode {
+	case http.StatusInternalServerError:
+		body = []byte(datasetError.ErrInternalServer.Error())
+	case http.StatusCreated:
+		body = []byte(`{"_id": "new-dataset-id"}`)
+	}
+
+	createDatasetResponse := httpfake.NewResponse()
+	createDatasetResponse.Status(statusCode)
+	createDatasetResponse.Body(body)
+
+	f.datasetCreateHandler.Response = createDatasetResponse
 }
