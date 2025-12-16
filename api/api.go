@@ -44,15 +44,15 @@ func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService
 	)
 
 	api.get(
-		fmt.Sprintf("/v1/migration-jobs/{%s}", PathParameterJobID),
+		fmt.Sprintf("/v1/migration-jobs/{%s}", PathParameterJobNumber),
 		authMiddleware.Require("migrations:read", api.getJob),
 	)
 
-	api.get(fmt.Sprintf("/v1/migration-jobs/{%s}/tasks", PathParameterJobID),
+	api.get(fmt.Sprintf("/v1/migration-jobs/{%s}/tasks", PathParameterJobNumber),
 		authMiddleware.Require("migrations:read", paginator.Paginate(api.getJobTasks)),
 	)
 
-	api.get(fmt.Sprintf("/v1/migration-jobs/{%s}/events", PathParameterJobID),
+	api.get(fmt.Sprintf("/v1/migration-jobs/{%s}/events", PathParameterJobNumber),
 		authMiddleware.Require("migrations:read", paginator.Paginate(api.getJobEvents)),
 	)
 

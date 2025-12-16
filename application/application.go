@@ -15,7 +15,7 @@ import (
 //go:generate moq -out mock/jobservice.go -pkg mock . JobService
 type JobService interface {
 	CreateJob(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error)
-	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
+	GetJob(ctx context.Context, jobNumber string) (*domain.Job, error)
 	ClaimJob(ctx context.Context) (*domain.Job, error)
 	UpdateJobState(ctx context.Context, jobID string, newState domain.JobState) error
 	GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error)

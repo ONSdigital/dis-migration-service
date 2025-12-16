@@ -25,10 +25,11 @@ import (
 )
 
 const (
-	testJobID    = "job-123"
-	testSourceID = "/test-source-id"
-	testTargetID = "test-target-id"
-	testType     = domain.JobTypeStaticDataset
+	testJobID     = "job-123"
+	testSourceID  = "/test-source-id"
+	testTargetID  = "test-target-id"
+	testType      = domain.JobTypeStaticDataset
+	testJobNumber = "7"
 )
 
 var (
@@ -60,14 +61,14 @@ func TestGetJob(t *testing.T) {
 		api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 		Convey("When a valid request is made", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testJobNumber), http.NoBody)
 			resp := httptest.NewRecorder()
 
 			api.Router.ServeHTTP(resp, req)
 
 			Convey("Then a job is returned", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
-				So(resp.Body.String(), ShouldContainSubstring, testID)
+				So(resp.Body.String(), ShouldContainSubstring, testJobNumber)
 			})
 		})
 	})
@@ -491,7 +492,7 @@ func TestGetJobTasks(t *testing.T) {
 
 			// Build request and set empty mux var to simulate missing job id
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs//tasks", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: ""})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: ""})
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -510,7 +511,7 @@ func TestGetJobTasks(t *testing.T) {
 			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: "job-123"})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "job-123"})
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -530,7 +531,7 @@ func TestGetJobTasks(t *testing.T) {
 			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: "job-123"})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "job-123"})
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -558,7 +559,7 @@ func TestGetJobTasks(t *testing.T) {
 			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: testJobID})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -586,7 +587,7 @@ func TestGetJobTasks(t *testing.T) {
 			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: "job-123"})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "job-123"})
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -616,7 +617,7 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs//events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: ""})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: ""})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -640,7 +641,7 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: testJobID})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -665,7 +666,7 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: testJobID})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -715,7 +716,7 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: testJobID})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -750,7 +751,7 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: testJobID})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -789,7 +790,7 @@ func TestGetJobEvents(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events?limit=1&offset=1",
 				http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: testJobID})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called with limit 1 and offset 1", func() {
@@ -820,7 +821,7 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: testJobID})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -870,7 +871,7 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: testJobID})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -923,7 +924,7 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobID: testJobID})
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {

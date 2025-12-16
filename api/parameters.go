@@ -1,8 +1,8 @@
 package api
 
 const (
-	// PathParameterJobID is the name of the job ID path parameter.
-	PathParameterJobID = "job_id"
+	// PathParameterJobNumber is the name of the job number path parameter.
+	PathParameterJobNumber = "job_number"
 
 	// QueryParameterLimit is the name of the limit query parameter.
 	QueryParameterLimit = "limit"

@@ -36,7 +36,7 @@ var (
 	ErrJobNumberCounterNotFound  = errors.New("job number counter not found")
 	ErrJobNotFound               = errors.New("job not found")
 	ErrUnableToParseBody         = errors.New("unable to read submitted body")
-	ErrJobIDNotProvided          = errors.New("job ID not provided")
+	ErrJobNumberNotProvided      = errors.New("job Number not provided")
 	ErrSourceIDNotProvided       = errors.New("source ID not provided")
 	ErrTargetIDNotProvided       = errors.New("target ID not provided")
 	ErrJobTypeNotProvided        = errors.New("job type not provided")

@@ -16,9 +16,9 @@ import (
 func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
-	jobID := vars[PathParameterJobID]
+	jobNumber := vars[PathParameterJobNumber]
 
-	job, err := api.JobService.GetJob(ctx, jobID)
+	job, err := api.JobService.GetJob(ctx, jobNumber)
 	if err != nil {
 		if !errors.Is(err, appErrors.ErrJobNotFound) {
 			log.Error(ctx, "failed to get job", err)
@@ -27,7 +27,17 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bytes, err := json.Marshal(job)
+	// we don't want to include the Job ID in the API response, so this needs to be temporarily removed
+	jobResponse := domain.ResponseJob{
+		Config:      job.Config,
+		JobNumber:   job.JobNumber,
+		Label:       job.Label,
+		LastUpdated: job.LastUpdated,
+		Links:       job.Links,
+		State:       job.State,
+	}
+
+	bytes, err := json.Marshal(jobResponse)
 	if err != nil {
 		log.Error(ctx, "failed to marshal response", err)
 		handleError(ctx, w, r, err)
@@ -59,19 +69,19 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, 
 func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
-	jobID := vars[PathParameterJobID]
+	jobNumber := vars[PathParameterJobNumber]
 
-	if jobID == "" {
-		return nil, 0, appErrors.ErrJobIDNotProvided
+	if jobNumber == "" {
+		return nil, 0, appErrors.ErrJobNumberNotProvided
 	}
 
 	// Ensure job exists -> return 404 if not found
-	if _, err := api.JobService.GetJob(ctx, jobID); err != nil {
+	if _, err := api.JobService.GetJob(ctx, jobNumber); err != nil {
 		return nil, 0, err // This will return 404 if job not found
 	}
 
 	// Fetch tasks for the job
-	tasks, totalCount, err := api.JobService.GetJobTasks(ctx, jobID, limit, offset)
+	tasks, totalCount, err := api.JobService.GetJobTasks(ctx, jobNumber, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -129,6 +139,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	jobResponse := domain.ResponseJob{
 		Config:      job.Config,
 		JobNumber:   job.JobNumber,
+		Label:       job.Label,
 		LastUpdated: job.LastUpdated,
 		Links:       job.Links,
 		State:       job.State,
@@ -148,7 +159,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 func (api *MigrationAPI) getJobEvents(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
-	jobID := vars[PathParameterJobID]
+	jobID := vars[PathParameterJobNumber]
 
 	if jobID == "" {
 		return nil, 0, appErrors.ErrJobIDNotProvided
