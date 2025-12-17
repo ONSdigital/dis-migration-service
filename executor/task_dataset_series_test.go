@@ -16,6 +16,10 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+const (
+	testServiceAuthToken = "test-service-auth-token"
+)
+
 func TestDatasetSeriesTaskExecutor(t *testing.T) {
 	Convey("Given a dataset series task executor with a zebedee client mock that returns a dataset series and a dataset API client mock that creates datasets", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
@@ -51,7 +55,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
 
 		Convey("When migrate is called for a task", func() {
 			task := &domain.Task{
@@ -73,6 +77,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				Convey("And the datasetAPI is called to create a dataset", func() {
 					So(len(mockDatasetClient.CreateDatasetCalls()), ShouldEqual, 1)
 					So(mockDatasetClient.CreateDatasetCalls()[0].Dataset.ID, ShouldEqual, "target-dataset-id")
+					So(mockDatasetClient.CreateDatasetCalls()[0].Headers.AccessToken, ShouldEqual, testServiceAuthToken)
 
 					Convey("And an edition task is created for each dataset", func() {
 						So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 2)
@@ -107,7 +112,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
 
 		Convey("When migrate is called for a task", func() {
 			task := &domain.Task{
@@ -152,7 +157,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
 
 		Convey("When migrate is called for a task", func() {
 			task := &domain.Task{
@@ -205,7 +210,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
 
 		Convey("When migrate is called for a task", func() {
 			task := &domain.Task{
@@ -262,7 +267,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
 
 		Convey("When migrate is called for a task", func() {
 			task := &domain.Task{
@@ -316,7 +321,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
 
 		Convey("When migrate is called for a task", func() {
 			task := &domain.Task{
