@@ -562,7 +562,6 @@ func TestGetJobTasks(t *testing.T) {
 				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-
 				GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 					// return tasks as interface{} to match service signature used in handler
 					return mockTasks, len(mockTasks), nil
