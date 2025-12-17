@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"time"
 
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -19,20 +20,24 @@ type Datastore struct {
 type dataMongoDB interface {
 	// Jobs
 	CreateJob(ctx context.Context, job *domain.Job) error
+	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
+	GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
+	ClaimJob(ctx context.Context, pendingState domain.State, activeState domain.State) (*domain.Job, error)
+	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error)
 	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
-	GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error)
-	ClaimJob(ctx context.Context, pendingState domain.JobState, activeState domain.JobState) (*domain.Job, error)
-	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
+	GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
 	GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error)
 	UpdateJob(ctx context.Context, job *domain.Job) error
+	UpdateJobState(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error
 
 	// Tasks
 	CreateTask(ctx context.Context, task *domain.Task) error
 	GetTask(ctx context.Context, taskID string) (*domain.Task, error)
-	GetJobTasks(ctx context.Context, states []domain.TaskState, jobNumber int, limit, offset int) ([]*domain.Task, int, error)
+	ClaimTask(ctx context.Context, pendingState domain.State, activeState domain.State) (*domain.Task, error)
+	GetJobTasks(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error)
 	CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error)
 	UpdateTask(ctx context.Context, task *domain.Task) error
-	ClaimTask(ctx context.Context, pendingState domain.TaskState, activeState domain.TaskState) (*domain.Task, error)
+	UpdateTaskState(ctx context.Context, taskID string, newState domain.State, lastUpdated time.Time) error
 
 	// Events
 	CreateEvent(ctx context.Context, event *domain.Event) error
@@ -62,13 +67,18 @@ func (ds *Datastore) CreateJob(ctx context.Context, job *domain.Job) error {
 	return ds.Backend.CreateJob(ctx, job)
 }
 
+// UpdateJobState updates the state of a migration job.
+func (ds *Datastore) UpdateJobState(ctx context.Context, jobID string, newState domain.State, lastUpdated time.Time) error {
+	return ds.Backend.UpdateJobState(ctx, jobID, newState, lastUpdated)
+}
+
 // GetJob retrieves a job by its job number.
 func (ds *Datastore) GetJob(ctx context.Context, jobNumber int) (*domain.Job, error) {
 	return ds.Backend.GetJob(ctx, jobNumber)
 }
 
 // ClaimJob claims a pending job for processing.
-func (ds *Datastore) ClaimJob(ctx context.Context, pendingState, activeState domain.JobState) (*domain.Job, error) {
+func (ds *Datastore) ClaimJob(ctx context.Context, pendingState, activeState domain.State) (*domain.Job, error) {
 	return ds.Backend.ClaimJob(ctx, pendingState, activeState)
 }
 
@@ -78,13 +88,13 @@ func (ds *Datastore) UpdateJob(ctx context.Context, job *domain.Job) error {
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (ds *Datastore) GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
+func (ds *Datastore) GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 	return ds.Backend.GetJobs(ctx, states, limit, offset)
 }
 
-// GetJobsByConfigAndState retrieves jobs based on the provided job
+// GetJobsByConfigAndState retrieves jobs based on the provided job.
 // configuration and states.
-func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error) {
+func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error) {
 	return ds.Backend.GetJobsByConfigAndState(ctx, jc, states, limit, offset)
 }
 
@@ -93,23 +103,28 @@ func (ds *Datastore) CreateTask(ctx context.Context, task *domain.Task) error {
 	return ds.Backend.CreateTask(ctx, task)
 }
 
-// GetTask retrieves a migration task by its ID.
-func (ds *Datastore) GetTask(ctx context.Context, taskID string) (*domain.Task, error) {
-	return ds.Backend.GetTask(ctx, taskID)
-}
-
 // UpdateTask updates an existing migration task.
 func (ds *Datastore) UpdateTask(ctx context.Context, task *domain.Task) error {
 	return ds.Backend.UpdateTask(ctx, task)
 }
 
+// UpdateTaskState updates the state of a migration task.
+func (ds *Datastore) UpdateTaskState(ctx context.Context, taskID string, newState domain.State, lastUpdated time.Time) error {
+	return ds.Backend.UpdateTaskState(ctx, taskID, newState, lastUpdated)
+}
+
+// GetTask retrieves a migration task.
+func (ds *Datastore) GetTask(ctx context.Context, taskID string) (*domain.Task, error) {
+	return ds.Backend.GetTask(ctx, taskID)
+}
+
 // ClaimTask claims a pending task for processing.
-func (ds *Datastore) ClaimTask(ctx context.Context, pendingState, activeState domain.TaskState) (*domain.Task, error) {
+func (ds *Datastore) ClaimTask(ctx context.Context, pendingState, activeState domain.State) (*domain.Task, error) {
 	return ds.Backend.ClaimTask(ctx, pendingState, activeState)
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (ds *Datastore) GetJobTasks(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+func (ds *Datastore) GetJobTasks(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 	return ds.Backend.GetJobTasks(ctx, states, jobNumber, limit, offset)
 }
 

@@ -43,6 +43,11 @@ func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService
 		authMiddleware.Require("migrations:create", api.createJob),
 	)
 
+	api.put(
+		fmt.Sprintf("/v1/migration-jobs/{%s}/state", PathParameterJobID),
+		authMiddleware.Require("migrations:edit", api.updateJobState),
+	)
+
 	api.get(
 		fmt.Sprintf("/v1/migration-jobs/{%s}", PathParameterJobNumber),
 		authMiddleware.Require("migrations:read", api.getJob),

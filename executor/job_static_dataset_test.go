@@ -31,7 +31,7 @@ func TestJobStaticDataset(t *testing.T) {
 					SourceID: "source-dataset-id",
 					TargetID: "target-dataset-id",
 				},
-				State: domain.JobStateMigrating,
+				State: domain.StateMigrating,
 			}
 
 			err := executor.Migrate(ctx, job)
@@ -71,7 +71,7 @@ func TestJobStaticDataset(t *testing.T) {
 					SourceID: "source-dataset-id",
 					TargetID: "target-dataset-id",
 				},
-				State: domain.JobStateMigrating,
+				State: domain.StateMigrating,
 			}
 
 			err := executor.Migrate(ctx, job)

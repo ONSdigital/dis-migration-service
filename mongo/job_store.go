@@ -38,7 +38,7 @@ func (m *Mongo) GetJob(ctx context.Context, jobNumber int) (*domain.Job, error) 
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (m *Mongo) GetJobs(ctx context.Context, stateFilter []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
+func (m *Mongo) GetJobs(ctx context.Context, stateFilter []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 	var results []*domain.Job
 
 	filter := bson.M{}
@@ -61,7 +61,7 @@ func (m *Mongo) GetJobs(ctx context.Context, stateFilter []domain.JobState, limi
 
 // GetJobsByConfigAndState retrieves jobs based on the provided job
 // configuration and states.
-func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, stateFilter []domain.JobState, limit, offset int) ([]*domain.Job, error) {
+func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, stateFilter []domain.State, limit, offset int) ([]*domain.Job, error) {
 	var results []*domain.Job
 
 	_, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
@@ -81,7 +81,7 @@ func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfi
 }
 
 // GetJobsByState retrieves a list of migration jobs filtered by their states.
-func (m *Mongo) GetJobsByState(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
+func (m *Mongo) GetJobsByState(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 	var results []*domain.Job
 
 	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
@@ -98,7 +98,7 @@ func (m *Mongo) GetJobsByState(ctx context.Context, states []domain.JobState, li
 }
 
 // ClaimJob claims a pending job for processing.
-func (m *Mongo) ClaimJob(ctx context.Context, pendingState, activeState domain.JobState) (*domain.Job, error) {
+func (m *Mongo) ClaimJob(ctx context.Context, pendingState, activeState domain.State) (*domain.Job, error) {
 	var job domain.Job
 
 	filter := bson.M{"state": pendingState}
@@ -124,7 +124,7 @@ func (m *Mongo) ClaimJob(ctx context.Context, pendingState, activeState domain.J
 
 // GetJobsByConfig retrieves jobs based on the provided job configuration.
 func (m *Mongo) GetJobsByConfig(ctx context.Context, jc *domain.JobConfig, limit, offset int) ([]*domain.Job, error) {
-	return m.GetJobsByConfigAndState(ctx, jc, []domain.JobState{}, limit, offset)
+	return m.GetJobsByConfigAndState(ctx, jc, []domain.State{}, limit, offset)
 }
 
 // UpdateJob updates an existing migration job.
@@ -138,6 +138,36 @@ func (m *Mongo) UpdateJob(ctx context.Context, job *domain.Job) error {
 		return appErrors.ErrInternalServerError
 	}
 
+	if result.MatchedCount == 0 {
+		return appErrors.ErrJobNotFound
+	}
+
+	return nil
+}
+
+// UpdateJobState updates the state of a job and returns the updated job.
+func (m *Mongo) UpdateJobState(ctx context.Context, jobID string, newState domain.State, lastUpdated time.Time) error {
+	collectionName := m.ActualCollectionName(config.JobsCollectionTitle)
+
+	filter := bson.M{"_id": jobID}
+	update := bson.M{
+		"$set": bson.M{
+			"state":        newState,
+			"last_updated": lastUpdated,
+		},
+	}
+
+	// Update the document
+	result, err := m.Connection.Collection(collectionName).UpdateOne(
+		ctx,
+		filter,
+		update,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Check if a document was found and updated
 	if result.MatchedCount == 0 {
 		return appErrors.ErrJobNotFound
 	}

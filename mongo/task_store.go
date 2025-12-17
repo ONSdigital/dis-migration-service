@@ -54,8 +54,40 @@ func (m *Mongo) UpdateTask(ctx context.Context, task *domain.Task) error {
 	return nil
 }
 
+// UpdateTaskState updates the state of a task and returns the updated task.
+func (m *Mongo) UpdateTaskState(ctx context.Context, taskID string, newState domain.State, lastUpdated time.Time) error {
+	collectionName := m.ActualCollectionName(config.TasksCollectionTitle)
+
+	filter := bson.M{
+		"_id": taskID,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"state":        newState,
+			"last_updated": lastUpdated,
+		},
+	}
+
+	// Update the document
+	result, err := m.Connection.Collection(collectionName).UpdateOne(
+		ctx,
+		filter,
+		update,
+	)
+	if err != nil {
+		return appErrors.ErrInternalServerError
+	}
+
+	// Check if a document was found and updated
+	if result.MatchedCount == 0 {
+		return appErrors.ErrTaskNotFound
+	}
+
+	return nil
+}
+
 // ClaimTask claims a pending task for processing.
-func (m *Mongo) ClaimTask(ctx context.Context, pendingState, activeState domain.TaskState) (*domain.Task, error) {
+func (m *Mongo) ClaimTask(ctx context.Context, pendingState, activeState domain.State) (*domain.Task, error) {
 	var task domain.Task
 
 	filter := bson.M{"state": pendingState}
@@ -80,7 +112,7 @@ func (m *Mongo) ClaimTask(ctx context.Context, pendingState, activeState domain.
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (m *Mongo) GetJobTasks(ctx context.Context, stateFilter []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+func (m *Mongo) GetJobTasks(ctx context.Context, stateFilter []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 	var results []*domain.Task
 
 	filter := bson.M{"job_number": jobNumber}

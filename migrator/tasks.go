@@ -83,7 +83,7 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 
 		// err is left hanging here for the catch-all error handler below as the handling is the same for all task states
 		switch task.State {
-		case domain.TaskStateMigrating:
+		case domain.StateMigrating:
 			err = taskExecutor.Migrate(ctx, task)
 		default:
 			err = fmt.Errorf("unsupported task state: %s", task.State)
@@ -110,7 +110,7 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 func (mig *migrator) failTask(ctx context.Context, task *domain.Task) error {
 	logData := log.Data{"taskID": task.ID, "jobNumber": task.JobNumber, "taskState": task.State}
 
-	failureState, err := domain.GetFailureStateForTaskState(task.State)
+	failureState, err := domain.GetFailureStateForJobState(task.State)
 	if err != nil {
 		log.Error(ctx, "failed to get failure state for task state", err, log.Data{"taskState": task.State})
 		return err

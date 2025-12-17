@@ -2,10 +2,13 @@ package application
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
+	"github.com/ONSdigital/dis-migration-service/stateengine"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -17,12 +20,11 @@ type JobService interface {
 	CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error)
 	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	ClaimJob(ctx context.Context) (*domain.Job, error)
-	UpdateJobState(ctx context.Context, jobNumber int, newState domain.JobState) error
-	GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error)
-	GetJobTasks(ctx context.Context, states []domain.TaskState, jobNumber int, limit, offset int) ([]*domain.Task, int, error)
+	UpdateJobState(ctx context.Context, jobNumber int, newState domain.State) error
+	GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
+	GetJobTasks(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error)
 	CreateTask(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error)
-	UpdateTask(ctx context.Context, task *domain.Task) error
-	UpdateTaskState(ctx context.Context, taskID string, newState domain.TaskState) error
+	UpdateTaskState(ctx context.Context, taskID string, newState domain.State) error
 	ClaimTask(ctx context.Context) (*domain.Task, error)
 	CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error)
 	GetNextJobNumber(ctx context.Context) (*domain.Counter, error)
@@ -95,38 +97,37 @@ func (js *jobService) GetJob(ctx context.Context, jobNumber int) (*domain.Job, e
 }
 
 // UpdateJobState updates the state of a migration job.
-func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newState domain.JobState) error {
-	//TODO: validate state transition
+func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newState domain.State) error {
 	job, err := js.store.GetJob(ctx, jobNumber)
 	if err != nil {
 		return err
 	}
-	job.State = newState
 
-	err = js.store.UpdateJob(ctx, job)
+	if err := stateengine.ValidateTransition(job.State, newState); err != nil {
+		return err
+	}
+
+	now := time.Now().UTC()
+	err = js.store.UpdateJobState(ctx, id, newState, now)
 	if err != nil {
-		log.Error(ctx, "failed to update job", err, log.Data{
-			"job_id":    job.ID,
-			"new_state": newState,
-		})
-		return appErrors.ErrInternalServerError
+		return fmt.Errorf("failed to update job state: %w", err)
 	}
 
 	return nil
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (js *jobService) GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
+func (js *jobService) GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 	return js.store.GetJobs(ctx, states, limit, offset)
 }
 
 // ClaimJob claims a pending job for processing.
 func (js *jobService) ClaimJob(ctx context.Context) (*domain.Job, error) {
 	transitions := []struct {
-		from domain.JobState
-		to   domain.JobState
+		from domain.State
+		to   domain.State
 	}{
-		{from: domain.JobStateSubmitted, to: domain.JobStateMigrating},
+		{from: domain.StateSubmitted, to: domain.StateMigrating},
 	}
 
 	for _, tr := range transitions {
@@ -160,34 +161,23 @@ func (js *jobService) CreateTask(ctx context.Context, jobNumber int, task *domai
 	return task, nil
 }
 
-// UpdateTask updates a migration task.
-func (js *jobService) UpdateTask(ctx context.Context, task *domain.Task) error {
-	err := js.store.UpdateTask(ctx, task)
-	if err != nil {
-		log.Error(ctx, "failed to update task", err, log.Data{
-			"task_id": task.ID,
-		})
-		return appErrors.ErrInternalServerError
-	}
-
-	return nil
-}
-
 // UpdateTaskState updates the state of a migration task.
-func (js *jobService) UpdateTaskState(ctx context.Context, taskID string, newState domain.TaskState) error {
-	//TODO: validate state transition
+func (js *jobService) UpdateTaskState(ctx context.Context, taskID string, newState domain.State) error {
 	task, err := js.store.GetTask(ctx, taskID)
 	if err != nil {
 		return err
 	}
-	task.State = newState
-	err = js.store.UpdateTask(ctx, task)
+
+	// Validate state transition
+	if err := stateengine.ValidateTransition(task.State, newState); err != nil {
+		return err
+	}
+
+	// Update in database
+	now := time.Now().UTC()
+	err = js.store.UpdateTaskState(ctx, taskID, newState, now)
 	if err != nil {
-		log.Error(ctx, "failed to update task", err, log.Data{
-			"task_id":   task.ID,
-			"new_state": newState,
-		})
-		return appErrors.ErrInternalServerError
+		return fmt.Errorf("failed to update task state: %w", err)
 	}
 
 	return nil
@@ -196,10 +186,10 @@ func (js *jobService) UpdateTaskState(ctx context.Context, taskID string, newSta
 // ClaimTask claims a pending task for processing.
 func (js *jobService) ClaimTask(ctx context.Context) (*domain.Task, error) {
 	transitions := []struct {
-		from domain.TaskState
-		to   domain.TaskState
+		from domain.State
+		to   domain.State
 	}{
-		{from: domain.TaskStateSubmitted, to: domain.TaskStateMigrating},
+		{from: domain.StateSubmitted, to: domain.StateMigrating},
 	}
 
 	for _, tr := range transitions {
@@ -215,7 +205,7 @@ func (js *jobService) ClaimTask(ctx context.Context) (*domain.Task, error) {
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (js *jobService) GetJobTasks(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+func (js *jobService) GetJobTasks(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 	return js.store.GetJobTasks(ctx, states, jobNumber, limit, offset)
 }
 

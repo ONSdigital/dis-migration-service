@@ -145,11 +145,11 @@ func TestGetJob(t *testing.T) {
 func TestGetJobs(t *testing.T) {
 	Convey("Given a test API instance and a mocked jobservice that returns multiple jobs", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobsFunc: func(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 				jobs := []*domain.Job{
-					{ID: "job1", State: domain.JobStateSubmitted},
-					{ID: "job2", State: domain.JobStateApproved},
-					{ID: "job3", State: domain.JobStateCompleted},
+					{ID: "job1", State: domain.StateSubmitted},
+					{ID: "job2", State: domain.StateApproved},
+					{ID: "job3", State: domain.StateCompleted},
 				}
 				return jobs, len(jobs), nil
 			},
@@ -190,7 +190,7 @@ func TestGetJobs(t *testing.T) {
 
 				Convey("And the service is called with all states", func() {
 					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
-					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.JobState{})
+					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.State{})
 				})
 			})
 		})
@@ -250,7 +250,7 @@ func TestGetJobs(t *testing.T) {
 
 				Convey("And the service is called with the submitted state", func() {
 					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
-					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.JobState{domain.JobStateSubmitted})
+					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.State{domain.StateSubmitted})
 				})
 			})
 		})
@@ -265,7 +265,7 @@ func TestGetJobs(t *testing.T) {
 
 				Convey("And the service is called with both states", func() {
 					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
-					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.JobState{domain.JobStateSubmitted, domain.JobStateApproved})
+					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.State{domain.StateSubmitted, domain.StateApproved})
 				})
 			})
 		})
@@ -280,7 +280,7 @@ func TestGetJobs(t *testing.T) {
 
 				Convey("And the service is called with both states", func() {
 					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
-					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.JobState{domain.JobStateSubmitted, domain.JobStateApproved})
+					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.State{domain.StateSubmitted, domain.StateApproved})
 				})
 			})
 		})
@@ -303,7 +303,7 @@ func TestGetJobs(t *testing.T) {
 
 	Convey("Given a test API instance and a mocked jobservice that returns no jobs", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobsFunc: func(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 				return []*domain.Job{}, 0, nil
 			},
 		}
@@ -566,7 +566,7 @@ func TestGetJobTasks(t *testing.T) {
 					return &domain.Job{JobNumber: jobNumber}, nil
 				},
 
-				GetJobTasksFunc: func(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+				GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 					// return tasks as interface{} to match service signature used in handler
 					return mockTasks, len(mockTasks), nil
 				},
@@ -596,8 +596,7 @@ func TestGetJobTasks(t *testing.T) {
 				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-
-				GetJobTasksFunc: func(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+				GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 					return nil, 0, testErr
 				},
 			}
@@ -615,15 +614,15 @@ func TestGetJobTasks(t *testing.T) {
 
 		Convey("When a request for a job's tasks is made with a single valid state", func() {
 			mockTasks := []*domain.Task{
-				{ID: "t1", JobNumber: testJobNumber, State: domain.TaskStateSubmitted},
-				{ID: "t2", JobNumber: testJobNumber, State: domain.TaskStateSubmitted},
+				{ID: "t1", JobNumber: testJobNumber, State: domain.StateSubmitted},
+				{ID: "t2", JobNumber: testJobNumber, State: domain.StateSubmitted},
 			}
 
 			mockService := applicationMock.JobServiceMock{
 				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobTasksFunc: func(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+				GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 					return mockTasks, len(mockTasks), nil
 				},
 			}
@@ -640,7 +639,7 @@ func TestGetJobTasks(t *testing.T) {
 
 				Convey("And the service is called with the submitted state", func() {
 					So(len(mockService.GetJobTasksCalls()), ShouldEqual, 1)
-					So(mockService.GetJobTasksCalls()[0].States, ShouldResemble, []domain.TaskState{domain.TaskStateSubmitted})
+					So(mockService.GetJobTasksCalls()[0].States, ShouldResemble, []domain.State{domain.StateSubmitted})
 				})
 			})
 		})
@@ -655,7 +654,7 @@ func TestGetJobTasks(t *testing.T) {
 				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobTasksFunc: func(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+				GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 					return mockTasks, len(mockTasks), nil
 				},
 			}
@@ -672,22 +671,22 @@ func TestGetJobTasks(t *testing.T) {
 
 				Convey("And the service is called with both states", func() {
 					So(len(mockService.GetJobTasksCalls()), ShouldEqual, 1)
-					So(mockService.GetJobTasksCalls()[0].States, ShouldResemble, []domain.TaskState{domain.TaskStateSubmitted, domain.TaskStateApproved})
+					So(mockService.GetJobTasksCalls()[0].States, ShouldResemble, []domain.State{domain.StateSubmitted, domain.StateApproved})
 				})
 			})
 		})
 
 		Convey("When a request for a job's tasks is made with an invalid state", func() {
 			mockTasks := []*domain.Task{
-				{ID: "t1", JobNumber: testJobNumber, State: domain.TaskStateApproved},
-				{ID: "t2", JobNumber: testJobNumber, State: domain.TaskStateApproved},
+				{ID: "t1", JobNumber: testJobNumber, State: domain.StateApproved},
+				{ID: "t2", JobNumber: testJobNumber, State: domain.StateApproved},
 			}
 
 			mockService := applicationMock.JobServiceMock{
 				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobTasksFunc: func(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+				GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 					return mockTasks, len(mockTasks), nil
 				},
 			}

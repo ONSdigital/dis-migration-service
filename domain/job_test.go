@@ -25,7 +25,7 @@ func TestNewJob(t *testing.T) {
 
 			Convey("Then a valid job should be returned", func() {
 				So(job.Config, ShouldResemble, &jobConfig)
-				So(job.State, ShouldEqual, JobStateSubmitted)
+				So(job.State, ShouldEqual, StateSubmitted)
 				So(job.Label, ShouldEqual, label)
 				So(uuid.Validate(job.ID), ShouldBeNil)
 				So(job.Links.Self.HRef, ShouldEqual, fmt.Sprintf("/v1/migration-jobs/%d", job.JobNumber))

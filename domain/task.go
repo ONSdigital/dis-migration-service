@@ -14,7 +14,7 @@ type Task struct {
 	JobNumber   int           `json:"job_number" bson:"job_number"`
 	LastUpdated time.Time     `json:"last_updated" bson:"last_updated"`
 	Source      *TaskMetadata `json:"source" bson:"source"`
-	State       TaskState     `json:"state" bson:"state"`
+	State       State         `json:"state" bson:"state"`
 	Target      *TaskMetadata `json:"target" bson:"target"`
 	Type        TaskType      `json:"type" bson:"type"`
 	Links       TaskLinks     `json:"links" bson:"links"`
@@ -31,7 +31,7 @@ func NewTask(jobNumber int) Task {
 		JobNumber:   jobNumber,
 		LastUpdated: time.Now().UTC(),
 		Links:       links,
-		State:       TaskStateSubmitted,
+		State:       StateSubmitted,
 	}
 }
 
