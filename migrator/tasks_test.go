@@ -30,7 +30,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 			},
 		}
 
-		getTaskExecutors = func(_ application.JobService, _ *clients.ClientList) map[domain.TaskType]executor.TaskExecutor {
+		getTaskExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.TaskType]executor.TaskExecutor {
 			return map[domain.TaskType]executor.TaskExecutor{
 				fakeTaskType: mockTestExecutor,
 			}
@@ -88,7 +88,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 	})
 
 	Convey("Given a migrator with no executors", t, func() {
-		getTaskExecutors = func(_ application.JobService, _ *clients.ClientList) map[domain.TaskType]executor.TaskExecutor {
+		getTaskExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.TaskType]executor.TaskExecutor {
 			return map[domain.TaskType]executor.TaskExecutor{}
 		}
 
@@ -133,7 +133,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 			},
 		}
 
-		getTaskExecutors = func(_ application.JobService, _ *clients.ClientList) map[domain.TaskType]executor.TaskExecutor {
+		getTaskExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.TaskType]executor.TaskExecutor {
 			return map[domain.TaskType]executor.TaskExecutor{
 				fakeTaskType: mockTaskExecutor,
 			}
@@ -275,7 +275,7 @@ func TestGetTaskExecutor(t *testing.T) {
 	Convey("Given a migrator with test executors", t, func() {
 		mockTaskExecutor := &executorMocks.TaskExecutorMock{}
 
-		getTaskExecutors = func(_ application.JobService, _ *clients.ClientList) map[domain.TaskType]executor.TaskExecutor {
+		getTaskExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.TaskType]executor.TaskExecutor {
 			return map[domain.TaskType]executor.TaskExecutor{
 				fakeTaskType: mockTaskExecutor,
 			}
@@ -329,8 +329,10 @@ func TestGetTaskExecutors(t *testing.T) {
 
 		mockClients := &clients.ClientList{}
 
+		cfg := &config.Config{}
+
 		Convey("When getTaskExecutors is called", func() {
-			executors := getTaskExecutors(mockJobService, mockClients)
+			executors := getTaskExecutors(mockJobService, mockClients, cfg)
 
 			Convey("Then a map of task executors is returned", func() {
 				So(executors, ShouldNotBeNil)
@@ -403,7 +405,7 @@ func TestMonitorTasks(t *testing.T) {
 			},
 		}
 
-		getTaskExecutors = func(_ application.JobService, _ *clients.ClientList) map[domain.TaskType]executor.TaskExecutor {
+		getTaskExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.TaskType]executor.TaskExecutor {
 			return map[domain.TaskType]executor.TaskExecutor{
 				fakeTaskType: mockTaskExecutor,
 			}

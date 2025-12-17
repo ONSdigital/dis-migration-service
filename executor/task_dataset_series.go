@@ -13,15 +13,17 @@ import (
 
 // DatasetSeriesTaskExecutor executes migration tasks for dataset series.
 type DatasetSeriesTaskExecutor struct {
-	jobService application.JobService
-	clientList *clients.ClientList
+	jobService       application.JobService
+	clientList       *clients.ClientList
+	serviceAuthToken string
 }
 
 // NewDatasetSeriesTaskExecutor creates a new DatasetSeriesTaskExecutor
-func NewDatasetSeriesTaskExecutor(jobService application.JobService, clientList *clients.ClientList) *DatasetSeriesTaskExecutor {
+func NewDatasetSeriesTaskExecutor(jobService application.JobService, clientList *clients.ClientList, serviceAuthToken string) *DatasetSeriesTaskExecutor {
 	return &DatasetSeriesTaskExecutor{
-		jobService: jobService,
-		clientList: clientList,
+		jobService:       jobService,
+		clientList:       clientList,
+		serviceAuthToken: serviceAuthToken,
 	}
 }
 
@@ -43,7 +45,11 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 		return err
 	}
 
-	_, err = e.clientList.DatasetAPI.CreateDataset(ctx, sdk.Headers{}, *targetData)
+	headers := sdk.Headers{
+		AccessToken: e.serviceAuthToken,
+	}
+
+	_, err = e.clientList.DatasetAPI.CreateDataset(ctx, headers, *targetData)
 	if err != nil {
 		log.Error(ctx, "failed to create target dataset in dataset API", err, logData)
 		return err

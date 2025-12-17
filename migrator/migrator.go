@@ -28,7 +28,7 @@ type migrator struct {
 // provided job service and clients
 func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, appClients *clients.ClientList) *migrator {
 	jobExecutors := getJobExecutors(jobService, appClients)
-	taskExecutors := getTaskExecutors(jobService, appClients)
+	taskExecutors := getTaskExecutors(jobService, appClients, cfg)
 
 	return &migrator{
 		jobService:    jobService,
