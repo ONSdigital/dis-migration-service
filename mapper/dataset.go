@@ -34,7 +34,10 @@ func MapDatasetLandingPageToDatasetAPI(datasetID string, pageData zebedee.Datase
 		NextRelease: pageData.Description.NextRelease,
 		QMI:         getQMILink(pageData.RelatedMethodology),
 		Title:       pageData.Description.Title,
-		Type:        datasetModels.Static.String(),
+		//TODO: populate topics correctly - dataset api expects a list of topic ids
+		// and so this has been hardcoded for now.
+		Topics: []string{"not a real topic"},
+		Type:   datasetModels.Static.String(),
 	}
 
 	return dataset, nil
