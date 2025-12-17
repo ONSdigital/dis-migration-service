@@ -12,7 +12,7 @@ type Job struct {
 	ID          string     `json:"id" bson:"_id"`
 	Label       string     `json:"label" bson:"label"`
 	LastUpdated time.Time  `json:"last_updated" bson:"last_updated"`
-	State       JobState   `json:"state" bson:"state"`
+	State       State      `json:"state" bson:"state"`
 	Config      *JobConfig `json:"config" bson:"config"`
 	Links       JobLinks   `json:"links" bson:"links"`
 }
@@ -36,7 +36,7 @@ func NewJob(cfg *JobConfig, label string) Job {
 		Label:       label,
 		LastUpdated: time.Now().UTC(),
 		Links:       links,
-		State:       JobStateSubmitted,
+		State:       StateSubmitted,
 	}
 }
 

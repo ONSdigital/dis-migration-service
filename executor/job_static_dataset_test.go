@@ -31,7 +31,7 @@ func TestJobStaticDataset(t *testing.T) {
 					SourceID: "source-dataset-id",
 					TargetID: "target-dataset-id",
 				},
-				State: domain.JobStateMigrating,
+				State: domain.StateMigrating,
 			}
 
 			err := executor.Migrate(ctx, job)
@@ -54,9 +54,6 @@ func TestJobStaticDataset(t *testing.T) {
 			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
 				return nil, errors.New("create task error")
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobID string, state domain.JobState) error {
-				return nil
-			},
 		}
 		mockClientList := &clients.ClientList{}
 
@@ -71,7 +68,7 @@ func TestJobStaticDataset(t *testing.T) {
 					SourceID: "source-dataset-id",
 					TargetID: "target-dataset-id",
 				},
-				State: domain.JobStateMigrating,
+				State: domain.StateMigrating,
 			}
 
 			err := executor.Migrate(ctx, job)
