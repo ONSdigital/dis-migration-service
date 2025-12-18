@@ -8,14 +8,15 @@ import (
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
+	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/executor"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
-var getTaskExecutors = func(jobService application.JobService, appClients *clients.ClientList) map[domain.TaskType]executor.TaskExecutor {
+var getTaskExecutors = func(jobService application.JobService, appClients *clients.ClientList, cfg *config.Config) map[domain.TaskType]executor.TaskExecutor {
 	taskExecutors := make(map[domain.TaskType]executor.TaskExecutor)
-	taskExecutors[domain.TaskTypeDatasetSeries] = executor.NewDatasetSeriesTaskExecutor(jobService, appClients)
+	taskExecutors[domain.TaskTypeDatasetSeries] = executor.NewDatasetSeriesTaskExecutor(jobService, appClients, cfg.ServiceAuthToken)
 	taskExecutors[domain.TaskTypeDatasetEdition] = executor.NewDatasetEditionTaskExecutor(jobService, appClients)
 	return taskExecutors
 }

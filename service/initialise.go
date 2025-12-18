@@ -138,7 +138,7 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 		log.Info(ctx, "returning mock app clients")
 		return &clients.ClientList{
 			DatasetAPI: &datasetAPIMocks.ClienterMock{
-				GetDatasetFunc: func(ctx context.Context, headers datasetAPI.Headers, collectionID string, datasetID string) (datasetModels.Dataset, error) {
+				GetDatasetFunc: func(ctx context.Context, headers datasetAPI.Headers, datasetID string) (datasetModels.Dataset, error) {
 					return datasetModels.Dataset{}, datasetErrors.ErrDatasetNotFound
 				},
 			},

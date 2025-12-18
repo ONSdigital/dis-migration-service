@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 )
@@ -28,10 +29,15 @@ func MapDatasetLandingPageToDatasetAPI(datasetID string, pageData zebedee.Datase
 		},
 		ID:       datasetID,
 		Keywords: pageData.Description.Keywords,
-		//TODO: confirm date format for zebedee and dataset API.
+		License:  domain.OpenGovermentLicence,
+		// Warning: NextRelease is a string in both Zebedee and Dataset API.
 		NextRelease: pageData.Description.NextRelease,
 		QMI:         getQMILink(pageData.RelatedMethodology),
 		Title:       pageData.Description.Title,
+		//TODO: populate topics correctly - dataset api expects a list of topic ids
+		// and so this has been hardcoded for now.
+		Topics: []string{"not a real topic"},
+		Type:   datasetModels.Static.String(),
 	}
 
 	return dataset, nil

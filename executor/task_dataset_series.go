@@ -6,20 +6,24 @@ import (
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	"github.com/ONSdigital/dis-migration-service/mapper"
+	"github.com/ONSdigital/dp-dataset-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // DatasetSeriesTaskExecutor executes migration tasks for dataset series.
 type DatasetSeriesTaskExecutor struct {
-	jobService application.JobService
-	clientList *clients.ClientList
+	jobService       application.JobService
+	clientList       *clients.ClientList
+	serviceAuthToken string
 }
 
 // NewDatasetSeriesTaskExecutor creates a new DatasetSeriesTaskExecutor
-func NewDatasetSeriesTaskExecutor(jobService application.JobService, clientList *clients.ClientList) *DatasetSeriesTaskExecutor {
+func NewDatasetSeriesTaskExecutor(jobService application.JobService, clientList *clients.ClientList, serviceAuthToken string) *DatasetSeriesTaskExecutor {
 	return &DatasetSeriesTaskExecutor{
-		jobService: jobService,
-		clientList: clientList,
+		jobService:       jobService,
+		clientList:       clientList,
+		serviceAuthToken: serviceAuthToken,
 	}
 }
 
@@ -29,10 +33,47 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 
 	log.Info(ctx, "starting migration for dataset series task", logData)
 
-	//TODO: add dataset series migration logic
-	task.State = domain.TaskStateInReview
+	sourceData, err := e.clientList.Zebedee.GetDatasetLandingPage(ctx, "", "", "en", task.Source.ID)
+	if err != nil {
+		log.Error(ctx, "failed to get source dataset data from zebedee", err, logData)
+		return err
+	}
 
-	err := e.jobService.UpdateTask(ctx, task)
+	targetData, err := mapper.MapDatasetLandingPageToDatasetAPI(task.Target.ID, sourceData)
+	if err != nil {
+		log.Error(ctx, "failed to map dataset landing page to dataset API model", err, logData)
+		return err
+	}
+
+	headers := sdk.Headers{
+		AccessToken: e.serviceAuthToken,
+	}
+
+	_, err = e.clientList.DatasetAPI.CreateDataset(ctx, headers, *targetData)
+	if err != nil {
+		log.Error(ctx, "failed to create target dataset in dataset API", err, logData)
+		return err
+	}
+
+	for _, edition := range sourceData.Datasets {
+		editionTask := domain.NewTask(task.JobID)
+
+		editionTask.Type = domain.TaskTypeDatasetEdition
+		editionTask.Source = &domain.TaskMetadata{
+			ID: edition.URI,
+		}
+		editionTask.Target = &domain.TaskMetadata{
+			DatasetID: task.Target.ID,
+		}
+
+		_, err := e.jobService.CreateTask(ctx, task.JobID, &editionTask)
+		if err != nil {
+			log.Error(ctx, "failed to create migration task", err, log.Data{"jobID": task.JobID, "task": editionTask})
+			return err
+		}
+	}
+
+	err = e.jobService.UpdateTaskState(ctx, task.ID, domain.TaskStateInReview)
 	if err != nil {
 		log.Error(ctx, "failed to update migration task", err, logData)
 		return err

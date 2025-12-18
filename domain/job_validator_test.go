@@ -68,7 +68,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 	}
 
 	datasetAPIMock := &datasetMocks.ClienterMock{
-		GetDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, collectionID, datasetID string) (datasetModels.Dataset, error) {
+		GetDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID string) (datasetModels.Dataset, error) {
 			switch datasetID {
 			case datasetErrorID:
 				return datasetModels.Dataset{}, errors.New("unexpected error")
