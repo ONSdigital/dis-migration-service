@@ -56,7 +56,7 @@ Feature: Migrate a static dataset job
       """
       {
         "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
-        "state": "migrating",
+        "state": "in_review",
         "last_updated": "{{DYNAMIC_TIMESTAMP}}",
         "config": {
           "source_id": "/test-static-dataset-job",
