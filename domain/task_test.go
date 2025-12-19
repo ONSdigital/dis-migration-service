@@ -40,7 +40,7 @@ func TestNewTask(t *testing.T) {
 			Convey("Then a Task should be returned with the correct fields set", func() {
 				So(task.ID, ShouldNotBeEmpty)
 				So(task.JobID, ShouldEqual, jobID)
-				So(task.State, ShouldEqual, domain.TaskStateSubmitted)
+				So(task.State, ShouldEqual, domain.StateSubmitted)
 				So(task.Links.Self.HRef, ShouldEqual,
 					"/v1/migration-jobs/job-456/tasks/"+task.ID)
 				So(task.Links.Job.HRef, ShouldEqual,
