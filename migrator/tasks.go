@@ -105,6 +105,15 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 				log.Error(ctx, "failed to mark job as failed after task execution error", failErr, log.Data{"taskID": task.ID, "taskState": task.State, "jobNumber": task.JobNumber})
 			}
 		}
+
+		// Success: Check if all tasks are complete and update job state if needed
+		checkErr := mig.TriggerJobStateTransitions(ctx, task.JobID)
+		if checkErr != nil {
+			log.Error(ctx, "error checking job state transition", checkErr, log.Data{
+				"taskID": task.ID, "jobID": task.JobID,
+			})
+			// Log but don't fail - the job can be checked again later
+		}
 	}()
 }
 

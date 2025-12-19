@@ -100,6 +100,21 @@ func TestMigratorExecuteTask(t *testing.T) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
+			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				return &domain.Job{
+					ID:    jobID,
+					State: domain.StateMigrating,
+				}, nil
+			},
+			UpdateJobStateFunc: func(ctx context.Context, jobID string, newState domain.State) error {
+				return nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+				return []*domain.Task{}, 0, nil
+			},
+			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+				return 1, nil
+			},
 		}
 
 		mockClients := &clients.ClientList{}
@@ -307,7 +322,7 @@ func TestGetTaskExecutor(t *testing.T) {
 			})
 		})
 
-		Convey("When getJobExecutor is called for a job with an unknown type", func() {
+		Convey("When getTaskExecutor is called for a task with an unknown type", func() {
 			task := &domain.Task{
 				Type: "unknown-task-type",
 			}
@@ -367,7 +382,6 @@ func TestMonitorTasks(t *testing.T) {
 				mig.monitorTasks(ctx)
 			}()
 
-			// Allow some time for the monitor to run
 			time.Sleep(25 * time.Millisecond)
 			cancel()
 
@@ -389,9 +403,23 @@ func TestMonitorTasks(t *testing.T) {
 						State: domain.StateMigrating,
 						Type:  fakeTaskType,
 					}, nil
-				} else {
-					return nil, nil
 				}
+				return nil, nil
+			},
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.State) error {
+				return nil
+			},
+			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				return &domain.Job{
+					ID:    jobID,
+					State: domain.StateMigrating,
+				}, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+				return []*domain.Task{}, 0, nil
+			},
+			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+				return 1, nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
@@ -425,7 +453,6 @@ func TestMonitorTasks(t *testing.T) {
 				mig.monitorTasks(ctx)
 			}()
 
-			// Allow some time for the monitor to run
 			time.Sleep(25 * time.Millisecond)
 			cancel()
 
