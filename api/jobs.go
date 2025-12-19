@@ -185,107 +185,79 @@ func (api *MigrationAPI) getJobEvents(w http.ResponseWriter, r *http.Request, li
 	return events, totalCount, nil
 }
 
-func (api *MigrationAPI) updateJobState(w http.ResponseWriter, r *http.Request) {
+// updateJobState handles requests to update the state of a migration job.
+func (api *MigrationAPI) updateJobState(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	ctx := r.Context()
-	vars := mux.Vars(r)
-	jobID := vars[PathParameterJobID]
+	jobID := mux.Vars(r)[PathParameterJobID]
 
-	// Parse request body
+	// Base log context reused throughout the handler
+	logData := log.Data{
+		"job_id": jobID,
+	}
+
+	// Read request body
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Info(ctx, "unable to read body")
+		log.Warn(ctx, "unable to read request body", logData)
 		handleError(ctx, w, r, appErrors.ErrUnableToParseBody)
 		return
 	}
 
 	var req StateChangeRequest
 	if err := json.Unmarshal(bodyBytes, &req); err != nil {
-		log.Info(ctx, "failed to decode request body", log.Data{"job_id": jobID})
+		log.Warn(ctx, "failed to decode request body", logData)
 		handleError(ctx, w, r, appErrors.ErrUnableToParseBody)
 		return
 	}
 
-	// Validate state is a known valid state
+	// Add requested state to log context once parsed
+	logData["requested_state"] = req.State
+
+	// Validate state is known
 	if !domain.IsValidState(req.State) {
-		log.Warn(
-			ctx,
-			"invalid state provided",
-			log.Data{
-				"job_id":         jobID,
-				"provided_state": req.State,
-			},
-		)
+		log.Warn(ctx, "invalid state provided", logData)
 		handleError(ctx, w, r, appErrors.ErrJobStateInvalid)
 		return
 	}
 
-	// Validate state is one of the allowed states for this endpoint
+	// Validate state is allowed for this endpoint
 	if !stateengine.IsAllowedStateForJobUpdate(req.State) {
-		log.Warn(
-			ctx,
-			"state not allowed for this endpoint",
-			log.Data{
-				"job_id":         jobID,
-				"provided_state": req.State,
-			},
-		)
+		log.Warn(ctx, "state not allowed for this endpoint", logData)
 		handleError(ctx, w, r, appErrors.ErrJobStateNotAllowed)
 		return
 	}
 
-	// Get current job to check if it exists
+	// Get current job
 	job, err := api.JobService.GetJob(ctx, jobID)
 	if err != nil {
 		if !errors.Is(err, appErrors.ErrJobNotFound) {
-			log.Error(ctx, "failed to get job", err, log.Data{"job_id": jobID})
+			log.Error(ctx, "failed to get job", err, logData)
 		}
 		handleError(ctx, w, r, err)
 		return
 	}
+
+	// Add current state once job is known
+	logData["current_state"] = job.State
 
 	// Attempt state transition
 	err = api.JobService.UpdateJobState(ctx, jobID, req.State)
 	if err != nil {
-		// Check if it's a state transition error
 		var transitionErr *stateengine.TransitionError
 		if errors.As(err, &transitionErr) {
-			log.Warn(
-				ctx,
-				"invalid state transition",
-				log.Data{
-					"job_id":     jobID,
-					"from_state": job.State,
-					"to_state":   req.State,
-					"error":      err.Error(),
-				},
-			)
+			log.Warn(ctx, "invalid state transition", logData)
 			handleError(ctx, w, r, appErrors.ErrJobStateTransitionNotAllowed)
 			return
 		}
 
-		log.Error(
-			ctx,
-			"failed to update job state",
-			err,
-			log.Data{
-				"job_id":     jobID,
-				"from_state": job.State,
-				"to_state":   req.State,
-			},
-		)
+		log.Error(ctx, "failed to update job state", err, logData)
 		handleError(ctx, w, r, err)
 		return
 	}
 
-	// Success - return 204 No Content
-	log.Info(
-		ctx,
-		"job state updated successfully",
-		log.Data{
-			"job_id":     jobID,
-			"from_state": job.State,
-			"to_state":   req.State,
-		},
-	)
+	log.Info(ctx, "job state updated successfully", logData)
 	w.WriteHeader(http.StatusNoContent)
 }
