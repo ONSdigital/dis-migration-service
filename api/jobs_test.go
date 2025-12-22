@@ -486,7 +486,7 @@ func TestGetJobTasks(t *testing.T) {
 		ctx := context.Background()
 		cfg := &config.Config{}
 
-		Convey("missing job id should return ErrJobIDNotProvided", func() {
+		Convey("missing job number should return ErrJobNumberNotProvided", func() {
 			mockService := applicationMock.JobServiceMock{}
 			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
@@ -499,7 +499,7 @@ func TestGetJobTasks(t *testing.T) {
 			So(items, ShouldBeNil)
 			So(total, ShouldEqual, 0)
 			So(err, ShouldNotBeNil)
-			So(err, ShouldEqual, appErrors.ErrJobIDNotProvided)
+			So(err, ShouldEqual, appErrors.ErrJobNumberNotProvided)
 		})
 
 		Convey("job not found should return ErrJobNotFound", func() {
@@ -623,10 +623,10 @@ func TestGetJobEvents(t *testing.T) {
 			Convey("When getJobEvents is called", func() {
 				items, total, err := api.getJobEvents(rr, req, 10, 0)
 
-				Convey("Then it returns ErrJobIDNotProvided", func() {
+				Convey("Then it returns ErrJobNumberNotProvided", func() {
 					So(items, ShouldBeNil)
 					So(total, ShouldEqual, 0)
-					So(err, ShouldEqual, appErrors.ErrJobIDNotProvided)
+					So(err, ShouldEqual, appErrors.ErrJobNumberNotProvided)
 				})
 			})
 		})

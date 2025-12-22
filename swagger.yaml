@@ -256,7 +256,7 @@ parameters:
     in: path
     name: job_number
     description: "Unique human-readable identifier for a migration job"
-    type: string
+    type: integer
     required: true
   limit:
     name: limit
@@ -425,8 +425,8 @@ definitions:
     type: object
     properties:
       job_number:
-        type: string
-        example: "550e8400-e29b-41d4-a716-446655440000"
+        type: integer
+        example: 20
       last_updated:
         type: string
         format: date-time
@@ -445,7 +445,7 @@ definitions:
               href:
                 description: "A fully qualified URL to the migration job's events API response"
                 type: string
-                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/550e8400-e29b-41d4-a716-446655440000/events"
+                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/20/events"
           self:
             description: "A link to the individual migration job"
             type: object
@@ -453,10 +453,10 @@ definitions:
               href:
                 description: "A fully qualified URL to the migration job API response"
                 type: string
-                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/1"
+                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/20"
               job_number:
-
-                type: string
+                type: integer
+                example: 20
           tasks:
             description: "A link to all the tasks for the migration job"
             type: object
@@ -464,7 +464,7 @@ definitions:
               href:
                 description: "A fully qualified URL to the migration job's tasks API response"
                 type: string
-                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/550e8400-e29b-41d4-a716-446655440000/tasks"
+                example: "https://api.beta.ons.gov.uk/v1/migration-jobs/20/tasks"
       config:
         description: "Config for the job"
         $ref: "#/definitions/MigrationJobConfig"

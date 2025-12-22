@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,7 +39,7 @@ type JobLinks struct {
 func NewJob(cfg *JobConfig, jobNumber int, label string) Job {
 	id := uuid.New().String()
 
-	links := NewJobLinks(id)
+	links := NewJobLinks(strconv.Itoa(jobNumber))
 
 	return Job{
 		Config:      cfg,
@@ -52,10 +53,10 @@ func NewJob(cfg *JobConfig, jobNumber int, label string) Job {
 }
 
 // NewJobLinks creates JobLinks for a job with the given ID
-func NewJobLinks(id string) JobLinks {
+func NewJobLinks(jobNumber string) JobLinks {
 	return JobLinks{
 		Self: &LinkObject{
-			HRef: fmt.Sprintf("/v1/migration-jobs/%s", id),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s", jobNumber),
 		},
 	}
 }

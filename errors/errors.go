@@ -59,7 +59,7 @@ var (
 	StatusCodeMap = map[error]int{
 		ErrJobNotFound:               http.StatusNotFound,
 		ErrUnableToParseBody:         http.StatusBadRequest,
-		ErrJobIDNotProvided:          http.StatusBadRequest,
+		ErrJobNumberNotProvided:      http.StatusBadRequest,
 		ErrSourceIDNotProvided:       http.StatusBadRequest,
 		ErrTargetIDNotProvided:       http.StatusBadRequest,
 		ErrJobTypeNotProvided:        http.StatusBadRequest,

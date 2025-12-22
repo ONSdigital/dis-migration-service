@@ -12,7 +12,7 @@ require (
 	github.com/ONSdigital/dp-dataset-api v1.90.0
 	github.com/ONSdigital/dp-files-api v1.14.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
-	github.com/ONSdigital/dp-mongodb/v3 v3.10.0
+	github.com/ONSdigital/dp-mongodb/v3 v3.11.0
 	github.com/ONSdigital/dp-net/v2 v2.22.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
 	github.com/ONSdigital/dp-upload-service v1.12.0

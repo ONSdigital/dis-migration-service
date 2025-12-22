@@ -135,7 +135,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// we don't want to include the Job ID in the API response, so this needs to be temporarily removed
+	// we don't want to include the Job ID in the API response (although we DO want to include it in the data store)
 	jobResponse := domain.ResponseJob{
 		Config:      job.Config,
 		JobNumber:   job.JobNumber,
@@ -159,19 +159,19 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 func (api *MigrationAPI) getJobEvents(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
-	jobID := vars[PathParameterJobNumber]
+	jobNumber := vars[PathParameterJobNumber]
 
-	if jobID == "" {
-		return nil, 0, appErrors.ErrJobIDNotProvided
+	if jobNumber == "" {
+		return nil, 0, appErrors.ErrJobNumberNotProvided
 	}
 
 	// Ensure job exists -> return 404 if not found
-	if _, err := api.JobService.GetJob(ctx, jobID); err != nil {
+	if _, err := api.JobService.GetJob(ctx, jobNumber); err != nil {
 		return nil, 0, err
 	}
 
 	// Fetch events for the job
-	events, totalCount, err := api.JobService.GetJobEvents(ctx, jobID, limit, offset)
+	events, totalCount, err := api.JobService.GetJobEvents(ctx, jobNumber, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
