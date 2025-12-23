@@ -21,10 +21,10 @@ func (m *Mongo) CreateEvent(ctx context.Context, event *domain.Event) error {
 }
 
 // GetJobEvents retrieves a list of migration events for a job with pagination.
-func (m *Mongo) GetJobEvents(ctx context.Context, jobID string, limit, offset int) ([]*domain.Event, int, error) {
+func (m *Mongo) GetJobEvents(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Event, int, error) {
 	var results []*domain.Event
 
-	filter := bson.M{"job_id": jobID}
+	filter := bson.M{"job_number": jobNumber}
 
 	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.EventsCollectionTitle)).
 		Find(
@@ -43,9 +43,9 @@ func (m *Mongo) GetJobEvents(ctx context.Context, jobID string, limit, offset in
 	return results, totalCount, nil
 }
 
-// CountEventsByJobID returns the total count of events for a job.
-func (m *Mongo) CountEventsByJobID(ctx context.Context, jobID string) (int, error) {
-	filter := bson.M{"job_id": jobID}
+// CountEventsByJobNumber returns the total count of events for a job.
+func (m *Mongo) CountEventsByJobNumber(ctx context.Context, jobNumber int) (int, error) {
+	filter := bson.M{"job_number": jobNumber}
 
 	// Use Find to get the total count without actually retrieving documents
 	var results []*domain.Event

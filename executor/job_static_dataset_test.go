@@ -14,7 +14,7 @@ import (
 func TestJobStaticDataset(t *testing.T) {
 	Convey("Given a static dataset job executor and a job service that does not error", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
 		}
@@ -26,7 +26,7 @@ func TestJobStaticDataset(t *testing.T) {
 
 		Convey("When migrate is called for a job", func() {
 			job := &domain.Job{
-				ID: "job-1",
+				JobNumber: 1,
 				Config: &domain.JobConfig{
 					SourceID: "source-dataset-id",
 					TargetID: "target-dataset-id",
@@ -41,7 +41,7 @@ func TestJobStaticDataset(t *testing.T) {
 
 				Convey("And a dataset series migration task is created for the dataset", func() {
 					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 1)
-					So(mockJobService.CreateTaskCalls()[0].JobID, ShouldEqual, "job-1")
+					So(mockJobService.CreateTaskCalls()[0].JobNumber, ShouldEqual, 1)
 					So(mockJobService.CreateTaskCalls()[0].Task.Type, ShouldEqual, domain.TaskTypeDatasetSeries)
 					So(mockJobService.CreateTaskCalls()[0].Task.Source.ID, ShouldEqual, "source-dataset-id")
 					So(mockJobService.CreateTaskCalls()[0].Task.Target.ID, ShouldEqual, "target-dataset-id")
@@ -51,10 +51,10 @@ func TestJobStaticDataset(t *testing.T) {
 	})
 	Convey("Given a static dataset job executor and a job service that errors when creating a task", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return nil, errors.New("create task error")
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobID string, state domain.JobState) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.JobState) error {
 				return nil
 			},
 		}

@@ -73,7 +73,7 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 
 		taskExecutor, err := mig.getTaskExecutor(ctx, task)
 		if err != nil {
-			log.Error(ctx, "failed to get task executor", err, log.Data{"task": task.ID, "jobID": task.JobID, "taskType": task.Type})
+			log.Error(ctx, "failed to get task executor", err, log.Data{"task": task.ID, "jobNumber": task.JobNumber, "taskType": task.Type})
 			failErr := mig.failTask(ctx, task)
 			if failErr != nil {
 				log.Error(ctx, "failed to mark task as failed after failing to get executor", failErr, log.Data{"taskID": task.ID, "taskState": task.State})
@@ -81,7 +81,7 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 			return
 		}
 
-		// err is left hanging here for the catch all error handler below as the handling is the same for all task states
+		// err is left hanging here for the catch-all error handler below as the handling is the same for all task states
 		switch task.State {
 		case domain.TaskStateMigrating:
 			err = taskExecutor.Migrate(ctx, task)
@@ -98,17 +98,17 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 				log.Error(ctx, "failed to mark task as failed after execution error", failErr, log.Data{"taskID": task.ID, "taskState": task.State})
 			}
 
-			failErr = mig.failJobByID(ctx, task.JobID)
+			failErr = mig.failJobByJobNumber(ctx, task.JobNumber)
 			if failErr != nil {
 				//TODO: flag this in slack.
-				log.Error(ctx, "failed to mark job as failed after task execution error", failErr, log.Data{"taskID": task.ID, "taskState": task.State, "jobID": task.JobID})
+				log.Error(ctx, "failed to mark job as failed after task execution error", failErr, log.Data{"taskID": task.ID, "taskState": task.State, "jobNumber": task.JobNumber})
 			}
 		}
 	}()
 }
 
 func (mig *migrator) failTask(ctx context.Context, task *domain.Task) error {
-	logData := log.Data{"taskID": task.ID, "jobID": task.JobID, "taskState": task.State}
+	logData := log.Data{"taskID": task.ID, "jobNumber": task.JobNumber, "taskState": task.State}
 
 	failureState, err := domain.GetFailureStateForTaskState(task.State)
 	if err != nil {

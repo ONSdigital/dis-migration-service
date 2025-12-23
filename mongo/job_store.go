@@ -24,11 +24,11 @@ func (m *Mongo) CreateJob(ctx context.Context, job *domain.Job) error {
 	return nil
 }
 
-// GetJob retrieves a job by its ID.
-func (m *Mongo) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
+// GetJob retrieves a job by its job number.
+func (m *Mongo) GetJob(ctx context.Context, jobNumber int) (*domain.Job, error) {
 	var job domain.Job
 	if err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
-		FindOne(ctx, bson.M{"_id": jobID}, &job); err != nil {
+		FindOne(ctx, bson.M{"job_number": jobNumber}, &job); err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, appErrors.ErrJobNotFound
 		}

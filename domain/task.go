@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,8 +10,9 @@ import (
 
 // Task represents a migration task
 type Task struct {
-	ID          string        `json:"id" bson:"_id"`
-	JobID       string        `json:"job_id" bson:"job_id"`
+	ID string `json:"id" bson:"_id"`
+	//JobID       string        `json:"job_id" bson:"job_id"`
+	JobNumber   int           `json:"job_number" bson:"job_number"`
 	LastUpdated time.Time     `json:"last_updated" bson:"last_updated"`
 	Source      *TaskMetadata `json:"source" bson:"source"`
 	State       TaskState     `json:"state" bson:"state"`
@@ -20,14 +22,14 @@ type Task struct {
 }
 
 // NewTask creates a new Task instance with the provided configuration
-func NewTask(jobID string) Task {
+func NewTask(jobNumber int) Task {
 	id := uuid.New().String()
 
-	links := NewTaskLinks(id, jobID)
+	links := NewTaskLinks(id, strconv.Itoa(jobNumber))
 
 	return Task{
 		ID:          id,
-		JobID:       jobID,
+		JobNumber:   jobNumber,
 		LastUpdated: time.Now().UTC(),
 		Links:       links,
 		State:       TaskStateSubmitted,
@@ -62,13 +64,13 @@ type TaskLinks struct {
 }
 
 // NewTaskLinks creates TaskLinks for a task
-func NewTaskLinks(id, jobID string) TaskLinks {
+func NewTaskLinks(id, jobNumber string) TaskLinks {
 	return TaskLinks{
 		Self: &LinkObject{
-			HRef: fmt.Sprintf("/v1/migration-jobs/%s/tasks/%s", jobID, id),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s/tasks/%s", jobNumber, id),
 		},
 		Job: &LinkObject{
-			HRef: fmt.Sprintf("/v1/migration-jobs/%s", jobID),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s", jobNumber),
 		},
 	}
 }

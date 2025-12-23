@@ -26,31 +26,31 @@ var _ application.JobService = &JobServiceMock{}
 // 			ClaimTaskFunc: func(ctx context.Context) (*domain.Task, error) {
 // 				panic("mock out the ClaimTask method")
 // 			},
-// 			CountEventsByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
-// 				panic("mock out the CountEventsByJobID method")
+// 			CountEventsByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+// 				panic("mock out the CountEventsByJobNumber method")
 // 			},
-// 			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
-// 				panic("mock out the CountTasksByJobID method")
+// 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+// 				panic("mock out the CountTasksByJobNumber method")
 // 			},
-// 			CreateEventFunc: func(ctx context.Context, jobID string, event *domain.Event) (*domain.Event, error) {
+// 			CreateEventFunc: func(ctx context.Context, jobNumber int, event *domain.Event) (*domain.Event, error) {
 // 				panic("mock out the CreateEvent method")
 // 			},
 // 			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error) {
 // 				panic("mock out the CreateJob method")
 // 			},
-// 			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+// 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 // 				panic("mock out the CreateTask method")
 // 			},
-// 			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+// 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 // 				panic("mock out the GetJob method")
 // 			},
-// 			GetJobEventsFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error) {
+// 			GetJobEventsFunc: func(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Event, int, error) {
 // 				panic("mock out the GetJobEvents method")
 // 			},
 // 			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
 // 				panic("mock out the GetJobNumberCounter method")
 // 			},
-// 			GetJobTasksFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error) {
+// 			GetJobTasksFunc: func(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Task, int, error) {
 // 				panic("mock out the GetJobTasks method")
 // 			},
 // 			GetJobsFunc: func(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error) {
@@ -59,7 +59,7 @@ var _ application.JobService = &JobServiceMock{}
 // 			UpdateJobNumberCounterFunc: func(ctx context.Context) error {
 // 				panic("mock out the UpdateJobNumberCounter method")
 // 			},
-// 			UpdateJobStateFunc: func(ctx context.Context, jobID string, newState domain.JobState) error {
+// 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.JobState) error {
 // 				panic("mock out the UpdateJobState method")
 // 			},
 // 			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
@@ -81,32 +81,32 @@ type JobServiceMock struct {
 	// ClaimTaskFunc mocks the ClaimTask method.
 	ClaimTaskFunc func(ctx context.Context) (*domain.Task, error)
 
-	// CountEventsByJobIDFunc mocks the CountEventsByJobID method.
-	CountEventsByJobIDFunc func(ctx context.Context, jobID string) (int, error)
+	// CountEventsByJobNumberFunc mocks the CountEventsByJobNumber method.
+	CountEventsByJobNumberFunc func(ctx context.Context, jobNumber int) (int, error)
 
-	// CountTasksByJobIDFunc mocks the CountTasksByJobID method.
-	CountTasksByJobIDFunc func(ctx context.Context, jobID string) (int, error)
+	// CountTasksByJobNumberFunc mocks the CountTasksByJobNumber method.
+	CountTasksByJobNumberFunc func(ctx context.Context, jobNumber int) (int, error)
 
 	// CreateEventFunc mocks the CreateEvent method.
-	CreateEventFunc func(ctx context.Context, jobID string, event *domain.Event) (*domain.Event, error)
+	CreateEventFunc func(ctx context.Context, jobNumber int, event *domain.Event) (*domain.Event, error)
 
 	// CreateJobFunc mocks the CreateJob method.
 	CreateJobFunc func(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error)
 
 	// CreateTaskFunc mocks the CreateTask method.
-	CreateTaskFunc func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error)
+	CreateTaskFunc func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error)
 
 	// GetJobFunc mocks the GetJob method.
-	GetJobFunc func(ctx context.Context, jobID string) (*domain.Job, error)
+	GetJobFunc func(ctx context.Context, jobNumber int) (*domain.Job, error)
 
 	// GetJobEventsFunc mocks the GetJobEvents method.
-	GetJobEventsFunc func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error)
+	GetJobEventsFunc func(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Event, int, error)
 
 	// GetJobNumberCounterFunc mocks the GetJobNumberCounter method.
 	GetJobNumberCounterFunc func(ctx context.Context) (*domain.Counter, error)
 
 	// GetJobTasksFunc mocks the GetJobTasks method.
-	GetJobTasksFunc func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error)
+	GetJobTasksFunc func(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Task, int, error)
 
 	// GetJobsFunc mocks the GetJobs method.
 	GetJobsFunc func(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error)
@@ -115,7 +115,7 @@ type JobServiceMock struct {
 	UpdateJobNumberCounterFunc func(ctx context.Context) error
 
 	// UpdateJobStateFunc mocks the UpdateJobState method.
-	UpdateJobStateFunc func(ctx context.Context, jobID string, newState domain.JobState) error
+	UpdateJobStateFunc func(ctx context.Context, jobNumber int, newState domain.JobState) error
 
 	// UpdateTaskFunc mocks the UpdateTask method.
 	UpdateTaskFunc func(ctx context.Context, task *domain.Task) error
@@ -135,26 +135,26 @@ type JobServiceMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
-		// CountEventsByJobID holds details about calls to the CountEventsByJobID method.
-		CountEventsByJobID []struct {
+		// CountEventsByJobNumber holds details about calls to the CountEventsByJobNumber method.
+		CountEventsByJobNumber []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// JobID is the jobID argument value.
-			JobID string
+			// JobNumber is the jobNumber argument value.
+			JobNumber int
 		}
-		// CountTasksByJobID holds details about calls to the CountTasksByJobID method.
-		CountTasksByJobID []struct {
+		// CountTasksByJobNumber holds details about calls to the CountTasksByJobNumber method.
+		CountTasksByJobNumber []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// JobID is the jobID argument value.
-			JobID string
+			// JobNumber is the jobNumber argument value.
+			JobNumber int
 		}
 		// CreateEvent holds details about calls to the CreateEvent method.
 		CreateEvent []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// JobID is the jobID argument value.
-			JobID string
+			// JobNumber is the jobNumber argument value.
+			JobNumber int
 			// Event is the event argument value.
 			Event *domain.Event
 		}
@@ -171,8 +171,8 @@ type JobServiceMock struct {
 		CreateTask []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// JobID is the jobID argument value.
-			JobID string
+			// JobNumber is the jobNumber argument value.
+			JobNumber int
 			// Task is the task argument value.
 			Task *domain.Task
 		}
@@ -180,15 +180,15 @@ type JobServiceMock struct {
 		GetJob []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// JobID is the jobID argument value.
-			JobID string
+			// JobNumber is the jobNumber argument value.
+			JobNumber int
 		}
 		// GetJobEvents holds details about calls to the GetJobEvents method.
 		GetJobEvents []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// JobID is the jobID argument value.
-			JobID string
+			// JobNumber is the jobNumber argument value.
+			JobNumber int
 			// Limit is the limit argument value.
 			Limit int
 			// Offset is the offset argument value.
@@ -203,8 +203,8 @@ type JobServiceMock struct {
 		GetJobTasks []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// JobID is the jobID argument value.
-			JobID string
+			// JobNumber is the jobNumber argument value.
+			JobNumber int
 			// Limit is the limit argument value.
 			Limit int
 			// Offset is the offset argument value.
@@ -230,8 +230,8 @@ type JobServiceMock struct {
 		UpdateJobState []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// JobID is the jobID argument value.
-			JobID string
+			// JobNumber is the jobNumber argument value.
+			JobNumber int
 			// NewState is the newState argument value.
 			NewState domain.JobState
 		}
@@ -254,8 +254,8 @@ type JobServiceMock struct {
 	}
 	lockClaimJob               sync.RWMutex
 	lockClaimTask              sync.RWMutex
-	lockCountEventsByJobID     sync.RWMutex
-	lockCountTasksByJobID      sync.RWMutex
+	lockCountEventsByJobNumber sync.RWMutex
+	lockCountTasksByJobNumber  sync.RWMutex
 	lockCreateEvent            sync.RWMutex
 	lockCreateJob              sync.RWMutex
 	lockCreateTask             sync.RWMutex
@@ -332,108 +332,108 @@ func (mock *JobServiceMock) ClaimTaskCalls() []struct {
 	return calls
 }
 
-// CountEventsByJobID calls CountEventsByJobIDFunc.
-func (mock *JobServiceMock) CountEventsByJobID(ctx context.Context, jobID string) (int, error) {
-	if mock.CountEventsByJobIDFunc == nil {
-		panic("JobServiceMock.CountEventsByJobIDFunc: method is nil but JobService.CountEventsByJobID was just called")
+// CountEventsByJobNumber calls CountEventsByJobNumberFunc.
+func (mock *JobServiceMock) CountEventsByJobNumber(ctx context.Context, jobNumber int) (int, error) {
+	if mock.CountEventsByJobNumberFunc == nil {
+		panic("JobServiceMock.CountEventsByJobNumberFunc: method is nil but JobService.CountEventsByJobNumber was just called")
 	}
 	callInfo := struct {
-		Ctx   context.Context
-		JobID string
+		Ctx       context.Context
+		JobNumber int
 	}{
-		Ctx:   ctx,
-		JobID: jobID,
+		Ctx:       ctx,
+		JobNumber: jobNumber,
 	}
-	mock.lockCountEventsByJobID.Lock()
-	mock.calls.CountEventsByJobID = append(mock.calls.CountEventsByJobID, callInfo)
-	mock.lockCountEventsByJobID.Unlock()
-	return mock.CountEventsByJobIDFunc(ctx, jobID)
+	mock.lockCountEventsByJobNumber.Lock()
+	mock.calls.CountEventsByJobNumber = append(mock.calls.CountEventsByJobNumber, callInfo)
+	mock.lockCountEventsByJobNumber.Unlock()
+	return mock.CountEventsByJobNumberFunc(ctx, jobNumber)
 }
 
-// CountEventsByJobIDCalls gets all the calls that were made to CountEventsByJobID.
+// CountEventsByJobNumberCalls gets all the calls that were made to CountEventsByJobNumber.
 // Check the length with:
-//     len(mockedJobService.CountEventsByJobIDCalls())
-func (mock *JobServiceMock) CountEventsByJobIDCalls() []struct {
-	Ctx   context.Context
-	JobID string
+//     len(mockedJobService.CountEventsByJobNumberCalls())
+func (mock *JobServiceMock) CountEventsByJobNumberCalls() []struct {
+	Ctx       context.Context
+	JobNumber int
 } {
 	var calls []struct {
-		Ctx   context.Context
-		JobID string
+		Ctx       context.Context
+		JobNumber int
 	}
-	mock.lockCountEventsByJobID.RLock()
-	calls = mock.calls.CountEventsByJobID
-	mock.lockCountEventsByJobID.RUnlock()
+	mock.lockCountEventsByJobNumber.RLock()
+	calls = mock.calls.CountEventsByJobNumber
+	mock.lockCountEventsByJobNumber.RUnlock()
 	return calls
 }
 
-// CountTasksByJobID calls CountTasksByJobIDFunc.
-func (mock *JobServiceMock) CountTasksByJobID(ctx context.Context, jobID string) (int, error) {
-	if mock.CountTasksByJobIDFunc == nil {
-		panic("JobServiceMock.CountTasksByJobIDFunc: method is nil but JobService.CountTasksByJobID was just called")
+// CountTasksByJobNumber calls CountTasksByJobNumberFunc.
+func (mock *JobServiceMock) CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error) {
+	if mock.CountTasksByJobNumberFunc == nil {
+		panic("JobServiceMock.CountTasksByJobNumberFunc: method is nil but JobService.CountTasksByJobNumber was just called")
 	}
 	callInfo := struct {
-		Ctx   context.Context
-		JobID string
+		Ctx       context.Context
+		JobNumber int
 	}{
-		Ctx:   ctx,
-		JobID: jobID,
+		Ctx:       ctx,
+		JobNumber: jobNumber,
 	}
-	mock.lockCountTasksByJobID.Lock()
-	mock.calls.CountTasksByJobID = append(mock.calls.CountTasksByJobID, callInfo)
-	mock.lockCountTasksByJobID.Unlock()
-	return mock.CountTasksByJobIDFunc(ctx, jobID)
+	mock.lockCountTasksByJobNumber.Lock()
+	mock.calls.CountTasksByJobNumber = append(mock.calls.CountTasksByJobNumber, callInfo)
+	mock.lockCountTasksByJobNumber.Unlock()
+	return mock.CountTasksByJobNumberFunc(ctx, jobNumber)
 }
 
-// CountTasksByJobIDCalls gets all the calls that were made to CountTasksByJobID.
+// CountTasksByJobNumberCalls gets all the calls that were made to CountTasksByJobNumber.
 // Check the length with:
-//     len(mockedJobService.CountTasksByJobIDCalls())
-func (mock *JobServiceMock) CountTasksByJobIDCalls() []struct {
-	Ctx   context.Context
-	JobID string
+//     len(mockedJobService.CountTasksByJobNumberCalls())
+func (mock *JobServiceMock) CountTasksByJobNumberCalls() []struct {
+	Ctx       context.Context
+	JobNumber int
 } {
 	var calls []struct {
-		Ctx   context.Context
-		JobID string
+		Ctx       context.Context
+		JobNumber int
 	}
-	mock.lockCountTasksByJobID.RLock()
-	calls = mock.calls.CountTasksByJobID
-	mock.lockCountTasksByJobID.RUnlock()
+	mock.lockCountTasksByJobNumber.RLock()
+	calls = mock.calls.CountTasksByJobNumber
+	mock.lockCountTasksByJobNumber.RUnlock()
 	return calls
 }
 
 // CreateEvent calls CreateEventFunc.
-func (mock *JobServiceMock) CreateEvent(ctx context.Context, jobID string, event *domain.Event) (*domain.Event, error) {
+func (mock *JobServiceMock) CreateEvent(ctx context.Context, jobNumber int, event *domain.Event) (*domain.Event, error) {
 	if mock.CreateEventFunc == nil {
 		panic("JobServiceMock.CreateEventFunc: method is nil but JobService.CreateEvent was just called")
 	}
 	callInfo := struct {
-		Ctx   context.Context
-		JobID string
-		Event *domain.Event
+		Ctx       context.Context
+		JobNumber int
+		Event     *domain.Event
 	}{
-		Ctx:   ctx,
-		JobID: jobID,
-		Event: event,
+		Ctx:       ctx,
+		JobNumber: jobNumber,
+		Event:     event,
 	}
 	mock.lockCreateEvent.Lock()
 	mock.calls.CreateEvent = append(mock.calls.CreateEvent, callInfo)
 	mock.lockCreateEvent.Unlock()
-	return mock.CreateEventFunc(ctx, jobID, event)
+	return mock.CreateEventFunc(ctx, jobNumber, event)
 }
 
 // CreateEventCalls gets all the calls that were made to CreateEvent.
 // Check the length with:
 //     len(mockedJobService.CreateEventCalls())
 func (mock *JobServiceMock) CreateEventCalls() []struct {
-	Ctx   context.Context
-	JobID string
-	Event *domain.Event
+	Ctx       context.Context
+	JobNumber int
+	Event     *domain.Event
 } {
 	var calls []struct {
-		Ctx   context.Context
-		JobID string
-		Event *domain.Event
+		Ctx       context.Context
+		JobNumber int
+		Event     *domain.Event
 	}
 	mock.lockCreateEvent.RLock()
 	calls = mock.calls.CreateEvent
@@ -481,37 +481,37 @@ func (mock *JobServiceMock) CreateJobCalls() []struct {
 }
 
 // CreateTask calls CreateTaskFunc.
-func (mock *JobServiceMock) CreateTask(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+func (mock *JobServiceMock) CreateTask(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 	if mock.CreateTaskFunc == nil {
 		panic("JobServiceMock.CreateTaskFunc: method is nil but JobService.CreateTask was just called")
 	}
 	callInfo := struct {
-		Ctx   context.Context
-		JobID string
-		Task  *domain.Task
+		Ctx       context.Context
+		JobNumber int
+		Task      *domain.Task
 	}{
-		Ctx:   ctx,
-		JobID: jobID,
-		Task:  task,
+		Ctx:       ctx,
+		JobNumber: jobNumber,
+		Task:      task,
 	}
 	mock.lockCreateTask.Lock()
 	mock.calls.CreateTask = append(mock.calls.CreateTask, callInfo)
 	mock.lockCreateTask.Unlock()
-	return mock.CreateTaskFunc(ctx, jobID, task)
+	return mock.CreateTaskFunc(ctx, jobNumber, task)
 }
 
 // CreateTaskCalls gets all the calls that were made to CreateTask.
 // Check the length with:
 //     len(mockedJobService.CreateTaskCalls())
 func (mock *JobServiceMock) CreateTaskCalls() []struct {
-	Ctx   context.Context
-	JobID string
-	Task  *domain.Task
+	Ctx       context.Context
+	JobNumber int
+	Task      *domain.Task
 } {
 	var calls []struct {
-		Ctx   context.Context
-		JobID string
-		Task  *domain.Task
+		Ctx       context.Context
+		JobNumber int
+		Task      *domain.Task
 	}
 	mock.lockCreateTask.RLock()
 	calls = mock.calls.CreateTask
@@ -520,33 +520,33 @@ func (mock *JobServiceMock) CreateTaskCalls() []struct {
 }
 
 // GetJob calls GetJobFunc.
-func (mock *JobServiceMock) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
+func (mock *JobServiceMock) GetJob(ctx context.Context, jobNumber int) (*domain.Job, error) {
 	if mock.GetJobFunc == nil {
 		panic("JobServiceMock.GetJobFunc: method is nil but JobService.GetJob was just called")
 	}
 	callInfo := struct {
-		Ctx   context.Context
-		JobID string
+		Ctx       context.Context
+		JobNumber int
 	}{
-		Ctx:   ctx,
-		JobID: jobID,
+		Ctx:       ctx,
+		JobNumber: jobNumber,
 	}
 	mock.lockGetJob.Lock()
 	mock.calls.GetJob = append(mock.calls.GetJob, callInfo)
 	mock.lockGetJob.Unlock()
-	return mock.GetJobFunc(ctx, jobID)
+	return mock.GetJobFunc(ctx, jobNumber)
 }
 
 // GetJobCalls gets all the calls that were made to GetJob.
 // Check the length with:
 //     len(mockedJobService.GetJobCalls())
 func (mock *JobServiceMock) GetJobCalls() []struct {
-	Ctx   context.Context
-	JobID string
+	Ctx       context.Context
+	JobNumber int
 } {
 	var calls []struct {
-		Ctx   context.Context
-		JobID string
+		Ctx       context.Context
+		JobNumber int
 	}
 	mock.lockGetJob.RLock()
 	calls = mock.calls.GetJob
@@ -555,41 +555,41 @@ func (mock *JobServiceMock) GetJobCalls() []struct {
 }
 
 // GetJobEvents calls GetJobEventsFunc.
-func (mock *JobServiceMock) GetJobEvents(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error) {
+func (mock *JobServiceMock) GetJobEvents(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Event, int, error) {
 	if mock.GetJobEventsFunc == nil {
 		panic("JobServiceMock.GetJobEventsFunc: method is nil but JobService.GetJobEvents was just called")
 	}
 	callInfo := struct {
-		Ctx    context.Context
-		JobID  string
-		Limit  int
-		Offset int
+		Ctx       context.Context
+		JobNumber int
+		Limit     int
+		Offset    int
 	}{
-		Ctx:    ctx,
-		JobID:  jobID,
-		Limit:  limit,
-		Offset: offset,
+		Ctx:       ctx,
+		JobNumber: jobNumber,
+		Limit:     limit,
+		Offset:    offset,
 	}
 	mock.lockGetJobEvents.Lock()
 	mock.calls.GetJobEvents = append(mock.calls.GetJobEvents, callInfo)
 	mock.lockGetJobEvents.Unlock()
-	return mock.GetJobEventsFunc(ctx, jobID, limit, offset)
+	return mock.GetJobEventsFunc(ctx, jobNumber, limit, offset)
 }
 
 // GetJobEventsCalls gets all the calls that were made to GetJobEvents.
 // Check the length with:
 //     len(mockedJobService.GetJobEventsCalls())
 func (mock *JobServiceMock) GetJobEventsCalls() []struct {
-	Ctx    context.Context
-	JobID  string
-	Limit  int
-	Offset int
+	Ctx       context.Context
+	JobNumber int
+	Limit     int
+	Offset    int
 } {
 	var calls []struct {
-		Ctx    context.Context
-		JobID  string
-		Limit  int
-		Offset int
+		Ctx       context.Context
+		JobNumber int
+		Limit     int
+		Offset    int
 	}
 	mock.lockGetJobEvents.RLock()
 	calls = mock.calls.GetJobEvents
@@ -629,41 +629,41 @@ func (mock *JobServiceMock) GetJobNumberCounterCalls() []struct {
 }
 
 // GetJobTasks calls GetJobTasksFunc.
-func (mock *JobServiceMock) GetJobTasks(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error) {
+func (mock *JobServiceMock) GetJobTasks(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Task, int, error) {
 	if mock.GetJobTasksFunc == nil {
 		panic("JobServiceMock.GetJobTasksFunc: method is nil but JobService.GetJobTasks was just called")
 	}
 	callInfo := struct {
-		Ctx    context.Context
-		JobID  string
-		Limit  int
-		Offset int
+		Ctx       context.Context
+		JobNumber int
+		Limit     int
+		Offset    int
 	}{
-		Ctx:    ctx,
-		JobID:  jobID,
-		Limit:  limit,
-		Offset: offset,
+		Ctx:       ctx,
+		JobNumber: jobNumber,
+		Limit:     limit,
+		Offset:    offset,
 	}
 	mock.lockGetJobTasks.Lock()
 	mock.calls.GetJobTasks = append(mock.calls.GetJobTasks, callInfo)
 	mock.lockGetJobTasks.Unlock()
-	return mock.GetJobTasksFunc(ctx, jobID, limit, offset)
+	return mock.GetJobTasksFunc(ctx, jobNumber, limit, offset)
 }
 
 // GetJobTasksCalls gets all the calls that were made to GetJobTasks.
 // Check the length with:
 //     len(mockedJobService.GetJobTasksCalls())
 func (mock *JobServiceMock) GetJobTasksCalls() []struct {
-	Ctx    context.Context
-	JobID  string
-	Limit  int
-	Offset int
+	Ctx       context.Context
+	JobNumber int
+	Limit     int
+	Offset    int
 } {
 	var calls []struct {
-		Ctx    context.Context
-		JobID  string
-		Limit  int
-		Offset int
+		Ctx       context.Context
+		JobNumber int
+		Limit     int
+		Offset    int
 	}
 	mock.lockGetJobTasks.RLock()
 	calls = mock.calls.GetJobTasks
@@ -746,37 +746,37 @@ func (mock *JobServiceMock) UpdateJobNumberCounterCalls() []struct {
 }
 
 // UpdateJobState calls UpdateJobStateFunc.
-func (mock *JobServiceMock) UpdateJobState(ctx context.Context, jobID string, newState domain.JobState) error {
+func (mock *JobServiceMock) UpdateJobState(ctx context.Context, jobNumber int, newState domain.JobState) error {
 	if mock.UpdateJobStateFunc == nil {
 		panic("JobServiceMock.UpdateJobStateFunc: method is nil but JobService.UpdateJobState was just called")
 	}
 	callInfo := struct {
-		Ctx      context.Context
-		JobID    string
-		NewState domain.JobState
+		Ctx       context.Context
+		JobNumber int
+		NewState  domain.JobState
 	}{
-		Ctx:      ctx,
-		JobID:    jobID,
-		NewState: newState,
+		Ctx:       ctx,
+		JobNumber: jobNumber,
+		NewState:  newState,
 	}
 	mock.lockUpdateJobState.Lock()
 	mock.calls.UpdateJobState = append(mock.calls.UpdateJobState, callInfo)
 	mock.lockUpdateJobState.Unlock()
-	return mock.UpdateJobStateFunc(ctx, jobID, newState)
+	return mock.UpdateJobStateFunc(ctx, jobNumber, newState)
 }
 
 // UpdateJobStateCalls gets all the calls that were made to UpdateJobState.
 // Check the length with:
 //     len(mockedJobService.UpdateJobStateCalls())
 func (mock *JobServiceMock) UpdateJobStateCalls() []struct {
-	Ctx      context.Context
-	JobID    string
-	NewState domain.JobState
+	Ctx       context.Context
+	JobNumber int
+	NewState  domain.JobState
 } {
 	var calls []struct {
-		Ctx      context.Context
-		JobID    string
-		NewState domain.JobState
+		Ctx       context.Context
+		JobNumber int
+		NewState  domain.JobState
 	}
 	mock.lockUpdateJobState.RLock()
 	calls = mock.calls.UpdateJobState

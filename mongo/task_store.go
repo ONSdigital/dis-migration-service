@@ -80,10 +80,10 @@ func (m *Mongo) ClaimTask(ctx context.Context, pendingState, activeState domain.
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (m *Mongo) GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+func (m *Mongo) GetJobTasks(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 	var results []*domain.Task
 
-	filter := bson.M{"job_id": jobID}
+	filter := bson.M{"job_number": jobNumber}
 
 	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
 		Find(
@@ -102,9 +102,9 @@ func (m *Mongo) GetJobTasks(ctx context.Context, jobID string, limit, offset int
 	return results, totalCount, nil
 }
 
-// CountTasksByJobID returns the total count of tasks for a job.
-func (m *Mongo) CountTasksByJobID(ctx context.Context, jobID string) (int, error) {
-	filter := bson.M{"job_id": jobID}
+// CountTasksByJobNumber returns the total count of tasks for a job.
+func (m *Mongo) CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error) {
+	filter := bson.M{"job_number": jobNumber}
 
 	// Use Find to get the total count without actually retrieving documents
 	var results []*domain.Task

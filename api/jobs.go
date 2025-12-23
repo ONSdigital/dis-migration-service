@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -16,7 +17,13 @@ import (
 func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
-	jobNumber := vars[PathParameterJobNumber]
+	jobNumberStr := vars[PathParameterJobNumber]
+	jobNumber, err := strconv.Atoi(jobNumberStr)
+	if err != nil {
+		log.Error(ctx, "failed to get job -  job number must be an int", err)
+		handleError(ctx, w, r, err)
+		return
+	}
 
 	job, err := api.JobService.GetJob(ctx, jobNumber)
 	if err != nil {
@@ -69,10 +76,16 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, 
 func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
-	jobNumber := vars[PathParameterJobNumber]
+	jobNumberStr := vars[PathParameterJobNumber]
 
-	if jobNumber == "" {
+	if jobNumberStr == "" {
 		return nil, 0, appErrors.ErrJobNumberNotProvided
+	}
+	jobNumber, err := strconv.Atoi(jobNumberStr)
+	if err != nil {
+		log.Error(ctx, "failed to get job -  job number must be an int", err)
+		handleError(ctx, w, r, err)
+		return
 	}
 
 	// Ensure job exists -> return 404 if not found
@@ -159,10 +172,17 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 func (api *MigrationAPI) getJobEvents(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
-	jobNumber := vars[PathParameterJobNumber]
+	jobNumberStr := vars[PathParameterJobNumber]
 
-	if jobNumber == "" {
+	if jobNumberStr == "" {
 		return nil, 0, appErrors.ErrJobNumberNotProvided
+	}
+
+	jobNumber, err := strconv.Atoi(jobNumberStr)
+	if err != nil {
+		log.Error(ctx, "failed to get job -  job number must be an int", err)
+		handleError(ctx, w, r, err)
+		return
 	}
 
 	// Ensure job exists -> return 404 if not found

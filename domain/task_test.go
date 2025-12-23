@@ -32,19 +32,19 @@ func TestNewTaskLinks(t *testing.T) {
 
 func TestNewTask(t *testing.T) {
 	Convey("Given a job ID", t, func() {
-		jobID := "job-456"
+		jobNumber := 456
 
 		Convey("When NewTask is called", func() {
-			task := domain.NewTask(jobID)
+			task := domain.NewTask(jobNumber)
 
 			Convey("Then a Task should be returned with the correct fields set", func() {
 				So(task.ID, ShouldNotBeEmpty)
-				So(task.JobID, ShouldEqual, jobID)
+				So(task.JobNumber, ShouldEqual, jobNumber)
 				So(task.State, ShouldEqual, domain.TaskStateSubmitted)
 				So(task.Links.Self.HRef, ShouldEqual,
-					"/v1/migration-jobs/job-456/tasks/"+task.ID)
+					"/v1/migration-jobs/456/tasks/"+task.ID)
 				So(task.Links.Job.HRef, ShouldEqual,
-					"/v1/migration-jobs/job-456")
+					"/v1/migration-jobs/456")
 			})
 		})
 	})

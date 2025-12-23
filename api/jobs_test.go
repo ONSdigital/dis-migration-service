@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	//"github.com/chromedp/cdproto/runtime"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -25,11 +27,10 @@ import (
 )
 
 const (
-	testJobID     = "job-123"
+	testJobNumber = 123
 	testSourceID  = "/test-source-id"
 	testTargetID  = "test-target-id"
 	testType      = domain.JobTypeStaticDataset
-	testJobNumber = "7"
 )
 
 var (
@@ -39,9 +40,9 @@ var (
 func TestGetJob(t *testing.T) {
 	Convey("Given a test API instance and a mocked jobservice that returns a job", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID: jobID,
+					JobNumber: jobNumber,
 				}, nil
 			},
 		}
@@ -61,21 +62,21 @@ func TestGetJob(t *testing.T) {
 		api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 		Convey("When a valid request is made", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testJobNumber), http.NoBody)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%d", testJobNumber), http.NoBody)
 			resp := httptest.NewRecorder()
 
 			api.Router.ServeHTTP(resp, req)
 
 			Convey("Then a job is returned", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
-				So(resp.Body.String(), ShouldContainSubstring, testJobNumber)
+				So(resp.Body.String(), ShouldContainSubstring, strconv.Itoa(testJobNumber))
 			})
 		})
 	})
 
 	Convey("Given a test API instance and a mocked jobservice that returns not found", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return nil, appErrors.ErrJobNotFound
 			},
 		}
@@ -95,7 +96,7 @@ func TestGetJob(t *testing.T) {
 		api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 		Convey("When a request is made for a missing job", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%d", testJobNumber), http.NoBody)
 			resp := httptest.NewRecorder()
 
 			api.Router.ServeHTTP(resp, req)
@@ -109,7 +110,7 @@ func TestGetJob(t *testing.T) {
 
 	Convey("Given a test API instance and a mocked jobservice that returns an internal error", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return nil, errors.New("database failure")
 			},
 		}
@@ -504,14 +505,14 @@ func TestGetJobTasks(t *testing.T) {
 
 		Convey("job not found should return ErrJobNotFound", func() {
 			mockService := applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return nil, appErrors.ErrJobNotFound
 				},
 			}
 			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
-			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "job-123"})
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/123/tasks", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "123"})
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -524,14 +525,14 @@ func TestGetJobTasks(t *testing.T) {
 		Convey("GetJob returns unexpected error is propagated", func() {
 			testErr := fmt.Errorf("db failure")
 			mockService := applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return nil, testErr
 				},
 			}
 			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
-			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "job-123"})
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/123/tasks", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "123"})
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -541,17 +542,16 @@ func TestGetJobTasks(t *testing.T) {
 		})
 
 		Convey("success returns tasks and total", func() {
-			testJobID := testJobID
 			mockTasks := []*domain.Task{
-				{ID: "t1", JobID: testJobID},
-				{ID: "t2", JobID: testJobID},
+				{ID: "t1", JobNumber: testJobNumber},
+				{ID: "t2", JobNumber: testJobNumber},
 			}
 
 			mockService := applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-					return &domain.Job{ID: jobID}, nil
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobTasksFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error) {
+				GetJobTasksFunc: func(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 					// return tasks as interface{} to match service signature used in handler
 					return mockTasks, len(mockTasks), nil
 				},
@@ -559,14 +559,15 @@ func TestGetJobTasks(t *testing.T) {
 			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
 			So(err, ShouldBeNil)
 			So(total, ShouldEqual, 2)
 
-			// items is returned as interface{}, assert underlying value
+			// 'items' is returned as interface{}, assert underlying value
 			gotTasks, ok := items.([]*domain.Task)
 			So(ok, ShouldBeTrue)
 			So(len(gotTasks), ShouldEqual, 2)
@@ -577,17 +578,17 @@ func TestGetJobTasks(t *testing.T) {
 		Convey("GetJobTasks returns an error is propagated", func() {
 			testErr := fmt.Errorf("find failure")
 			mockService := applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-					return &domain.Job{ID: jobID}, nil
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobTasksFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Task, int, error) {
+				GetJobTasksFunc: func(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 					return nil, 0, testErr
 				},
 			}
 			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
-			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "job-123"})
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/123/tasks", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "123"})
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -633,7 +634,7 @@ func TestGetJobEvents(t *testing.T) {
 
 		Convey("And GetJob returns ErrJobNotFound", func() {
 			mockService := &applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return nil, appErrors.ErrJobNotFound
 				},
 			}
@@ -641,7 +642,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -658,7 +660,7 @@ func TestGetJobEvents(t *testing.T) {
 		Convey("And GetJob returns an unexpected error", func() {
 			testErr := fmt.Errorf("db failure")
 			mockService := &applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return nil, testErr
 				},
 			}
@@ -666,7 +668,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -684,7 +687,7 @@ func TestGetJobEvents(t *testing.T) {
 			mockEvents := []*domain.Event{
 				{
 					ID:        "event-1",
-					JobID:     testJobID,
+					JobNumber: testJobNumber,
 					CreatedAt: "2025-11-19T13:30:00Z",
 					Action:    "submitted",
 					RequestedBy: &domain.User{
@@ -694,7 +697,7 @@ func TestGetJobEvents(t *testing.T) {
 				},
 				{
 					ID:        "event-2",
-					JobID:     testJobID,
+					JobNumber: testJobNumber,
 					CreatedAt: "2025-11-19T13:35:00Z",
 					Action:    "approved",
 					RequestedBy: &domain.User{
@@ -705,10 +708,10 @@ func TestGetJobEvents(t *testing.T) {
 			}
 
 			mockService := &applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-					return &domain.Job{ID: jobID}, nil
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobEventsFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error) {
+				GetJobEventsFunc: func(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Event, int, error) {
 					return mockEvents, len(mockEvents), nil
 				},
 			}
@@ -716,7 +719,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -740,10 +744,10 @@ func TestGetJobEvents(t *testing.T) {
 		Convey("And GetJob succeeds but GetJobEvents returns an error", func() {
 			testErr := fmt.Errorf("find failure")
 			mockService := &applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-					return &domain.Job{ID: jobID}, nil
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobEventsFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error) {
+				GetJobEventsFunc: func(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Event, int, error) {
 					return nil, 0, testErr
 				},
 			}
@@ -751,7 +755,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -769,17 +774,17 @@ func TestGetJobEvents(t *testing.T) {
 			mockEvents := []*domain.Event{
 				{
 					ID:          "event-2",
-					JobID:       testJobID,
+					JobNumber:   testJobNumber,
 					Action:      "approved",
 					RequestedBy: &domain.User{ID: "user-2"},
 				},
 			}
 
 			mockService := &applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-					return &domain.Job{ID: jobID}, nil
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobEventsFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error) {
+				GetJobEventsFunc: func(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Event, int, error) {
 					So(limit, ShouldEqual, 1)
 					So(offset, ShouldEqual, 1)
 					return mockEvents, 5, nil
@@ -790,7 +795,8 @@ func TestGetJobEvents(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events?limit=1&offset=1",
 				http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called with limit 1 and offset 1", func() {
@@ -810,10 +816,10 @@ func TestGetJobEvents(t *testing.T) {
 
 		Convey("And GetJobEvents returns an empty list", func() {
 			mockService := &applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-					return &domain.Job{ID: jobID}, nil
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobEventsFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error) {
+				GetJobEventsFunc: func(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Event, int, error) {
 					return []*domain.Event{}, 0, nil
 				},
 			}
@@ -821,7 +827,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -841,18 +848,18 @@ func TestGetJobEvents(t *testing.T) {
 		Convey("And GetJobEvents returns events with different user types", func() {
 			mockEvents := []*domain.Event{
 				{
-					ID:     "event-human",
-					JobID:  testJobID,
-					Action: "approved",
+					ID:        "event-human",
+					JobNumber: testJobNumber,
+					Action:    "approved",
 					RequestedBy: &domain.User{
 						ID:    "human-user",
 						Email: "human@ons.gov.uk",
 					},
 				},
 				{
-					ID:     "event-service",
-					JobID:  testJobID,
-					Action: "migrating",
+					ID:        "event-service",
+					JobNumber: testJobNumber,
+					Action:    "migrating",
 					RequestedBy: &domain.User{
 						ID: "service-account",
 					},
@@ -860,10 +867,10 @@ func TestGetJobEvents(t *testing.T) {
 			}
 
 			mockService := &applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-					return &domain.Job{ID: jobID}, nil
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobEventsFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error) {
+				GetJobEventsFunc: func(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Event, int, error) {
 					return mockEvents, len(mockEvents), nil
 				},
 			}
@@ -871,7 +878,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -894,29 +902,29 @@ func TestGetJobEvents(t *testing.T) {
 			mockEvents := []*domain.Event{
 				{
 					ID:          "event-1",
-					JobID:       testJobID,
+					JobNumber:   testJobNumber,
 					Action:      "submitted",
 					RequestedBy: &domain.User{ID: "user-1"},
 				},
 				{
 					ID:          "event-2",
-					JobID:       testJobID,
+					JobNumber:   testJobNumber,
 					Action:      "migrating",
 					RequestedBy: &domain.User{ID: "user-2"},
 				},
 				{
 					ID:          "event-3",
-					JobID:       testJobID,
+					JobNumber:   testJobNumber,
 					Action:      "completed",
 					RequestedBy: &domain.User{ID: "user-3"},
 				},
 			}
 
 			mockService := &applicationMock.JobServiceMock{
-				GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
-					return &domain.Job{ID: jobID}, nil
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobEventsFunc: func(ctx context.Context, jobID string, limit int, offset int) ([]*domain.Event, int, error) {
+				GetJobEventsFunc: func(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Event, int, error) {
 					return mockEvents, len(mockEvents), nil
 				},
 			}
@@ -924,7 +932,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
-			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobID})
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {

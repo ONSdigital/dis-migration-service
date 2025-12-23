@@ -15,21 +15,21 @@ import (
 //go:generate moq -out mock/jobservice.go -pkg mock . JobService
 type JobService interface {
 	CreateJob(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error)
-	GetJob(ctx context.Context, jobNumber string) (*domain.Job, error)
+	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	ClaimJob(ctx context.Context) (*domain.Job, error)
-	UpdateJobState(ctx context.Context, jobID string, newState domain.JobState) error
+	UpdateJobState(ctx context.Context, jobNumber int, newState domain.JobState) error
 	GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error)
-	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
-	CreateTask(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error)
+	GetJobTasks(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Task, int, error)
+	CreateTask(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error)
 	UpdateTask(ctx context.Context, task *domain.Task) error
 	UpdateTaskState(ctx context.Context, taskID string, newState domain.TaskState) error
 	ClaimTask(ctx context.Context) (*domain.Task, error)
-	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
+	CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error)
 	GetJobNumberCounter(ctx context.Context) (*domain.Counter, error)
 	UpdateJobNumberCounter(ctx context.Context) error
-	CreateEvent(ctx context.Context, jobID string, event *domain.Event) (*domain.Event, error)
-	GetJobEvents(ctx context.Context, jobID string, limit, offset int) ([]*domain.Event, int, error)
-	CountEventsByJobID(ctx context.Context, jobID string) (int, error)
+	CreateEvent(ctx context.Context, jobNumber int, event *domain.Event) (*domain.Event, error)
+	GetJobEvents(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Event, int, error)
+	CountEventsByJobNumber(ctx context.Context, jobNumber int) (int, error)
 }
 
 type jobService struct {
@@ -88,15 +88,15 @@ func (js *jobService) UpdateJobNumberCounter(ctx context.Context) error {
 	return js.store.UpdateJobNumberCounter(ctx)
 }
 
-// GetJob retrieves a migration job by its ID.
-func (js *jobService) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
-	return js.store.GetJob(ctx, jobID)
+// GetJob retrieves a migration job by its job number.
+func (js *jobService) GetJob(ctx context.Context, jobNumber int) (*domain.Job, error) {
+	return js.store.GetJob(ctx, jobNumber)
 }
 
 // UpdateJobState updates the state of a migration job.
-func (js *jobService) UpdateJobState(ctx context.Context, jobID string, newState domain.JobState) error {
+func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newState domain.JobState) error {
 	//TODO: validate state transition
-	job, err := js.store.GetJob(ctx, jobID)
+	job, err := js.store.GetJob(ctx, jobNumber)
 	if err != nil {
 		return err
 	}
@@ -141,9 +141,9 @@ func (js *jobService) ClaimJob(ctx context.Context) (*domain.Job, error) {
 }
 
 // CreateTask creates a new migration task for a job.
-func (js *jobService) CreateTask(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+func (js *jobService) CreateTask(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 	// Verify job exists
-	_, err := js.store.GetJob(ctx, jobID)
+	_, err := js.store.GetJob(ctx, jobNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -214,19 +214,19 @@ func (js *jobService) ClaimTask(ctx context.Context) (*domain.Task, error) {
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (js *jobService) GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
-	return js.store.GetJobTasks(ctx, jobID, limit, offset)
+func (js *jobService) GetJobTasks(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
+	return js.store.GetJobTasks(ctx, jobNumber, limit, offset)
 }
 
-// CountTasksByJobID returns the total count of tasks for a job.
-func (js *jobService) CountTasksByJobID(ctx context.Context, jobID string) (int, error) {
-	return js.store.CountTasksByJobID(ctx, jobID)
+// CountTasksByJobNumber returns the total count of tasks for a job.
+func (js *jobService) CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error) {
+	return js.store.CountTasksByJobNumber(ctx, jobNumber)
 }
 
 // CreateEvent creates a new migration event for a job.
-func (js *jobService) CreateEvent(ctx context.Context, jobID string, event *domain.Event) (*domain.Event, error) {
+func (js *jobService) CreateEvent(ctx context.Context, jobNumber int, event *domain.Event) (*domain.Event, error) {
 	// Verify job exists
-	_, err := js.store.GetJob(ctx, jobID)
+	_, err := js.store.GetJob(ctx, jobNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -241,11 +241,11 @@ func (js *jobService) CreateEvent(ctx context.Context, jobID string, event *doma
 }
 
 // GetJobEvents retrieves a list of migration events for a job with pagination.
-func (js *jobService) GetJobEvents(ctx context.Context, jobID string, limit, offset int) ([]*domain.Event, int, error) {
-	return js.store.GetJobEvents(ctx, jobID, limit, offset)
+func (js *jobService) GetJobEvents(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Event, int, error) {
+	return js.store.GetJobEvents(ctx, jobNumber, limit, offset)
 }
 
-// CountEventsByJobID returns the total count of events for a job.
-func (js *jobService) CountEventsByJobID(ctx context.Context, jobID string) (int, error) {
-	return js.store.CountEventsByJobID(ctx, jobID)
+// CountEventsByJobNumber returns the total count of events for a job.
+func (js *jobService) CountEventsByJobNumber(ctx context.Context, jobNumber int) (int, error) {
+	return js.store.CountEventsByJobNumber(ctx, jobNumber)
 }

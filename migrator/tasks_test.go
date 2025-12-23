@@ -42,7 +42,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 					Type: fakeTaskType,
 				}, nil
 			},
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) { return &domain.Job{}, nil },
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) { return &domain.Job{}, nil },
 			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
@@ -143,13 +143,13 @@ func TestMigratorExecuteTask(t *testing.T) {
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.TaskState) error {
 				return nil
 			},
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    fakeJobID,
-					State: domain.JobStateMigrating,
+					JobNumber: fakeJobNumber,
+					State:     domain.JobStateMigrating,
 				}, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobID string, newState domain.JobState) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.JobState) error {
 				return nil
 			},
 			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
@@ -168,9 +168,9 @@ func TestMigratorExecuteTask(t *testing.T) {
 
 		Convey("When a task is executed that errors during migration", func() {
 			task := &domain.Task{
-				JobID: fakeJobID,
-				Type:  fakeTaskType,
-				State: domain.TaskStateMigrating,
+				JobNumber: fakeJobNumber,
+				Type:      fakeTaskType,
+				State:     domain.TaskStateMigrating,
 			}
 			mig.executeTask(ctx, task)
 			mig.wg.Wait()

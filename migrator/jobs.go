@@ -101,10 +101,10 @@ func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 	}()
 }
 
-func (mig *migrator) failJobByID(ctx context.Context, jobID string) error {
-	job, err := mig.jobService.GetJob(ctx, jobID)
+func (mig *migrator) failJobByJobNumber(ctx context.Context, jobNumber int) error {
+	job, err := mig.jobService.GetJob(ctx, jobNumber)
 	if err != nil {
-		log.Error(ctx, "failed to get job by id to fail it", err)
+		log.Error(ctx, "failed to get job by job number to fail it", err)
 		return err
 	}
 
@@ -127,7 +127,7 @@ func (mig *migrator) failJob(ctx context.Context, job *domain.Job) error {
 
 	logData["failureState"] = failureState
 
-	err = mig.jobService.UpdateJobState(ctx, job.ID, failureState)
+	err = mig.jobService.UpdateJobState(ctx, job.JobNumber, failureState)
 	if err != nil {
 		log.Error(ctx, "failed to update task state to failed", err, logData)
 		return err

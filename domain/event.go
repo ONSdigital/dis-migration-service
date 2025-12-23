@@ -10,7 +10,7 @@ type Event struct {
 	CreatedAt   string     `json:"created_at" bson:"created_at"`
 	RequestedBy *User      `json:"requested_by" bson:"requested_by"`
 	Action      string     `json:"action" bson:"action"`
-	JobID       string     `json:"job_id" bson:"job_id"`
+	JobNumber   int        `json:"job_number" bson:"job_number"`
 	Links       EventLinks `json:"links" bson:"links"`
 }
 

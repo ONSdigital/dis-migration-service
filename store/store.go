@@ -19,7 +19,7 @@ type Datastore struct {
 type dataMongoDB interface {
 	// Jobs
 	CreateJob(ctx context.Context, job *domain.Job) error
-	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
+	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	GetJobs(ctx context.Context, states []domain.JobState, limit, offset int) ([]*domain.Job, int, error)
 	ClaimJob(ctx context.Context, pendingState domain.JobState, activeState domain.JobState) (*domain.Job, error)
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
@@ -30,15 +30,15 @@ type dataMongoDB interface {
 	// Tasks
 	CreateTask(ctx context.Context, task *domain.Task) error
 	GetTask(ctx context.Context, taskID string) (*domain.Task, error)
-	GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error)
-	CountTasksByJobID(ctx context.Context, jobID string) (int, error)
+	GetJobTasks(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Task, int, error)
+	CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error)
 	UpdateTask(ctx context.Context, task *domain.Task) error
 	ClaimTask(ctx context.Context, pendingState domain.TaskState, activeState domain.TaskState) (*domain.Task, error)
 
 	// Events
 	CreateEvent(ctx context.Context, event *domain.Event) error
-	GetJobEvents(ctx context.Context, jobID string, limit, offset int) ([]*domain.Event, int, error)
-	CountEventsByJobID(ctx context.Context, jobID string) (int, error)
+	GetJobEvents(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Event, int, error)
+	CountEventsByJobNumber(ctx context.Context, jobNumber int) (int, error)
 
 	// Other
 	Checker(ctx context.Context, state *healthcheck.CheckState) error
@@ -63,9 +63,9 @@ func (ds *Datastore) CreateJob(ctx context.Context, job *domain.Job) error {
 	return ds.Backend.CreateJob(ctx, job)
 }
 
-// GetJob retrieves a job by its ID.
-func (ds *Datastore) GetJob(ctx context.Context, jobID string) (*domain.Job, error) {
-	return ds.Backend.GetJob(ctx, jobID)
+// GetJob retrieves a job by its job number.
+func (ds *Datastore) GetJob(ctx context.Context, jobNumber int) (*domain.Job, error) {
+	return ds.Backend.GetJob(ctx, jobNumber)
 }
 
 // ClaimJob claims a pending job for processing.
@@ -110,13 +110,13 @@ func (ds *Datastore) ClaimTask(ctx context.Context, pendingState, activeState do
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (ds *Datastore) GetJobTasks(ctx context.Context, jobID string, limit, offset int) ([]*domain.Task, int, error) {
-	return ds.Backend.GetJobTasks(ctx, jobID, limit, offset)
+func (ds *Datastore) GetJobTasks(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
+	return ds.Backend.GetJobTasks(ctx, jobNumber, limit, offset)
 }
 
-// CountTasksByJobID returns the total count of tasks for a job.
-func (ds *Datastore) CountTasksByJobID(ctx context.Context, jobID string) (int, error) {
-	return ds.Backend.CountTasksByJobID(ctx, jobID)
+// CountTasksByJobNumber returns the total count of tasks for a job.
+func (ds *Datastore) CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error) {
+	return ds.Backend.CountTasksByJobNumber(ctx, jobNumber)
 }
 
 // GetJobNumberCounter retrieves the current value from the JobNumberCounter.
@@ -136,11 +136,11 @@ func (ds *Datastore) CreateEvent(ctx context.Context, event *domain.Event) error
 }
 
 // GetJobEvents retrieves a list of migration events for a job with pagination.
-func (ds *Datastore) GetJobEvents(ctx context.Context, jobID string, limit, offset int) ([]*domain.Event, int, error) {
-	return ds.Backend.GetJobEvents(ctx, jobID, limit, offset)
+func (ds *Datastore) GetJobEvents(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Event, int, error) {
+	return ds.Backend.GetJobEvents(ctx, jobNumber, limit, offset)
 }
 
-// CountEventsByJobID returns the total count of events for a job.
-func (ds *Datastore) CountEventsByJobID(ctx context.Context, jobID string) (int, error) {
-	return ds.Backend.CountEventsByJobID(ctx, jobID)
+// CountEventsByJobNumber returns the total count of events for a job.
+func (ds *Datastore) CountEventsByJobNumber(ctx context.Context, jobNumber int) (int, error) {
+	return ds.Backend.CountEventsByJobNumber(ctx, jobNumber)
 }

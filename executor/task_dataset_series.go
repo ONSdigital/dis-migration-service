@@ -25,7 +25,7 @@ func NewDatasetSeriesTaskExecutor(jobService application.JobService, clientList 
 
 // Migrate handles the migration operations for a dataset series task.
 func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Task) error {
-	logData := log.Data{"taskID": task.ID, "jobID": task.JobID}
+	logData := log.Data{"taskID": task.ID, "jobID": task.JobNumber}
 
 	log.Info(ctx, "starting migration for dataset series task", logData)
 
