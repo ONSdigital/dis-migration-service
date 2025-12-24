@@ -34,7 +34,7 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// we don't want to include the Job ID in the API response, so this needs to be temporarily removed
+	// we don't want to include the Job ID in the API response (although we DO want to include it in the data store)
 	jobResponse := domain.ResponseJob{
 		Config:      job.Config,
 		JobNumber:   job.JobNumber,
