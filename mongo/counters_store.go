@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
@@ -63,7 +65,7 @@ func (m *Mongo) UpdateJobNumberCounter(ctx context.Context) error {
 	_, err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).UpdateOne(ctx, bson.M{
 		"counter_name": "job_number_counter",
 	}, bson.D{
-		{"$inc", bson.D{{"counter_value", 1}}},
+		{Key: "$inc", Value: bson.D{primitive.E{Key: "counter_value", Value: 1}}},
 	})
 
 	if err != nil {

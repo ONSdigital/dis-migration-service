@@ -10,8 +10,7 @@ import (
 
 // Task represents a migration task
 type Task struct {
-	ID string `json:"id" bson:"_id"`
-	//JobID       string        `json:"job_id" bson:"job_id"`
+	ID          string        `json:"id" bson:"_id"`
 	JobNumber   int           `json:"job_number" bson:"job_number"`
 	LastUpdated time.Time     `json:"last_updated" bson:"last_updated"`
 	Source      *TaskMetadata `json:"source" bson:"source"`

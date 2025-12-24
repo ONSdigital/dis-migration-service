@@ -110,7 +110,7 @@ func (ds *Datastore) ClaimTask(ctx context.Context, pendingState, activeState do
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (ds *Datastore) GetJobTasks(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
+func (ds *Datastore) GetJobTasks(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 	return ds.Backend.GetJobTasks(ctx, jobNumber, limit, offset)
 }
 
@@ -136,7 +136,7 @@ func (ds *Datastore) CreateEvent(ctx context.Context, event *domain.Event) error
 }
 
 // GetJobEvents retrieves a list of migration events for a job with pagination.
-func (ds *Datastore) GetJobEvents(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Event, int, error) {
+func (ds *Datastore) GetJobEvents(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Event, int, error) {
 	return ds.Backend.GetJobEvents(ctx, jobNumber, limit, offset)
 }
 

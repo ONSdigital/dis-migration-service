@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	//"github.com/chromedp/cdproto/runtime"
 	"io"
 	"net/http"
 	"net/http/httptest"

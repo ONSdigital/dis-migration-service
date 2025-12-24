@@ -214,7 +214,7 @@ func (js *jobService) ClaimTask(ctx context.Context) (*domain.Task, error) {
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.
-func (js *jobService) GetJobTasks(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
+func (js *jobService) GetJobTasks(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 	return js.store.GetJobTasks(ctx, jobNumber, limit, offset)
 }
 
@@ -241,7 +241,7 @@ func (js *jobService) CreateEvent(ctx context.Context, jobNumber int, event *dom
 }
 
 // GetJobEvents retrieves a list of migration events for a job with pagination.
-func (js *jobService) GetJobEvents(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Event, int, error) {
+func (js *jobService) GetJobEvents(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Event, int, error) {
 	return js.store.GetJobEvents(ctx, jobNumber, limit, offset)
 }
 

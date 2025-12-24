@@ -21,7 +21,7 @@ func (m *Mongo) CreateEvent(ctx context.Context, event *domain.Event) error {
 }
 
 // GetJobEvents retrieves a list of migration events for a job with pagination.
-func (m *Mongo) GetJobEvents(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Event, int, error) {
+func (m *Mongo) GetJobEvents(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Event, int, error) {
 	var results []*domain.Event
 
 	filter := bson.M{"job_number": jobNumber}
