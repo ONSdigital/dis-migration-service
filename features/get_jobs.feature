@@ -12,11 +12,12 @@ Feature: Get list of jobs
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 12,
           "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/12"
             }
           },
           "state": "migrating",
@@ -35,11 +36,12 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 12,
               "label": "Labour Market statistics",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {
                 "self": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/12"
                 }
               },
               "state": "migrating",
@@ -62,11 +64,12 @@ Feature: Get list of jobs
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 3,
           "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/3"
             }
           },
           "state": "migrating",
@@ -81,11 +84,12 @@ Feature: Get list of jobs
         """
         {
           "_id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 33,
           "label": "Retail Sales Index",
           "last_updated": "2025-11-20T10:15:00Z",
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/4874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/33"
             }
           },
           "state": "in_progress",
@@ -104,11 +108,12 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 33,
               "label": "Retail Sales Index",
               "last_updated": "2025-11-20T10:15:00Z",
               "links": {
                 "self": {
-                  "href": "/v1/migration-jobs/4874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/33"
                 }
               },
               "state": "in_progress",
@@ -120,11 +125,12 @@ Feature: Get list of jobs
             },
             {
               "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 3,
               "label": "Labour Market statistics",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {
                 "self": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/3"
                 }
               },
               "state": "migrating",
@@ -148,11 +154,12 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 3,
               "label": "Labour Market statistics",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {
                 "self": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/3"
                 }
               },
               "state": "migrating",
@@ -176,11 +183,12 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 33,
               "label": "Retail Sales Index",
               "last_updated": "2025-11-20T10:15:00Z",
               "links": {
                 "self": {
-                  "href": "/v1/migration-jobs/4874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/33"
                 }
               },
               "state": "in_progress",
@@ -202,6 +210,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-submitted-1",
+          "job_number": 23,
           "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "migrating",
@@ -212,6 +221,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-approved-1",
+          "job_number": 24,
           "label": "job-approved-1",
           "last_updated": "2025-11-19T14:00:00Z",
           "state": "approved",
@@ -226,6 +236,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "job-submitted-1",
+              "job_number": 23,
               "label": "job-submitted-1",
               "state": "migrating",
               "config": {
@@ -248,6 +259,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-submitted-1",
+          "job_number": 20,
           "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "migrating",
@@ -258,6 +270,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-approved-1",
+          "job_number": 21,
           "label": "job-approved-1",
           "last_updated": "2025-11-19T14:00:00Z",
           "state": "approved",
@@ -272,6 +285,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "job-approved-1",
+              "job_number": 21,
               "label": "job-approved-1",
               "last_updated": "2025-11-19T14:00:00Z",
               "links": {},
@@ -280,6 +294,7 @@ Feature: Get list of jobs
             },
             {
               "id": "job-submitted-1",
+              "job_number": 20,
               "label": "job-submitted-1",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {},
@@ -298,6 +313,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-submitted-1",
+          "job_number": 1,
           "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "migrating",
@@ -308,6 +324,7 @@ Feature: Get list of jobs
         """
         {
           "_id": "job-approved-1",
+          "job_number": 2,
           "label": "job-approved-1",
           "last_updated": "2025-11-19T14:00:00Z",
           "state": "approved",
@@ -322,6 +339,7 @@ Feature: Get list of jobs
           "items": [
             {
               "id": "job-approved-1",
+              "job_number": 2,
               "label": "job-approved-1",
               "last_updated": "2025-11-19T14:00:00Z",
               "links": {},
@@ -330,6 +348,7 @@ Feature: Get list of jobs
             },
             {
               "id": "job-submitted-1",
+              "job_number": 1,
               "label": "job-submitted-1",
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {},

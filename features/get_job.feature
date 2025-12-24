@@ -12,6 +12,7 @@ Feature: Get a Job
         """
         {
           "_id": "1",
+          "job_number": 19,
           "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "migrating",
@@ -22,11 +23,11 @@ Feature: Get a Job
           }
         }
         """
-      When I GET "/v1/migration-jobs/1"
+      When I GET "/v1/migration-jobs/19"
       Then I should receive the following JSON response with status "200":
         """
         {
-          "id": "1",
+          "job_number": 19,
           "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "migrating",

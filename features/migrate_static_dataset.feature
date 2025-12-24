@@ -35,10 +35,11 @@ Feature: Migrate a static dataset job
       """
       {
         "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+        "job_number": 20,
         "last_updated": "2025-11-19T13:28:00Z",
         "links": {
           "self": {
-            "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+            "href": "/v1/migration-jobs/20"
           }
         },
         "state": "submitted",
@@ -51,11 +52,11 @@ Feature: Migrate a static dataset job
       }
       """
     And I wait 3 seconds for the job processor to process tasks and jobs
-    When I GET "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+    When I GET "/v1/migration-jobs/20"
     Then I should receive the following JSON response with status "200":
       """
       {
-        "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+        "job_number": 20,
         "state": "migrating",
         "last_updated": "{{DYNAMIC_TIMESTAMP}}",
         "config": {
@@ -66,7 +67,7 @@ Feature: Migrate a static dataset job
         "label": "Test Dataset Series",
         "links": {
           "self": {
-            "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+            "href": "/v1/migration-jobs/20"
           }
         }
       }

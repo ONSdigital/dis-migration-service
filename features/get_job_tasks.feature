@@ -12,16 +12,17 @@ Feature: Get list of job tasks
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 7,
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/7"
             },
             "events": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
+              "href": "/v1/migration-jobs/7/events"
             },
             "tasks": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+              "href": "/v1/migration-jobs/7/tasks"
             }
           },
           "state": "migrating",
@@ -37,7 +38,7 @@ Feature: Get list of job tasks
         """
         {
           "_id": "task-123e4567-e89b-12d3-a456-426614174000",
-          "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 7,
           "last_updated": "2025-11-19T13:30:00Z",
           "state": "migrating",
           "type": "dataset",
@@ -51,15 +52,15 @@ Feature: Get list of job tasks
           },
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks/task-123e4567-e89b-12d3-a456-426614174000"
+              "href": "/v1/migration-jobs/7/tasks/task-123e4567-e89b-12d3-a456-426614174000"
             },
             "job": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/7"
             }
           }
         }
         """
-      When I GET "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+      When I GET "/v1/migration-jobs/7/tasks"
       Then I should receive the following JSON response with status "200":
         """
         {
@@ -67,7 +68,7 @@ Feature: Get list of job tasks
           "items": [
             {
               "id": "task-123e4567-e89b-12d3-a456-426614174000",
-              "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 7,
               "last_updated": "2025-11-19T13:30:00Z",
               "state": "migrating",
               "type": "dataset",
@@ -81,10 +82,10 @@ Feature: Get list of job tasks
               },
               "links": {
                 "self": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks/task-123e4567-e89b-12d3-a456-426614174000"
+                  "href": "/v1/migration-jobs/7/tasks/task-123e4567-e89b-12d3-a456-426614174000"
                 },
                 "job": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/7"
                 }
               }
             }
@@ -100,16 +101,17 @@ Feature: Get list of job tasks
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 17,
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/17"
             },
             "events": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
+              "href": "/v1/migration-jobs/17/events"
             },
             "tasks": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+              "href": "/v1/migration-jobs/17/tasks"
             }
           },
           "state": "migrating",
@@ -125,7 +127,7 @@ Feature: Get list of job tasks
         """
         {
           "_id": "task-123e4567-e89b-12d3-a456-426614174000",
-          "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 17,
           "last_updated": "2025-11-19T13:30:00Z",
           "state": "migrating",
           "type": "dataset",
@@ -139,10 +141,10 @@ Feature: Get list of job tasks
           },
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks/task-123e4567-e89b-12d3-a456-426614174000"
+              "href": "/v1/migration-jobs/17/tasks/task-123e4567-e89b-12d3-a456-426614174000"
             },
             "job": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/17"
             }
           }
         }
@@ -151,7 +153,7 @@ Feature: Get list of job tasks
         """
         {
           "_id": "task-456e7890-e89b-12d3-a456-426614174001",
-          "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 17,
           "last_updated": "2025-11-19T13:35:00Z",
           "state": "publishing",
           "type": "dataset_edition",
@@ -165,15 +167,15 @@ Feature: Get list of job tasks
           },
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks/task-456e7890-e89b-12d3-a456-426614174001"
+              "href": "/v1/migration-jobs/17/tasks/task-456e7890-e89b-12d3-a456-426614174001"
             },
             "job": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/17"
             }
           }
         }
         """
-      When I GET "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+      When I GET "/v1/migration-jobs/17/tasks"
       Then I should receive the following JSON response with status "200":
         """
         {
@@ -181,7 +183,7 @@ Feature: Get list of job tasks
           "items": [
             {
               "id": "task-456e7890-e89b-12d3-a456-426614174001",
-              "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 17,
               "last_updated": "2025-11-19T13:35:00Z",
               "state": "publishing",
               "type": "dataset_edition",
@@ -195,16 +197,16 @@ Feature: Get list of job tasks
               },
               "links": {
                 "self": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks/task-456e7890-e89b-12d3-a456-426614174001"
+                  "href": "/v1/migration-jobs/17/tasks/task-456e7890-e89b-12d3-a456-426614174001"
                 },
                 "job": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/17"
                 }
               }
             },
             {
               "id": "task-123e4567-e89b-12d3-a456-426614174000",
-              "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 17,
               "last_updated": "2025-11-19T13:30:00Z",
               "state": "migrating",
               "type": "dataset",
@@ -218,10 +220,10 @@ Feature: Get list of job tasks
               },
               "links": {
                 "self": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks/task-123e4567-e89b-12d3-a456-426614174000"
+                  "href": "/v1/migration-jobs/17/tasks/task-123e4567-e89b-12d3-a456-426614174000"
                 },
                 "job": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/17"
                 }
               }
             }
@@ -231,7 +233,7 @@ Feature: Get list of job tasks
           "total_count": 2
         }
         """
-      When I GET "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks?limit=1&offset=1"
+      When I GET "/v1/migration-jobs/17/tasks?limit=1&offset=1"
       Then I should receive the following JSON response with status "200":
         """
         {
@@ -239,7 +241,7 @@ Feature: Get list of job tasks
           "items": [
             {
               "id": "task-123e4567-e89b-12d3-a456-426614174000",
-              "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 17,
               "last_updated": "2025-11-19T13:30:00Z",
               "state": "migrating",
               "type": "dataset",
@@ -253,10 +255,10 @@ Feature: Get list of job tasks
               },
               "links": {
                 "self": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks/task-123e4567-e89b-12d3-a456-426614174000"
+                  "href": "/v1/migration-jobs/17/tasks/task-123e4567-e89b-12d3-a456-426614174000"
                 },
                 "job": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/17"
                 }
               }
             }
@@ -272,16 +274,17 @@ Feature: Get list of job tasks
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 22,
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/22"
             },
             "events": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
+              "href": "/v1/migration-jobs/22/events"
             },
             "tasks": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+              "href": "/v1/migration-jobs/22/tasks"
             }
           },
           "state": "migrating",
@@ -293,7 +296,7 @@ Feature: Get list of job tasks
           }
         }
         """
-      When I GET "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+      When I GET "/v1/migration-jobs/22/tasks"
       Then I should receive the following JSON response with status "200":
         """
         {
@@ -306,7 +309,7 @@ Feature: Get list of job tasks
         """
 
     Scenario: Get a list of tasks for non-existent job returns 404
-      When I GET "/v1/migration-jobs/non-existent-job-id/tasks"
+      When I GET "/v1/migration-jobs/101/tasks"
       Then I should receive the following JSON response with status "404":
         """
         {

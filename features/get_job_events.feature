@@ -12,16 +12,17 @@ Feature: Get list of job events
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 18,
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/18"
             },
             "events": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
+              "href": "/v1/migration-jobs/18/events"
             },
             "tasks": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+              "href": "/v1/migration-jobs/18/tasks"
             }
           },
           "state": "submitted",
@@ -37,7 +38,7 @@ Feature: Get list of job events
         """
         {
           "_id": "event-123e4567-e89b-12d3-a456-426614174000",
-          "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 18,
           "created_at": "2025-11-19T13:30:00Z",
           "action": "submitted",
           "requested_by": {
@@ -46,15 +47,15 @@ Feature: Get list of job events
           },
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events/event-123e4567-e89b-12d3-a456-426614174000"
+              "href": "/v1/migration-jobs/18/events/event-123e4567-e89b-12d3-a456-426614174000"
             },
             "job": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/18"
             }
           }
         }
         """
-      When I GET "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
+      When I GET "/v1/migration-jobs/18/events"
       Then I should receive the following JSON response with status "200":
         """
         {
@@ -62,7 +63,7 @@ Feature: Get list of job events
           "items": [
             {
               "id": "event-123e4567-e89b-12d3-a456-426614174000",
-              "job_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 18,
               "created_at": "2025-11-19T13:30:00Z",
               "action": "submitted",
               "requested_by": {
@@ -71,10 +72,10 @@ Feature: Get list of job events
               },
               "links": {
                 "self": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events/event-123e4567-e89b-12d3-a456-426614174000"
+                  "href": "/v1/migration-jobs/18/events/event-123e4567-e89b-12d3-a456-426614174000"
                 },
                 "job": {
-                  "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+                  "href": "/v1/migration-jobs/18"
                 }
               }
             }
@@ -86,7 +87,7 @@ Feature: Get list of job events
         """
 
     Scenario: Get a list of events for non-existent job returns 404
-      When I GET "/v1/migration-jobs/non-existent-job-id/events"
+      When I GET "/v1/migration-jobs/102/events"
       Then I should receive the following JSON response with status "404":
         """
         {
@@ -104,16 +105,17 @@ Feature: Get list of job events
         """
         {
           "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 8,
           "last_updated": "2025-11-19T13:28:00Z",
           "links": {
             "self": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791"
+              "href": "/v1/migration-jobs/8"
             },
             "events": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
+              "href": "/v1/migration-jobs/8/events"
             },
             "tasks": {
-              "href": "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/tasks"
+              "href": "/v1/migration-jobs/8/tasks"
             }
           },
           "state": "submitted",
@@ -125,7 +127,7 @@ Feature: Get list of job events
           }
         }
         """
-      When I GET "/v1/migration-jobs/2874ee9e-1cec-44f8-9b6d-998cf2062791/events"
+      When I GET "/v1/migration-jobs/8/events"
       Then I should receive the following JSON response with status "200":
         """
         {
