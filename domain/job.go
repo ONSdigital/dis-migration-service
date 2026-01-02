@@ -32,7 +32,9 @@ type ResponseJob struct {
 
 // JobLinks contains HATEOS links for a migration job
 type JobLinks struct {
-	Self *LinkObject `bson:"self,omitempty"       json:"self,omitempty"`
+	Self   *LinkObject `bson:"self,omitempty"       json:"self,omitempty"`
+	Tasks  *LinkObject `bson:"tasks,omitempty"       json:"tasks,omitempty"`
+	Events *LinkObject `bson:"events,omitempty"      json:"events,omitempty"`
 }
 
 // NewJob creates a new Job instance with the provided configuration
@@ -57,6 +59,12 @@ func NewJobLinks(jobNumber string) JobLinks {
 	return JobLinks{
 		Self: &LinkObject{
 			HRef: fmt.Sprintf("/v1/migration-jobs/%s", jobNumber),
+		},
+		Tasks: &LinkObject{
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s/tasks", jobNumber),
+		},
+		Events: &LinkObject{
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s/events", jobNumber),
 		},
 	}
 }

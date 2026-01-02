@@ -47,6 +47,19 @@ var (
 	}
 )
 
+// IsValidTaskState checks if the provided state is a valid TaskState.
+func IsValidTaskState(state TaskState) bool {
+	switch state {
+	case TaskStateSubmitted, TaskStateInReview, TaskStateApproved, TaskStatePublished,
+		TaskStateCompleted, TaskStateMigrating, TaskStatePublishing, TaskStatePostPublishing,
+		TaskStateReverting, TaskStateFailedMigration, TaskStateFailedPostPublish, TaskStateFailedPublish,
+		TaskStateCancelled:
+		return true
+	default:
+		return false
+	}
+}
+
 // GetFailureStateForTaskState returns the corresponding failure state
 // for a given active task state.
 func GetFailureStateForTaskState(state TaskState) (TaskState, error) {

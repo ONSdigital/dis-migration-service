@@ -13,10 +13,10 @@ require (
 	github.com/ONSdigital/dp-files-api v1.14.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-mongodb/v3 v3.11.0
-	github.com/ONSdigital/dp-net/v2 v2.22.0
+	github.com/ONSdigital/dp-net/v3 v3.9.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
-	github.com/ONSdigital/dp-upload-service v1.12.0
-	github.com/ONSdigital/log.go/v2 v2.5.0
+	github.com/ONSdigital/dp-upload-service v1.13.0
+	github.com/ONSdigital/log.go/v2 v2.5.1
 	github.com/cucumber/godog v0.15.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
@@ -34,7 +34,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ONSdigital/dp-kafka/v3 v3.11.0 // indirect
-	github.com/ONSdigital/dp-net/v3 v3.8.0 // indirect
+	github.com/ONSdigital/dp-net/v2 v2.22.0 // indirect
 	github.com/ONSdigital/dp-permissions-api v1.6.0 // indirect
 	github.com/ONSdigital/dp-s3/v3 v3.3.0 // indirect
 	github.com/Shopify/sarama v1.38.1 // indirect

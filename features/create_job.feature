@@ -41,6 +41,12 @@ Feature: Create a Job
           "links": {
             "self": {
               "href": "{{DYNAMIC_URI_PATH}}"
+            },
+            "tasks": {
+              "href": "{{DYNAMIC_URI_PATH}}"
+            },
+            "events": {
+              "href": "{{DYNAMIC_URI_PATH}}"
             }
           }
         }

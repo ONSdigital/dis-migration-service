@@ -322,6 +322,274 @@ Feature: Get list of job tasks
         }
         """
 
+    Scenario: Get a list of tasks filtered by a single state
+      Given the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 8,
+          "last_updated": "2025-11-19T13:28:00Z",
+          "links": {
+            "self": {
+              "href": "/v1/migration-jobs/8"
+            },
+            "events": {
+              "href": "/v1/migration-jobs/8/events"
+            },
+            "tasks": {
+              "href": "/v1/migration-jobs/8/tasks"
+            }
+          },
+          "state": "migrating",
+          "type": "static_dataset",
+          "config": {
+            "source_id": "test-source-id",
+            "target_id": "test-target-id",
+            "type": "static_dataset"
+          }
+        }
+        """
+      And the following document exists in the "tasks" collection:
+        """
+        {
+          "_id": "task-123e4567-e89b-12d3-a456-426614174000",
+          "job_number": 8,
+          "last_updated": "2025-11-19T13:30:00Z",
+          "state": "migrating",
+          "type": "dataset",
+          "source": {
+            "id": "source-dataset-1",
+            "label": "Source Dataset 1"
+          },
+          "target": {
+            "id": "target-dataset-1",
+            "label": "Target Dataset 1"
+          },
+          "links": {
+            "self": {
+              "href": "/v1/migration-jobs/8/tasks/task-123e4567-e89b-12d3-a456-426614174000"
+            },
+            "job": {
+              "href": "/v1/migration-jobs/8"
+            }
+          }
+        }
+        """
+      When I GET "/v1/migration-jobs/8/tasks?state=migrating"
+      Then I should receive the following JSON response with status "200":
+        """
+        {
+          "count": 1,
+          "items": [
+            {
+              "id": "task-123e4567-e89b-12d3-a456-426614174000",
+              "job_number": 8,
+              "last_updated": "2025-11-19T13:30:00Z",
+              "state": "migrating",
+              "type": "dataset",
+              "source": {
+                "id": "source-dataset-1",
+                "label": "Source Dataset 1"
+              },
+              "target": {
+                "id": "target-dataset-1",
+                "label": "Target Dataset 1"
+              },
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/8/tasks/task-123e4567-e89b-12d3-a456-426614174000"
+                },
+                "job": {
+                  "href": "/v1/migration-jobs/8"
+                }
+              }
+            }
+          ],
+          "limit": 10,
+          "offset": 0,
+          "total_count": 1
+        }
+        """
+
+    Scenario: Get a list of tasks filtered by multiple states using repeated query param
+      Given the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 7,
+          "last_updated": "2025-11-19T13:28:00Z",
+          "links": {
+            "self": {
+              "href": "/v1/migration-jobs/7"
+            },
+            "events": {
+              "href": "/v1/migration-jobs/7/events"
+            },
+            "tasks": {
+              "href": "/v1/migration-jobs/7/tasks"
+            }
+          },
+          "state": "migrating",
+          "type": "static_dataset",
+          "config": {
+            "source_id": "test-source-id",
+            "target_id": "test-target-id",
+            "type": "static_dataset"
+          }
+        }
+        """
+      And the following document exists in the "tasks" collection:
+        """
+        {
+          "_id": "task-123e4567-e89b-12d3-a456-426614174000",
+          "job_number": 7,
+          "last_updated": "2025-11-19T13:30:00Z",
+          "state": "migrating",
+          "type": "dataset",
+          "source": {
+            "id": "source-dataset-1",
+            "label": "Source Dataset 1"
+          },
+          "target": {
+            "id": "target-dataset-1",
+            "label": "Target Dataset 1"
+          },
+          "links": {
+            "self": {
+              "href": "/v1/migration-jobs/7/tasks/task-123e4567-e89b-12d3-a456-426614174000"
+            },
+            "job": {
+              "href": "/v1/migration-jobs/7"
+            }
+          }
+        }
+        """
+      And the following document exists in the "tasks" collection:
+        """
+        {
+          "_id": "task-456e7890-e89b-12d3-a456-426614174001",
+          "job_number": 7,
+          "last_updated": "2025-11-19T13:35:00Z",
+          "state": "publishing",
+          "type": "dataset_edition",
+          "source": {
+            "id": "source-edition-2",
+            "label": "Source Edition 2"
+          },
+          "target": {
+            "id": "target-edition-2",
+            "label": "Target Edition 2"
+          },
+          "links": {
+            "self": {
+              "href": "/v1/migration-jobs/7/tasks/task-456e7890-e89b-12d3-a456-426614174001"
+            },
+            "job": {
+              "href": "/v1/migration-jobs/7"
+            }
+          }
+        }
+        """
+      When I GET "/v1/migration-jobs/7/tasks?state=migrating&state=publishing"
+      Then I should receive the following JSON response with status "200":
+        """
+        {
+          "count": 2,
+          "items": [
+            {
+              "id": "task-456e7890-e89b-12d3-a456-426614174001",
+              "job_number": 7,
+              "last_updated": "2025-11-19T13:35:00Z",
+              "state": "publishing",
+              "type": "dataset_edition",
+              "source": {
+                "id": "source-edition-2",
+                "label": "Source Edition 2"
+              },
+              "target": {
+                "id": "target-edition-2",
+                "label": "Target Edition 2"
+              },
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/7/tasks/task-456e7890-e89b-12d3-a456-426614174001"
+                },
+                "job": {
+                  "href": "/v1/migration-jobs/7"
+                }
+              }
+            },
+            {
+              "id": "task-123e4567-e89b-12d3-a456-426614174000",
+               "job_number": 7,
+              "last_updated": "2025-11-19T13:30:00Z",
+              "state": "migrating",
+              "type": "dataset",
+              "source": {
+                "id": "source-dataset-1",
+                "label": "Source Dataset 1"
+              },
+              "target": {
+                "id": "target-dataset-1",
+                "label": "Target Dataset 1"
+              },
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/7/tasks/task-123e4567-e89b-12d3-a456-426614174000"
+                },
+                "job": {
+                  "href": "/v1/migration-jobs/7"
+                }
+              }
+            }
+          ],
+          "limit": 10,
+          "offset": 0,
+          "total_count": 2
+        }
+        """
+
+    @InvalidInput
+    Scenario: Get a list of lists with an invalid state
+      Given the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 7,
+          "last_updated": "2025-11-19T13:28:00Z",
+          "links": {
+            "self": {
+              "href": "/v1/migration-jobs/7"
+            },
+            "events": {
+              "href": "/v1/migration-jobs/7/events"
+            },
+            "tasks": {
+              "href": "/v1/migration-jobs/7/tasks"
+            }
+          },
+          "state": "submitted",
+          "type": "static_dataset",
+          "config": {
+            "source_id": "test-source-id",
+            "target_id": "test-target-id",
+            "type": "static_dataset"
+          }
+        }
+        """
+      When I GET "/v1/migration-jobs/7/tasks?state=unknown"
+      Then I should receive the following JSON response with status "400":
+        """
+        {
+          "errors": [
+            {
+              "code": 400,
+              "description": "task state parameter is invalid"
+            }
+          ]
+        }
+        """
+
     @InvalidInput
     Scenario: Get a list of tasks with limit exceeding maximum allowed
       Given the following document exists in the "jobs" collection:

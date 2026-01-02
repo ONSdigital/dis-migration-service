@@ -36,7 +36,7 @@ var (
 	ErrJobNumberCounterNotFound  = errors.New("job number counter not found")
 	ErrJobNotFound               = errors.New("job not found")
 	ErrUnableToParseBody         = errors.New("unable to read submitted body")
-	ErrJobNumberNotProvided      = errors.New("job Number not provided")
+	ErrJobNumberNotProvided      = errors.New("job number not provided")
 	ErrSourceIDNotProvided       = errors.New("source ID not provided")
 	ErrTargetIDNotProvided       = errors.New("target ID not provided")
 	ErrJobTypeNotProvided        = errors.New("job type not provided")
@@ -49,6 +49,7 @@ var (
 	ErrTargetIDValidation        = errors.New("target ID failed to validate")
 	ErrJobAlreadyRunning         = errors.New("job already running")
 	ErrJobStateInvalid           = errors.New("job state parameter is invalid")
+	ErrTaskStateInvalid          = errors.New("task state parameter is invalid")
 	ErrTaskNotFound              = errors.New("task not found")
 	ErrOffsetInvalid             = errors.New("offset parameter is invalid")
 	ErrLimitInvalid              = errors.New("limit parameter is invalid")
@@ -74,6 +75,7 @@ var (
 		ErrSourceIDZebedeeURIInvalid: http.StatusBadRequest,
 		ErrTargetIDDatasetIDInvalid:  http.StatusBadRequest,
 		ErrJobStateInvalid:           http.StatusBadRequest,
+		ErrTaskStateInvalid:          http.StatusBadRequest,
 		ErrOffsetInvalid:             http.StatusBadRequest,
 		ErrLimitInvalid:              http.StatusBadRequest,
 		ErrLimitExceeded:             http.StatusBadRequest,

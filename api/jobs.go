@@ -85,7 +85,7 @@ func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, lim
 	if err != nil {
 		log.Error(ctx, "failed to get job -  job number must be an int", err)
 		handleError(ctx, w, r, err)
-		return
+		return &[]domain.Task{}, 0, err
 	}
 
 	// Ensure job exists -> return 404 if not found
@@ -93,8 +93,21 @@ func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, lim
 		return nil, 0, err // This will return 404 if job not found
 	}
 
+	statesParam := r.URL.Query()["state"]
+	states := make([]domain.TaskState, 0, len(statesParam))
+
+	for _, s := range statesParam {
+		for _, p := range strings.Split(s, ",") {
+			state := domain.TaskState(strings.TrimSpace(p))
+			if !domain.IsValidTaskState(state) {
+				return nil, 0, appErrors.ErrTaskStateInvalid
+			}
+			states = append(states, state)
+		}
+	}
+
 	// Fetch tasks for the job
-	tasks, totalCount, err := api.JobService.GetJobTasks(ctx, jobNumber, limit, offset)
+	tasks, totalCount, err := api.JobService.GetJobTasks(ctx, states, jobNumber, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -255,8 +255,23 @@ func TestGetJobs(t *testing.T) {
 			})
 		})
 
-		Convey("When a request is made with multiple valid states", func() {
+		Convey("When a request is made with multiple valid states, using repeated query param", func() {
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?state=submitted&state=approved", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then jobs matching any of the states are returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				Convey("And the service is called with both states", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
+					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.JobState{domain.JobStateSubmitted, domain.JobStateApproved})
+				})
+			})
+		})
+
+		Convey("When a request is made with multiple valid states, using comma-separated values", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?state=submitted,approved", http.NoBody)
 			resp := httptest.NewRecorder()
 			api.Router.ServeHTTP(resp, req)
 
@@ -550,7 +565,8 @@ func TestGetJobTasks(t *testing.T) {
 				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobTasksFunc: func(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+
+				GetJobTasksFunc: func(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 					// return tasks as interface{} to match service signature used in handler
 					return mockTasks, len(mockTasks), nil
 				},
@@ -580,7 +596,8 @@ func TestGetJobTasks(t *testing.T) {
 				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 					return &domain.Job{JobNumber: jobNumber}, nil
 				},
-				GetJobTasksFunc: func(ctx context.Context, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+
+				GetJobTasksFunc: func(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
 					return nil, 0, testErr
 				},
 			}
@@ -594,6 +611,102 @@ func TestGetJobTasks(t *testing.T) {
 			So(items, ShouldBeNil)
 			So(total, ShouldEqual, 0)
 			So(err, ShouldBeError, testErr)
+		})
+
+		Convey("When a request for a job's tasks is made with a single valid state", func() {
+			mockTasks := []*domain.Task{
+				{ID: "t1", JobNumber: testJobNumber, State: domain.TaskStateSubmitted},
+				{ID: "t2", JobNumber: testJobNumber, State: domain.TaskStateSubmitted},
+			}
+
+			mockService := applicationMock.JobServiceMock{
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
+				},
+				GetJobTasksFunc: func(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+					return mockTasks, len(mockTasks), nil
+				},
+			}
+			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/123/tasks?state=submitted", http.NoBody)
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then the server should respond with status 200 OK", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				Convey("And the service is called with the submitted state", func() {
+					So(len(mockService.GetJobTasksCalls()), ShouldEqual, 1)
+					So(mockService.GetJobTasksCalls()[0].States, ShouldResemble, []domain.TaskState{domain.TaskStateSubmitted})
+				})
+			})
+		})
+
+		Convey("When a request for a job's tasks is made with multiple valid states", func() {
+			mockTasks := []*domain.Task{
+				{ID: "t1", JobNumber: testJobNumber, State: domain.TaskStateSubmitted},
+				{ID: "t2", JobNumber: testJobNumber, State: domain.TaskStateApproved},
+			}
+
+			mockService := applicationMock.JobServiceMock{
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
+				},
+				GetJobTasksFunc: func(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+					return mockTasks, len(mockTasks), nil
+				},
+			}
+			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/123/tasks?state=submitted&state=approved", http.NoBody)
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then the server should respond with status 200 OK", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				Convey("And the service is called with both states", func() {
+					So(len(mockService.GetJobTasksCalls()), ShouldEqual, 1)
+					So(mockService.GetJobTasksCalls()[0].States, ShouldResemble, []domain.TaskState{domain.TaskStateSubmitted, domain.TaskStateApproved})
+				})
+			})
+		})
+
+		Convey("When a request for a job's tasks is made with an invalid state", func() {
+			mockTasks := []*domain.Task{
+				{ID: "t1", JobNumber: testJobNumber, State: domain.TaskStateApproved},
+				{ID: "t2", JobNumber: testJobNumber, State: domain.TaskStateApproved},
+			}
+
+			mockService := applicationMock.JobServiceMock{
+				GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+					return &domain.Job{JobNumber: jobNumber}, nil
+				},
+				GetJobTasksFunc: func(ctx context.Context, states []domain.TaskState, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+					return mockTasks, len(mockTasks), nil
+				},
+			}
+			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/123/tasks?state=unknown", http.NoBody)
+			testJobNumberStr := strconv.Itoa(testJobNumber)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 400 bad request is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				So(resp.Body.String(), ShouldContainSubstring, "task state parameter is invalid")
+
+				Convey("And the service is not called", func() {
+					So(len(mockService.GetJobTasksCalls()), ShouldEqual, 0)
+				})
+			})
 		})
 	})
 }
