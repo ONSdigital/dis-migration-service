@@ -10,6 +10,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/dis-migration-service/service"
+	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"net/http"
@@ -38,11 +39,14 @@ var _ service.Initialiser = &InitialiserMock{}
 //			DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 //				panic("mock out the DoGetHealthCheck method")
 //			},
-//			DoGetMigratorFunc: func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+//			DoGetMigratorFunc: func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
 //				panic("mock out the DoGetMigrator method")
 //			},
 //			DoGetMongoDBFunc: func(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error) {
 //				panic("mock out the DoGetMongoDB method")
+//			},
+//			DoGetSlackClientFunc: func(ctx context.Context, cfg *config.Config) (slack.Clienter, error) {
+//				panic("mock out the DoGetSlackClient method")
 //			},
 //		}
 //
@@ -64,10 +68,13 @@ type InitialiserMock struct {
 	DoGetHealthCheckFunc func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error)
 
 	// DoGetMigratorFunc mocks the DoGetMigrator method.
-	DoGetMigratorFunc func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error)
+	DoGetMigratorFunc func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error)
 
 	// DoGetMongoDBFunc mocks the DoGetMongoDB method.
 	DoGetMongoDBFunc func(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error)
+
+	// DoGetSlackClientFunc mocks the DoGetSlackClient method.
+	DoGetSlackClientFunc func(ctx context.Context, cfg *config.Config) (slack.Clienter, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -113,6 +120,8 @@ type InitialiserMock struct {
 			JobService application.JobService
 			// ClientList is the clientList argument value.
 			ClientList *clients.ClientList
+			// SlackClient is the slackClient argument value.
+			SlackClient slack.Clienter
 		}
 		// DoGetMongoDB holds details about calls to the DoGetMongoDB method.
 		DoGetMongoDB []struct {
@@ -121,6 +130,13 @@ type InitialiserMock struct {
 			// Cfg is the cfg argument value.
 			Cfg config.MongoConfig
 		}
+		// DoGetSlackClient holds details about calls to the DoGetSlackClient method.
+		DoGetSlackClient []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
+		}
 	}
 	lockDoGetAppClients              sync.RWMutex
 	lockDoGetAuthorisationMiddleware sync.RWMutex
@@ -128,6 +144,7 @@ type InitialiserMock struct {
 	lockDoGetHealthCheck             sync.RWMutex
 	lockDoGetMigrator                sync.RWMutex
 	lockDoGetMongoDB                 sync.RWMutex
+	lockDoGetSlackClient             sync.RWMutex
 }
 
 // DoGetAppClients calls DoGetAppClientsFunc.
@@ -283,25 +300,27 @@ func (mock *InitialiserMock) DoGetHealthCheckCalls() []struct {
 }
 
 // DoGetMigrator calls DoGetMigratorFunc.
-func (mock *InitialiserMock) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+func (mock *InitialiserMock) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
 	if mock.DoGetMigratorFunc == nil {
 		panic("InitialiserMock.DoGetMigratorFunc: method is nil but Initialiser.DoGetMigrator was just called")
 	}
 	callInfo := struct {
-		Ctx        context.Context
-		Cfg        *config.Config
-		JobService application.JobService
-		ClientList *clients.ClientList
+		Ctx         context.Context
+		Cfg         *config.Config
+		JobService  application.JobService
+		ClientList  *clients.ClientList
+		SlackClient slack.Clienter
 	}{
-		Ctx:        ctx,
-		Cfg:        cfg,
-		JobService: jobService,
-		ClientList: clientList,
+		Ctx:         ctx,
+		Cfg:         cfg,
+		JobService:  jobService,
+		ClientList:  clientList,
+		SlackClient: slackClient,
 	}
 	mock.lockDoGetMigrator.Lock()
 	mock.calls.DoGetMigrator = append(mock.calls.DoGetMigrator, callInfo)
 	mock.lockDoGetMigrator.Unlock()
-	return mock.DoGetMigratorFunc(ctx, cfg, jobService, clientList)
+	return mock.DoGetMigratorFunc(ctx, cfg, jobService, clientList, slackClient)
 }
 
 // DoGetMigratorCalls gets all the calls that were made to DoGetMigrator.
@@ -309,16 +328,18 @@ func (mock *InitialiserMock) DoGetMigrator(ctx context.Context, cfg *config.Conf
 //
 //	len(mockedInitialiser.DoGetMigratorCalls())
 func (mock *InitialiserMock) DoGetMigratorCalls() []struct {
-	Ctx        context.Context
-	Cfg        *config.Config
-	JobService application.JobService
-	ClientList *clients.ClientList
+	Ctx         context.Context
+	Cfg         *config.Config
+	JobService  application.JobService
+	ClientList  *clients.ClientList
+	SlackClient slack.Clienter
 } {
 	var calls []struct {
-		Ctx        context.Context
-		Cfg        *config.Config
-		JobService application.JobService
-		ClientList *clients.ClientList
+		Ctx         context.Context
+		Cfg         *config.Config
+		JobService  application.JobService
+		ClientList  *clients.ClientList
+		SlackClient slack.Clienter
 	}
 	mock.lockDoGetMigrator.RLock()
 	calls = mock.calls.DoGetMigrator
@@ -359,5 +380,41 @@ func (mock *InitialiserMock) DoGetMongoDBCalls() []struct {
 	mock.lockDoGetMongoDB.RLock()
 	calls = mock.calls.DoGetMongoDB
 	mock.lockDoGetMongoDB.RUnlock()
+	return calls
+}
+
+// DoGetSlackClient calls DoGetSlackClientFunc.
+func (mock *InitialiserMock) DoGetSlackClient(ctx context.Context, cfg *config.Config) (slack.Clienter, error) {
+	if mock.DoGetSlackClientFunc == nil {
+		panic("InitialiserMock.DoGetSlackClientFunc: method is nil but Initialiser.DoGetSlackClient was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}{
+		Ctx: ctx,
+		Cfg: cfg,
+	}
+	mock.lockDoGetSlackClient.Lock()
+	mock.calls.DoGetSlackClient = append(mock.calls.DoGetSlackClient, callInfo)
+	mock.lockDoGetSlackClient.Unlock()
+	return mock.DoGetSlackClientFunc(ctx, cfg)
+}
+
+// DoGetSlackClientCalls gets all the calls that were made to DoGetSlackClient.
+// Check the length with:
+//
+//	len(mockedInitialiser.DoGetSlackClientCalls())
+func (mock *InitialiserMock) DoGetSlackClientCalls() []struct {
+	Ctx context.Context
+	Cfg *config.Config
+} {
+	var calls []struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}
+	mock.lockDoGetSlackClient.RLock()
+	calls = mock.calls.DoGetSlackClient
+	mock.lockDoGetSlackClient.RUnlock()
 	return calls
 }

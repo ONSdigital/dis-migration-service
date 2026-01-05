@@ -9,6 +9,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
+	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
@@ -28,6 +29,7 @@ type Service struct {
 	ServiceList *ExternalServiceList
 	mongoDB     store.MongoDB
 	migrator    migrator.Migrator
+	slackClient slack.Clienter
 	clients     *clients.ClientList
 }
 
@@ -68,8 +70,15 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	// Get job service
 	svc.JobService = application.Setup(&datastore, svc.clients, svc.Config)
 
+	// Initialize Slack client
+	svc.slackClient, err = svc.ServiceList.GetSlackClient(ctx, svc.Config)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise slack client", err)
+		return err
+	}
+
 	// Get Migrator
-	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, svc.Config, svc.JobService, svc.clients)
+	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, svc.Config, svc.JobService, svc.clients, svc.slackClient)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise migrator", err)
 		return err
@@ -185,7 +194,6 @@ func (svc *Service) Close(ctx context.Context) error {
 
 // CreateMiddleware creates an Alice middleware chain of handlers
 // to forward collectionID from cookie from header
-
 func createMiddleware(hc HealthChecker) alice.Chain {
 	// healthcheck
 	healthcheckHandler := healthcheckMiddleware(hc.Handler, "/health")

@@ -10,22 +10,20 @@ import (
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
-	"github.com/ONSdigital/dis-migration-service/service/mock"
-	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
-	"github.com/ONSdigital/log.go/v2/log"
-	"go.mongodb.org/mongo-driver/bson"
-
-	"github.com/ONSdigital/dis-migration-service/migrator"
-
-	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
-
-	"github.com/ONSdigital/dis-migration-service/mongo"
-	"github.com/ONSdigital/dis-migration-service/store"
-
 	"github.com/ONSdigital/dis-migration-service/config"
+	"github.com/ONSdigital/dis-migration-service/migrator"
+	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dis-migration-service/service"
+	"github.com/ONSdigital/dis-migration-service/service/mock"
+	"github.com/ONSdigital/dis-migration-service/slack"
+	slackMocks "github.com/ONSdigital/dis-migration-service/slack/mocks"
+	"github.com/ONSdigital/dis-migration-service/store"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
+	"github.com/ONSdigital/log.go/v2/log"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 const (
@@ -49,6 +47,7 @@ type MigrationComponent struct {
 	StartTime               time.Time
 	FakeAPIRouter           *FakeAPI
 	AuthorisationMiddleware authorisation.Middleware
+	MockSlackClient         *slackMocks.ClienterMock
 }
 
 func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *componenttest.AuthorizationFeature) (*MigrationComponent, error) {
@@ -103,10 +102,37 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *comp
 	c.Config.ZebedeeURL = c.FakeAPIRouter.fakeHTTP.Server.URL
 	c.Config.DatasetAPIURL = c.FakeAPIRouter.fakeHTTP.Server.URL
 
+	// Initialize mock Slack client
+	c.MockSlackClient = &slackMocks.ClienterMock{
+		SendInfoFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+			log.Info(ctx, "mock slack: info notification", log.Data{
+				"summary": summary,
+				"details": details,
+			})
+			return nil
+		},
+		SendWarningFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+			log.Info(ctx, "mock slack: warning notification", log.Data{
+				"summary": summary,
+				"details": details,
+			})
+			return nil
+		},
+		SendAlarmFunc: func(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+			log.Info(ctx, "mock slack: alarm notification", log.Data{
+				"summary": summary,
+				"error":   err,
+				"details": details,
+			})
+			return nil
+		},
+	}
+
 	initMock := &mock.InitialiserMock{
 		DoGetHealthCheckFunc:             c.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:              c.DoGetHTTPServer,
 		DoGetMongoDBFunc:                 c.DoGetMongoDB,
+		DoGetSlackClientFunc:             c.DoGetSlackClient,
 		DoGetMigratorFunc:                c.DoGetMigrator,
 		DoGetAppClientsFunc:              c.DoGetAppClients,
 		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddleware,
@@ -209,8 +235,13 @@ func (c *MigrationComponent) DoGetMongoDB(ctx context.Context, cfg config.MongoC
 	return c.MongoClient, nil
 }
 
-func (c *MigrationComponent) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig := migrator.NewDefaultMigrator(cfg, jobService, clientList)
+func (c *MigrationComponent) DoGetSlackClient(ctx context.Context, cfg *config.Config) (slack.Clienter, error) {
+	log.Info(ctx, "returning mock slack client for component testing")
+	return c.MockSlackClient, nil
+}
+
+func (c *MigrationComponent) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
+	mig := migrator.NewDefaultMigrator(cfg, jobService, clientList, slackClient)
 	return mig, nil
 }
 
@@ -228,4 +259,69 @@ func (c *MigrationComponent) DoGetAuthorisationMiddleware(ctx context.Context, c
 
 	c.AuthorisationMiddleware = middleware
 	return c.AuthorisationMiddleware, nil
+}
+
+func (c *MigrationComponent) GetMockSlackClient() *slackMocks.ClienterMock {
+	return c.MockSlackClient
+}
+
+// AssertSlackInfoCalled asserts that SendInfo was called on the mock Slack client
+func (c *MigrationComponent) AssertSlackInfoCalled(expectedCount int) error {
+	actualCount := len(c.MockSlackClient.SendInfoCalls())
+	if actualCount != expectedCount {
+		return fmt.Errorf("expected SendInfo to be called %d times, but was called %d times", expectedCount, actualCount)
+	}
+	return nil
+}
+
+// AssertSlackInfoCalledWithSummary asserts that SendInfo was called with a specific summary
+func (c *MigrationComponent) AssertSlackInfoCalledWithSummary(expectedSummary string) error {
+	calls := c.MockSlackClient.SendInfoCalls()
+	for _, call := range calls {
+		if call.Summary == expectedSummary {
+			return nil
+		}
+	}
+	return fmt.Errorf("expected SendInfo to be called with summary %q, but it was not found", expectedSummary)
+}
+
+// AssertSlackInfoCalledWithDetails asserts that SendInfo was called with specific details
+func (c *MigrationComponent) AssertSlackInfoCalledWithDetails(expectedKey string, expectedValue interface{}) error {
+	calls := c.MockSlackClient.SendInfoCalls()
+	for _, call := range calls {
+		if val, ok := call.Details[expectedKey]; ok {
+			if val == expectedValue {
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("expected SendInfo to be called with details %s=%v, but it was not found", expectedKey, expectedValue)
+}
+
+// ResetMockSlackClient resets the mock Slack client call history
+func (c *MigrationComponent) ResetMockSlackClient() {
+	c.MockSlackClient = &slackMocks.ClienterMock{
+		SendInfoFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+			log.Info(ctx, "mock slack: info notification", log.Data{
+				"summary": summary,
+				"details": details,
+			})
+			return nil
+		},
+		SendWarningFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+			log.Info(ctx, "mock slack: warning notification", log.Data{
+				"summary": summary,
+				"details": details,
+			})
+			return nil
+		},
+		SendAlarmFunc: func(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+			log.Info(ctx, "mock slack: alarm notification", log.Data{
+				"summary": summary,
+				"error":   err,
+				"details": details,
+			})
+			return nil
+		},
+	}
 }

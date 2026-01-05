@@ -4,31 +4,29 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
-
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/config"
-
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/dis-migration-service/mongo"
+	"github.com/ONSdigital/dis-migration-service/slack"
+	slackMocks "github.com/ONSdigital/dis-migration-service/slack/mocks"
 	"github.com/ONSdigital/dis-migration-service/store"
 	redirectAPI "github.com/ONSdigital/dis-redirect-api/sdk/go"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	datasetErrors "github.com/ONSdigital/dp-dataset-api/apierrors"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	datasetAPI "github.com/ONSdigital/dp-dataset-api/sdk"
 	datasetAPIMocks "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
 	filesAPI "github.com/ONSdigital/dp-files-api/sdk"
 	filesAPIMocks "github.com/ONSdigital/dp-files-api/sdk/mocks"
-	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
-	uploadSDKMocks "github.com/ONSdigital/dp-upload-service/sdk/mocks"
-
-	"github.com/ONSdigital/log.go/v2/log"
-
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v3/http"
+	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
+	uploadSDKMocks "github.com/ONSdigital/dp-upload-service/sdk/mocks"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // ExternalServiceList holds the initialiser and initialisation
@@ -38,6 +36,7 @@ type ExternalServiceList struct {
 	Init        Initialiser
 	MongoDB     bool
 	Migrator    bool
+	SlackClient bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
@@ -79,9 +78,20 @@ func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg config.MongoCo
 	return mongodb, nil
 }
 
+// GetSlackClient returns a Slack client for sending notifications
+func (e *ExternalServiceList) GetSlackClient(ctx context.Context, cfg *config.Config) (slack.Clienter, error) {
+	slackClient, err := e.Init.DoGetSlackClient(ctx, cfg)
+	if err != nil {
+		log.Error(ctx, "failed to initialise slack client", err)
+		return nil, err
+	}
+	e.SlackClient = true
+	return slackClient, nil
+}
+
 // GetMigrator returns the background migrator
-func (e *ExternalServiceList) GetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig, err := e.Init.DoGetMigrator(ctx, cfg, jobService, clientList)
+func (e *ExternalServiceList) GetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
+	mig, err := e.Init.DoGetMigrator(ctx, cfg, jobService, clientList, slackClient)
 	if err != nil {
 		return nil, err
 	}
@@ -125,9 +135,50 @@ func (e *Init) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.
 	return mongodb, nil
 }
 
+// DoGetSlackClient returns a Slack client based on configuration
+func (e *Init) DoGetSlackClient(ctx context.Context, cfg *config.Config) (slack.Clienter, error) {
+	slackCfg := &slack.Config{
+		Enabled:  cfg.SlackConfig.Enabled,
+		APIToken: cfg.SlackConfig.APIToken,
+		Channels: slack.Channels{
+			InfoChannel:    cfg.SlackConfig.Channels.InfoChannel,
+			WarningChannel: cfg.SlackConfig.Channels.WarningChannel,
+			AlarmChannel:   cfg.SlackConfig.Channels.AlarmChannel,
+		},
+	}
+
+	if cfg.EnableMockClients {
+		log.Info(ctx, "returning mock slack client")
+		return &slackMocks.ClienterMock{
+			SendInfoFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+				return nil
+			},
+			SendWarningFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+				return nil
+			},
+			SendAlarmFunc: func(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+				return nil
+			},
+		}, nil
+	}
+
+	slackClient, err := slack.New(slackCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if slackCfg.Enabled {
+		log.Info(ctx, "slack client initialised and enabled")
+	} else {
+		log.Info(ctx, "slack client initialised (disabled - using noop client)")
+	}
+
+	return slackClient, nil
+}
+
 // DoGetMigrator returns a Migrator
-func (e *Init) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
-	mig := migrator.NewDefaultMigrator(cfg, jobService, clientList)
+func (e *Init) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
+	mig := migrator.NewDefaultMigrator(cfg, jobService, clientList, slackClient)
 	log.Info(ctx, "migrator initialised")
 	return mig, nil
 }

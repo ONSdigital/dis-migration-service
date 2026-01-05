@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	dpMongo "github.com/ONSdigital/dp-mongodb/v3/mongodb"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -61,6 +61,7 @@ func TestConfig(t *testing.T) {
 						},
 					},
 					AuthConfig:       authorisation.NewDefaultConfig(),
+					SlackConfig:      &slack.Config{},
 					RedirectAPIURL:   "http://localhost:29900",
 					UploadServiceURL: "http://localhost:25100",
 					ZebedeeURL:       "http://localhost:8082",

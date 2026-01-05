@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dis-migration-service
 
-go 1.24.0
+go 1.24.7
 
 require (
 	github.com/ONSdigital/dis-redirect-api v0.3.8
@@ -22,6 +22,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/pkg/errors v0.9.1
+	github.com/slack-go/slack v0.17.3
 	github.com/smartystreets/goconvey v1.8.1
 	go.mongodb.org/mongo-driver v1.17.6
 	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.63.0
@@ -96,6 +97,7 @@ require (
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/gorilla/schema v1.4.1 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect

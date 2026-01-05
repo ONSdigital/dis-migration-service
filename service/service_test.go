@@ -8,11 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
-	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
-
-	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -20,10 +15,13 @@ import (
 	migratorMock "github.com/ONSdigital/dis-migration-service/migrator/mock"
 	"github.com/ONSdigital/dis-migration-service/service"
 	"github.com/ONSdigital/dis-migration-service/service/mock"
+	"github.com/ONSdigital/dis-migration-service/slack"
+	slackMocks "github.com/ONSdigital/dis-migration-service/slack/mocks"
 	"github.com/ONSdigital/dis-migration-service/store"
-
 	storeMock "github.com/ONSdigital/dis-migration-service/store/mock"
-
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/pkg/errors"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -46,6 +44,21 @@ var funcDoGetHealthcheckErr = func(cfg *config.Config, buildTime string, gitComm
 
 var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.HTTPServer {
 	return nil
+}
+
+// createMockSlackClient creates a default mock Slack client for testing
+func createMockSlackClient() slack.Clienter {
+	return &slackMocks.ClienterMock{
+		SendInfoFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+			return nil
+		},
+		SendWarningFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+			return nil
+		},
+		SendAlarmFunc: func(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+			return nil
+		},
+	}
 }
 
 func TestRun(t *testing.T) {
@@ -98,7 +111,11 @@ func TestRun(t *testing.T) {
 			return &storeMock.MongoDBMock{}, nil
 		}
 
-		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+		funcDoGetSlackClient := func(ctx context.Context, cfg *config.Config) (slack.Clienter, error) {
+			return createMockSlackClient(), nil
+		}
+
+		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
 			return &migratorMock.MigratorMock{
 				StartFunc: func(ctx context.Context) {},
 			}, nil
@@ -117,6 +134,7 @@ func TestRun(t *testing.T) {
 			initMock := &mock.InitialiserMock{
 				DoGetHTTPServerFunc:  funcDoGetHTTPServerNil,
 				DoGetHealthCheckFunc: funcDoGetHealthcheckErr,
+				DoGetSlackClientFunc: funcDoGetSlackClient,
 				DoGetMigratorFunc:    funcDoGetMigrator,
 				DoGetMongoDBFunc:     funcDoGetMongoDBOk,
 				DoGetAppClientsFunc:  funcDoGetAppClientsOk,
@@ -142,6 +160,7 @@ func TestRun(t *testing.T) {
 			initMock := &mock.InitialiserMock{
 				DoGetHTTPServerFunc:              funcDoGetHTTPServer,
 				DoGetHealthCheckFunc:             funcDoGetHealthcheckOk,
+				DoGetSlackClientFunc:             funcDoGetSlackClient,
 				DoGetMigratorFunc:                funcDoGetMigrator,
 				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
 				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
@@ -157,6 +176,7 @@ func TestRun(t *testing.T) {
 			Convey("Then service Run succeeds and all the flags are set", func() {
 				So(err, ShouldBeNil)
 				So(svcList.HealthCheck, ShouldBeTrue)
+				So(svcList.SlackClient, ShouldBeTrue)
 			})
 
 			Convey("The checkers are registered and the healthcheck and http server started", func() {
@@ -183,7 +203,8 @@ func TestRun(t *testing.T) {
 			}
 
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc: funcDoGetHTTPServerNil,
+				DoGetHTTPServerFunc:  funcDoGetHTTPServerNil,
+				DoGetSlackClientFunc: funcDoGetSlackClient,
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
@@ -201,6 +222,7 @@ func TestRun(t *testing.T) {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldResemble, fmt.Sprintf("unable to register checkers: %s", errAddCheckFail.Error()))
 				So(svcList.HealthCheck, ShouldBeTrue)
+				So(svcList.SlackClient, ShouldBeTrue)
 				So(len(hcMockAddFail.AddCheckCalls()), ShouldEqual, 1)
 				So(hcMockAddFail.AddCheckCalls()[0].Name, ShouldResemble, "Mongo DB")
 			})
@@ -214,6 +236,7 @@ func TestRun(t *testing.T) {
 			initMock := &mock.InitialiserMock{
 				DoGetHealthCheckFunc:             funcDoGetHealthcheckOk,
 				DoGetHTTPServerFunc:              funcDoGetFailingHTTPServer,
+				DoGetSlackClientFunc:             funcDoGetSlackClient,
 				DoGetMigratorFunc:                funcDoGetMigrator,
 				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
 				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
@@ -287,7 +310,11 @@ func TestClose(t *testing.T) {
 			return nil
 		}
 
-		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList) (migrator.Migrator, error) {
+		funcDoGetSlackClient := func(ctx context.Context, cfg *config.Config) (slack.Clienter, error) {
+			return createMockSlackClient(), nil
+		}
+
+		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
 			return &migratorMock.MigratorMock{
 				StartFunc:    func(ctx context.Context) {},
 				ShutdownFunc: funcClose,
@@ -314,6 +341,7 @@ func TestClose(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
+				DoGetSlackClientFunc:             funcDoGetSlackClient,
 				DoGetMigratorFunc:                funcDoGetMigrator,
 				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
 				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
@@ -347,6 +375,7 @@ func TestClose(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
+				DoGetSlackClientFunc:             funcDoGetSlackClient,
 				DoGetMigratorFunc:                funcDoGetMigrator,
 				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
 				DoGetAppClientsFunc:              funcDoGetAppClientsOk,

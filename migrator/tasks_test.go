@@ -13,7 +13,6 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/executor"
 	executorMocks "github.com/ONSdigital/dis-migration-service/executor/mock"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -50,11 +49,12 @@ func TestMigratorExecuteTask(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When a task in state migrating is executed", func() {
@@ -118,11 +118,12 @@ func TestMigratorExecuteTask(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When a task is executed", func() {
@@ -180,11 +181,12 @@ func TestMigratorExecuteTask(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When a task is executed that errors during migration", func() {
@@ -222,9 +224,10 @@ func TestMigratorFailTask(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When failTask is called for a task with an active state", func() {
@@ -270,11 +273,12 @@ func TestMigratorFailTask(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When failTask is called for a task", func() {
@@ -310,9 +314,10 @@ func TestGetTaskExecutor(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When getTaskExecutor is called for a task with a known type", func() {
@@ -376,11 +381,12 @@ func TestMonitorTasks(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorPollInterval: 10 * time.Millisecond,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx, cancel := context.WithCancel(context.Background())
 
 		Convey("When monitorTasks is started and runs one iteration", func() {
@@ -446,12 +452,13 @@ func TestMonitorTasks(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorPollInterval:            10 * time.Millisecond,
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx, cancel := context.WithCancel(context.Background())
 
 		Convey("When monitorTasks is started and runs one iteration", func() {

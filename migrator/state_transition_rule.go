@@ -29,7 +29,7 @@ func (mig *migrator) GetStateTransitionRules() map[domain.State][]StateTransitio
 				Description:     "all tasks migrated, job moves to in_review",
 			},
 		},
-		domain.StateInReview: {
+		domain.StatePublishing: {
 			{
 				TaskTargetState: domain.StatePublished,
 				JobTargetState:  domain.StatePublished,
@@ -98,6 +98,11 @@ func (mig *migrator) CheckAndUpdateJobStateBasedOnTasks(ctx context.Context, job
 	logData["new_state"] = rule.JobTargetState
 	log.Info(ctx, "job state updated successfully", logData)
 
+	// Send Slack notification for completed active states
+	if isActiveStateCompletion(job.State, rule.JobTargetState) {
+		mig.notifyJobStateCompletion(ctx, job, rule.JobTargetState)
+	}
+
 	return nil
 }
 
@@ -138,4 +143,20 @@ func (mig *migrator) TriggerJobStateTransitions(ctx context.Context, jobNumber i
 		}
 	}
 	return nil
+}
+
+// isActiveStateCompletion checks if the transition represents completion
+// of an active processing state
+func isActiveStateCompletion(fromState, toState domain.State) bool {
+	// Check if we're completing one of the active processing states
+	switch fromState {
+	case domain.StateMigrating:
+		return toState == domain.StateInReview
+	case domain.StatePublishing:
+		return toState == domain.StatePublished
+	case domain.StatePostPublishing:
+		return toState == domain.StateCompleted
+	default:
+		return false
+	}
 }

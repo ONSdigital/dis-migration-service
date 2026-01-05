@@ -113,3 +113,14 @@ func IsRejectedOrReverting(state domain.State) bool {
 		return false
 	}
 }
+
+// IsActiveProcessingState returns true if the state represents an active
+// processing state that should notify on completion
+func IsActiveProcessingState(state domain.State) bool {
+	switch state {
+	case domain.StateMigrating, domain.StatePublishing, domain.StatePostPublishing:
+		return true
+	default:
+		return false
+	}
+}

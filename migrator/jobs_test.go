@@ -13,6 +13,8 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/executor"
 	executorMocks "github.com/ONSdigital/dis-migration-service/executor/mock"
+	"github.com/ONSdigital/dis-migration-service/slack"
+	slackMocks "github.com/ONSdigital/dis-migration-service/slack/mocks"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -21,6 +23,21 @@ const (
 	fakeJobType   domain.JobType = "fake-job-type"
 	fakeJobNumber int            = 101
 )
+
+// createMockSlackClient creates a default mock Slack client for testing
+func createMockSlackClient() slack.Clienter {
+	return &slackMocks.ClienterMock{
+		SendInfoFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+			return nil
+		},
+		SendWarningFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+			return nil
+		},
+		SendAlarmFunc: func(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+			return nil
+		},
+	}
+}
 
 func TestMigratorExecuteJob(t *testing.T) {
 	Convey("Given a migrator with test executors", t, func() {
@@ -44,11 +61,12 @@ func TestMigratorExecuteJob(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When a job in state migrating is executed", func() {
@@ -103,11 +121,12 @@ func TestMigratorExecuteJob(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When a job is executed", func() {
@@ -154,11 +173,12 @@ func TestMigratorExecuteJob(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When a job is executed that errors during migration", func() {
@@ -193,9 +213,10 @@ func TestMigratorFailJob(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When failJob is called for a job with an active state", func() {
@@ -241,11 +262,12 @@ func TestMigratorFailJob(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When failJob is called for a job", func() {
@@ -281,9 +303,10 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 		Convey("When failJobByID is called", func() {
 			err := mig.failJobByJobNumber(ctx, 25)
@@ -313,9 +336,10 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 		Convey("When failJobByID is called", func() {
 			err := mig.failJobByJobNumber(ctx, 25)
@@ -339,9 +363,10 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 		Convey("When failJobByJobNumber is called", func() {
 			err := mig.failJobByJobNumber(ctx, 26)
@@ -375,9 +400,10 @@ func TestGetJobExecutor(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 
 		Convey("When getJobExecutor is called for a job with a known type", func() {
@@ -426,11 +452,12 @@ func TestMonitorJobs(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorPollInterval: 10 * time.Millisecond,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx, cancel := context.WithCancel(context.Background())
 
 		Convey("When monitorJobs is started and runs one iteration", func() {
@@ -485,12 +512,13 @@ func TestMonitorJobs(t *testing.T) {
 		}
 
 		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{
 			MigratorPollInterval:            10 * time.Millisecond,
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients)
+		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx, cancel := context.WithCancel(context.Background())
 
 		Convey("When monitorJobs is started and runs one iteration", func() {

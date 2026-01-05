@@ -11,6 +11,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/executor"
+	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -18,6 +19,7 @@ type migrator struct {
 	jobService    application.JobService
 	jobExecutors  map[domain.JobType]executor.JobExecutor
 	taskExecutors map[domain.TaskType]executor.TaskExecutor
+	slackClient   slack.Clienter
 	wg            sync.WaitGroup
 	semaphore     chan struct{}
 	pollInterval  time.Duration
@@ -26,7 +28,7 @@ type migrator struct {
 
 // NewDefaultMigrator creates a new default migrator with the
 // provided job service and clients
-func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, appClients *clients.ClientList) *migrator {
+func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, appClients *clients.ClientList, slackClient slack.Clienter) *migrator {
 	jobExecutors := getJobExecutors(jobService, appClients)
 	taskExecutors := getTaskExecutors(jobService, appClients, cfg)
 
@@ -34,6 +36,7 @@ func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, a
 		jobService:    jobService,
 		jobExecutors:  jobExecutors,
 		taskExecutors: taskExecutors,
+		slackClient:   slackClient,
 		pollInterval:  cfg.MigratorPollInterval,
 		// Semaphore to limit concurrent migrations
 		semaphore: make(chan struct{}, cfg.MigratorMaxConcurrentExecutions),
