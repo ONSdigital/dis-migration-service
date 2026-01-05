@@ -20,17 +20,21 @@ type StateTransitionRule struct {
 
 // GetStateTransitionRules returns all rules for job state transitions
 // based on task completion
-func (mig *migrator) GetStateTransitionRules() []StateTransitionRule {
-	return []StateTransitionRule{
-		{
-			TaskTargetState: domain.StateInReview,
-			JobTargetState:  domain.StateInReview,
-			Description:     "All tasks migrated, job moves to in_review",
+func (mig *migrator) GetStateTransitionRules() map[domain.State][]StateTransitionRule {
+	return map[domain.State][]StateTransitionRule{
+		domain.StateMigrating: {
+			{
+				TaskTargetState: domain.StateInReview,
+				JobTargetState:  domain.StateInReview,
+				Description:     "all tasks migrated, job moves to in_review",
+			},
 		},
-		{
-			TaskTargetState: domain.StatePublished,
-			JobTargetState:  domain.StatePublished,
-			Description:     "All tasks published, job moves to published",
+		domain.StateInReview: {
+			{
+				TaskTargetState: domain.StatePublished,
+				JobTargetState:  domain.StatePublished,
+				Description:     "all tasks published, job moves to published",
+			},
 		},
 	}
 }
@@ -122,22 +126,15 @@ func (mig *migrator) TriggerJobStateTransitions(ctx context.Context, jobID strin
 		return err
 	}
 
-	rules := mig.GetStateTransitionRules()
-	for _, rule := range rules {
-		// Skip if job already at or past this target state
-		if job.State == rule.JobTargetState {
-			continue
-		}
+	rules := mig.GetStateTransitionRules()[job.State]
+	if len(rules) == 0 {
+		return nil // No transitions available from current state
+	}
 
+	for _, rule := range rules {
 		err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, jobID, rule)
 		if err != nil {
 			return err
-		}
-
-		// If state was updated, stop checking further rules
-		updatedJob, _ := mig.jobService.GetJob(ctx, jobID)
-		if updatedJob.State != job.State {
-			break
 		}
 	}
 	return nil

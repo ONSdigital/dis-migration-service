@@ -405,7 +405,7 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
 				return &domain.Job{
 					ID:    jobID,
-					State: domain.StatePublishing,
+					State: domain.StateInReview,
 				}, nil
 			},
 			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
