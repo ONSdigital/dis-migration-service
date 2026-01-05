@@ -19,6 +19,7 @@ import (
 
 const (
 	testJobNumber             = 21
+	testJobNumberCounterName  = "job_number_counter"
 	testJobNumberCounterValue = 5
 	testDatasetTitle          = "Test Dataset Title"
 	nonExistentJobNumber      = 101
@@ -32,6 +33,9 @@ func TestCreateJob(t *testing.T) {
 			},
 			CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
 				return nil
+			},
+			GetNextJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+				return &domain.Counter{CounterName: testJobNumberCounterName, CounterValue: testJobNumberCounterValue}, nil
 			},
 		}
 
@@ -61,7 +65,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, testJobNumberCounterValue)
+			job, err := jobService.CreateJob(ctx, &jobConfig)
 
 			Convey("Then the validator should be called to get the title", func() {
 				So(len(mockValidator.ValidateSourceIDWithExternalCalls()), ShouldEqual, 1)
@@ -126,7 +130,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, testJobNumberCounterValue)
+			job, err := jobService.CreateJob(ctx, &jobConfig)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -155,6 +159,9 @@ func TestCreateJob(t *testing.T) {
 			CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
 				return nil
 			},
+			GetNextJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+				return &domain.Counter{CounterName: testJobNumberCounterName, CounterValue: testJobNumberCounterValue}, nil
+			},
 		}
 
 		mockStore := store.Datastore{
@@ -183,7 +190,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, testJobNumberCounterValue)
+			job, err := jobService.CreateJob(ctx, &jobConfig)
 
 			Convey("Then the store should be checked for matching jobs", func() {
 				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)
@@ -209,6 +216,9 @@ func TestCreateJob(t *testing.T) {
 			CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
 				return nil
 			},
+			GetNextJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+				return &domain.Counter{CounterName: testJobNumberCounterName, CounterValue: testJobNumberCounterValue}, nil
+			},
 		}
 
 		mockStore := store.Datastore{
@@ -237,7 +247,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, testJobNumberCounterValue)
+			job, err := jobService.CreateJob(ctx, &jobConfig)
 
 			Convey("Then the store should be checked for matching jobs", func() {
 				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)
@@ -263,6 +273,9 @@ func TestCreateJob(t *testing.T) {
 			CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
 				return errors.New("fake error for testing")
 			},
+			GetNextJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+				return &domain.Counter{CounterName: testJobNumberCounterName, CounterValue: testJobNumberCounterValue}, nil
+			},
 		}
 
 		mockStore := store.Datastore{
@@ -291,7 +304,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, testJobNumberCounterValue)
+			job, err := jobService.CreateJob(ctx, &jobConfig)
 
 			Convey("Then the store should be called to create a job", func() {
 				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)

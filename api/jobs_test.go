@@ -372,7 +372,7 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockService := applicationMock.JobServiceMock{
-			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error) {
+			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error) {
 				return &createdJob, nil
 			},
 			GetNextJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {

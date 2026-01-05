@@ -141,14 +141,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// increment and get the job number counter
-	jobNumberCounter, err := api.JobService.GetNextJobNumberCounter(ctx)
-	if err != nil {
-		handleError(ctx, w, r, err)
-		return
-	}
-
-	job, err := api.JobService.CreateJob(ctx, jobConfig, jobNumberCounter.CounterValue)
+	job, err := api.JobService.CreateJob(ctx, jobConfig)
 	if err != nil {
 		handleError(ctx, w, r, err)
 		return

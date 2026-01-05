@@ -14,7 +14,7 @@ import (
 //
 //go:generate moq -out mock/jobservice.go -pkg mock . JobService
 type JobService interface {
-	CreateJob(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error)
+	CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error)
 	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	ClaimJob(ctx context.Context) (*domain.Job, error)
 	UpdateJobState(ctx context.Context, jobNumber int, newState domain.JobState) error
@@ -48,14 +48,21 @@ func Setup(datastore *store.Datastore, appClients *clients.ClientList) JobServic
 
 // CreateJob creates a new migration job based on the
 // provided job configuration.
-func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error) {
+func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error) {
 	label, err := jobConfig.ValidateExternal(ctx, *js.clients)
 	if err != nil {
 		return &domain.Job{}, err
 	}
 
+	// increment and get the job number counter
+	jobNumberCounter, err := js.GetNextJobNumberCounter(ctx)
+	if err != nil {
+		log.Error(ctx, "failed to get next job number counter", err)
+		return &domain.Job{}, appErrors.ErrInternalServerError
+	}
+
 	// Create job with label
-	job := domain.NewJob(jobConfig, jobNumberCounterValue, label)
+	job := domain.NewJob(jobConfig, jobNumberCounter.CounterValue, label)
 
 	foundJobs, err := js.store.GetJobsByConfigAndState(ctx, job.Config, domain.GetNonCancelledStates(), 1, 0)
 	if err != nil {
@@ -84,7 +91,7 @@ func (js *jobService) GetJobNumberCounter(ctx context.Context) (*domain.Counter,
 }
 
 // GetNextJobNumberCounter increments the job number counter,
-// in mongoDB, and then returns it
+// in mongoDB, and then 	returns it
 func (js *jobService) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
 	return js.store.GetNextJobNumberCounter(ctx)
 }
