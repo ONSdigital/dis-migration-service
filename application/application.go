@@ -26,7 +26,7 @@ type JobService interface {
 	ClaimTask(ctx context.Context) (*domain.Task, error)
 	CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error)
 	GetJobNumberCounter(ctx context.Context) (*domain.Counter, error)
-	UpdateJobNumberCounter(ctx context.Context) error
+	GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error)
 	CreateEvent(ctx context.Context, jobNumber int, event *domain.Event) (*domain.Event, error)
 	GetJobEvents(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Event, int, error)
 	CountEventsByJobNumber(ctx context.Context, jobNumber int) (int, error)
@@ -83,9 +83,10 @@ func (js *jobService) GetJobNumberCounter(ctx context.Context) (*domain.Counter,
 	return js.store.GetJobNumberCounter(ctx)
 }
 
-// UpdateJobNumberCounter increments the job number counter, in mongoDB, by 1
-func (js *jobService) UpdateJobNumberCounter(ctx context.Context) error {
-	return js.store.UpdateJobNumberCounter(ctx)
+// GetNextJobNumberCounter increments the job number counter,
+// in mongoDB, and then returns it
+func (js *jobService) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
+	return js.store.GetNextJobNumberCounter(ctx)
 }
 
 // GetJob retrieves a migration job by its job number.

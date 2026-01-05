@@ -24,7 +24,7 @@ type dataMongoDB interface {
 	ClaimJob(ctx context.Context, pendingState domain.JobState, activeState domain.JobState) (*domain.Job, error)
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.JobState, limit, offset int) ([]*domain.Job, error)
 	GetJobNumberCounter(ctx context.Context) (*domain.Counter, error)
-	UpdateJobNumberCounter(ctx context.Context) error
+	GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error)
 	UpdateJob(ctx context.Context, job *domain.Job) error
 
 	// Tasks
@@ -125,9 +125,10 @@ func (ds *Datastore) GetJobNumberCounter(ctx context.Context) (*domain.Counter, 
 	return ds.Backend.GetJobNumberCounter(ctx)
 }
 
-// UpdateJobNumberCounter increments the job number counter, in mongoDB, by 1.
-func (ds *Datastore) UpdateJobNumberCounter(ctx context.Context) error {
-	return ds.Backend.UpdateJobNumberCounter(ctx)
+// GetNextJobNumberCounter increments the job number counter,
+// in mongoDB, and then returns it.
+func (ds *Datastore) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
+	return ds.Backend.GetNextJobNumberCounter(ctx)
 }
 
 // CreateEvent creates a new migration event.

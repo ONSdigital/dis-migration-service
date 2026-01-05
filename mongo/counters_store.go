@@ -60,20 +60,20 @@ func (m *Mongo) GetJobNumberCounter(ctx context.Context) (*domain.Counter, error
 	return &jobNumberCounter, nil
 }
 
-// UpdateJobNumberCounter increments the job number counter, in mongoDB, by 1
-func (m *Mongo) UpdateJobNumberCounter(ctx context.Context) error {
-	_, err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).UpdateOne(ctx, bson.M{
-		"counter_name": "job_number_counter",
-	}, bson.D{
-		{Key: "$inc", Value: bson.D{primitive.E{Key: "counter_value", Value: 1}}},
-	})
+// GetNextJobNumberCounter increments the job number counter,
+// in mongoDB, and then returns it
+func (m *Mongo) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
+	var jobNumberCounter domain.Counter
+	err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).FindOneAndUpdate(ctx,
+		bson.M{"counter_name": "job_number_counter"}, bson.D{
+			{Key: "$inc", Value: bson.D{primitive.E{Key: "counter_value", Value: 1}}},
+		}, &jobNumberCounter)
 
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
-			return appErrors.ErrJobNumberCounterNotFound
+			return nil, appErrors.ErrJobNumberCounterNotFound
 		}
-		return appErrors.ErrInternalServerError
+		return nil, appErrors.ErrInternalServerError
 	}
-
-	return nil
+	return &jobNumberCounter, nil
 }

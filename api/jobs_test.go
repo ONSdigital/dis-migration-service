@@ -375,8 +375,8 @@ func TestCreateJob(t *testing.T) {
 			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig, jobNumberCounterValue int) (*domain.Job, error) {
 				return &createdJob, nil
 			},
-			UpdateJobNumberCounterFunc: func(ctx context.Context) error {
-				return nil
+			GetNextJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+				return &testCounter, nil
 			},
 			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
 				return &testCounter, nil
