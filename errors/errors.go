@@ -33,15 +33,15 @@ func New(err error) Error {
 
 // Predefined errors
 var (
-	ErrJobNumberCounterNotFound  = errors.New("job number counter not found")
-	ErrJobNotFound               = errors.New("job not found")
-	ErrUnableToParseBody         = errors.New("unable to read submitted body")
-	ErrJobNumberNotProvided      = errors.New("job number not provided")
-	ErrJobNumberMustBeInt        = errors.New("job number must be an integer")
-	ErrSourceIDNotProvided       = errors.New("source ID not provided")
-	ErrTargetIDNotProvided       = errors.New("target ID not provided")
-	ErrJobTypeNotProvided        = errors.New("job type not provided")
-	ErrSourceTitleNotFound       = errors.New("source title not found or empty")
+	ErrJobNumberCounterNotFound     = errors.New("job number counter not found")
+	ErrJobNotFound                  = errors.New("job not found")
+	ErrUnableToParseBody            = errors.New("unable to read submitted body")
+	ErrJobNumberNotProvided         = errors.New("job number not provided")
+	ErrJobNumberMustBeInt           = errors.New("job number must be an integer")
+	ErrSourceIDNotProvided          = errors.New("source ID not provided")
+	ErrTargetIDNotProvided          = errors.New("target ID not provided")
+	ErrJobTypeNotProvided           = errors.New("job type not provided")
+	ErrSourceTitleNotFound          = errors.New("source title not found or empty")
 	ErrJobIDNotProvided             = errors.New("job ID not provided")
 	ErrSourceIDInvalid              = errors.New("source ID is invalid")
 	ErrTargetIDInvalid              = errors.New("target ID is invalid")
@@ -63,27 +63,27 @@ var (
 	ErrTargetIDDatasetIDInvalid  = errors.New("target id must be lowercase alphanumeric with optional hyphen separators")
 
 	StatusCodeMap = map[error]int{
-		ErrJobNotFound:               http.StatusNotFound,
-		ErrUnableToParseBody:         http.StatusBadRequest,
-		ErrJobNumberNotProvided:      http.StatusBadRequest,
-		ErrSourceIDNotProvided:       http.StatusBadRequest,
-		ErrTargetIDNotProvided:       http.StatusBadRequest,
-		ErrJobTypeNotProvided:        http.StatusBadRequest,
-		ErrInternalServerError:       http.StatusInternalServerError,
-		ErrSourceTitleNotFound:       http.StatusInternalServerError,
-		ErrSourceIDValidation:        http.StatusInternalServerError,
-		ErrTargetIDValidation:        http.StatusInternalServerError,
-		ErrJobAlreadyRunning:         http.StatusConflict,
-		ErrSourceIDInvalid:           http.StatusBadRequest,
-		ErrTargetIDInvalid:           http.StatusBadRequest,
-		ErrJobTypeInvalid:            http.StatusBadRequest,
-		ErrSourceIDZebedeeURIInvalid: http.StatusBadRequest,
-		ErrTargetIDDatasetIDInvalid:  http.StatusBadRequest,
-		ErrJobStateInvalid:           http.StatusBadRequest,
-		ErrTaskStateInvalid:          http.StatusBadRequest,
-		ErrOffsetInvalid:             http.StatusBadRequest,
-		ErrLimitInvalid:              http.StatusBadRequest,
-		ErrLimitExceeded:             http.StatusBadRequest,
+		ErrJobNotFound:                  http.StatusNotFound,
+		ErrUnableToParseBody:            http.StatusBadRequest,
+		ErrJobNumberNotProvided:         http.StatusBadRequest,
+		ErrSourceIDNotProvided:          http.StatusBadRequest,
+		ErrTargetIDNotProvided:          http.StatusBadRequest,
+		ErrJobTypeNotProvided:           http.StatusBadRequest,
+		ErrInternalServerError:          http.StatusInternalServerError,
+		ErrSourceTitleNotFound:          http.StatusInternalServerError,
+		ErrSourceIDValidation:           http.StatusInternalServerError,
+		ErrTargetIDValidation:           http.StatusInternalServerError,
+		ErrJobAlreadyRunning:            http.StatusConflict,
+		ErrSourceIDInvalid:              http.StatusBadRequest,
+		ErrTargetIDInvalid:              http.StatusBadRequest,
+		ErrJobTypeInvalid:               http.StatusBadRequest,
+		ErrSourceIDZebedeeURIInvalid:    http.StatusBadRequest,
+		ErrTargetIDDatasetIDInvalid:     http.StatusBadRequest,
+		ErrJobStateInvalid:              http.StatusBadRequest,
+		ErrTaskStateInvalid:             http.StatusBadRequest,
+		ErrOffsetInvalid:                http.StatusBadRequest,
+		ErrLimitInvalid:                 http.StatusBadRequest,
+		ErrLimitExceeded:                http.StatusBadRequest,
 		ErrJobStateTransitionNotAllowed: http.StatusConflict,
 		ErrSourceIDInvalid:              http.StatusBadRequest,
 		ErrTargetIDInvalid:              http.StatusBadRequest,

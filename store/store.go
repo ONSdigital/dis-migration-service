@@ -20,12 +20,11 @@ type Datastore struct {
 type dataMongoDB interface {
 	// Jobs
 	CreateJob(ctx context.Context, job *domain.Job) error
-	GetJob(ctx context.Context, jobID string) (*domain.Job, error)
+	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
 	ClaimJob(ctx context.Context, pendingState domain.State, activeState domain.State) (*domain.Job, error)
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error)
-	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
-	GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
+
 	GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error)
 	UpdateJob(ctx context.Context, job *domain.Job) error
 	UpdateJobState(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error

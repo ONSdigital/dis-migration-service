@@ -44,7 +44,7 @@ func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService
 	)
 
 	api.put(
-		fmt.Sprintf("/v1/migration-jobs/{%s}/state", PathParameterJobID),
+		fmt.Sprintf("/v1/migration-jobs/{%s}/state", PathParameterJobNumber),
 		authMiddleware.Require("migrations:edit", api.updateJobState),
 	)
 

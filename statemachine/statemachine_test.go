@@ -1,10 +1,10 @@
-package stateengine_test
+package statemachine_test
 
 import (
 	"testing"
 
 	"github.com/ONSdigital/dis-migration-service/domain"
-	"github.com/ONSdigital/dis-migration-service/stateengine"
+	"github.com/ONSdigital/dis-migration-service/statemachine"
 )
 
 func TestCanTransition(t *testing.T) {
@@ -163,7 +163,7 @@ func TestCanTransition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := stateengine.CanTransition(tt.from, tt.to)
+			result := statemachine.CanTransition(tt.from, tt.to)
 			if result != tt.expected {
 				t.Errorf(
 					"CanTransition(%q, %q) = %v, want %v",
@@ -222,7 +222,7 @@ func TestValidateTransition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stateengine.ValidateTransition(tt.from, tt.to)
+			err := statemachine.ValidateTransition(tt.from, tt.to)
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
 			}
@@ -293,7 +293,7 @@ func TestIsTerminalState(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := stateengine.IsTerminalState(tt.state)
+			result := statemachine.IsTerminalState(tt.state)
 			if result != tt.expected {
 				t.Errorf(
 					"IsTerminalState(%q) = %v, want %v",
@@ -346,7 +346,7 @@ func TestGetNextStates(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := stateengine.GetNextStates(tt.state)
+			result := statemachine.GetNextStates(tt.state)
 			if !statesEqual(result, tt.expected) {
 				t.Errorf(
 					"GetNextStates(%q) = %v, want %v",
@@ -394,7 +394,7 @@ func TestIsFailureState(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := stateengine.IsFailureState(tt.state)
+			result := statemachine.IsFailureState(tt.state)
 			if result != tt.expected {
 				t.Errorf(
 					"IsFailureState(%q) = %v, want %v",
@@ -437,7 +437,7 @@ func TestIsRejectedOrReverting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := stateengine.IsRejectedOrReverting(tt.state)
+			result := statemachine.IsRejectedOrReverting(tt.state)
 			if result != tt.expected {
 				t.Errorf(
 					"IsRejectedOrReverting(%q) = %v, want %v",

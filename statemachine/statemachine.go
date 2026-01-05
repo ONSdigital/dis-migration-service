@@ -1,4 +1,4 @@
-package stateengine
+package statemachine
 
 import (
 	"fmt"

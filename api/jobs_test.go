@@ -378,9 +378,6 @@ func TestCreateJob(t *testing.T) {
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				return &testCounter, nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
-				return &testCounter, nil
-			},
 		}
 
 		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
@@ -646,8 +643,8 @@ func TestGetJobTasks(t *testing.T) {
 
 		Convey("When a request for a job's tasks is made with multiple valid states", func() {
 			mockTasks := []*domain.Task{
-				{ID: "t1", JobNumber: testJobNumber, State: domain.TaskStateSubmitted},
-				{ID: "t2", JobNumber: testJobNumber, State: domain.TaskStateApproved},
+				{ID: "t1", JobNumber: testJobNumber, State: domain.StateSubmitted},
+				{ID: "t2", JobNumber: testJobNumber, State: domain.StateApproved},
 			}
 
 			mockService := applicationMock.JobServiceMock{

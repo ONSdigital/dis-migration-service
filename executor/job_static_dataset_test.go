@@ -54,7 +54,7 @@ func TestJobStaticDataset(t *testing.T) {
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return nil, errors.New("create task error")
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.JobState) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State) error {
 				return nil
 			},
 		}

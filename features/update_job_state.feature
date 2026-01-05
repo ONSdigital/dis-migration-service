@@ -12,6 +12,7 @@ Feature: Update Job State
         """
         {
           "_id": "1",
+          "job_number": 1,
           "state": "in_review"
         }
         """
@@ -86,6 +87,7 @@ Feature: Update Job State
         """
         {
           "_id": "1",
+          "job_number": 1,
           "state": "completed"
         }
         """

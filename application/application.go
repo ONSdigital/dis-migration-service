@@ -8,7 +8,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
-	"github.com/ONSdigital/dis-migration-service/stateengine"
+	"github.com/ONSdigital/dis-migration-service/statemachine"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -103,12 +103,12 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 		return err
 	}
 
-	if err := stateengine.ValidateTransition(job.State, newState); err != nil {
+	if err := statemachine.ValidateTransition(job.State, newState); err != nil {
 		return err
 	}
 
 	now := time.Now().UTC()
-	err = js.store.UpdateJobState(ctx, id, newState, now)
+	err = js.store.UpdateJobState(ctx, job.ID, newState, now)
 	if err != nil {
 		return fmt.Errorf("failed to update job state: %w", err)
 	}
@@ -169,7 +169,7 @@ func (js *jobService) UpdateTaskState(ctx context.Context, taskID string, newSta
 	}
 
 	// Validate state transition
-	if err := stateengine.ValidateTransition(task.State, newState); err != nil {
+	if err := statemachine.ValidateTransition(task.State, newState); err != nil {
 		return err
 	}
 

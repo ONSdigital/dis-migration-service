@@ -10,7 +10,7 @@ import (
 
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
-	"github.com/ONSdigital/dis-migration-service/stateengine"
+	"github.com/ONSdigital/dis-migration-service/statemachine"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
@@ -191,24 +191,36 @@ func (api *MigrationAPI) updateJobState(
 	r *http.Request,
 ) {
 	ctx := r.Context()
-	jobID := mux.Vars(r)[PathParameterJobID]
+	vars := mux.Vars(r)
+	jobNumberStr := vars[PathParameterJobNumber]
+
+	if jobNumberStr == "" {
+		handleError(ctx, w, r, appErrors.ErrJobNumberNotProvided)
+	}
+
+	jobNumber, err := strconv.Atoi(jobNumberStr)
+	if err != nil {
+		log.Error(ctx, "failed to get job -  job number must be an int", err)
+		handleError(ctx, w, r, err)
+		return
+	}
 
 	// Base log context reused throughout the handler
 	logData := log.Data{
-		"job_id": jobID,
+		"job_number": jobNumber,
 	}
 
 	// Read request body
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Warn(ctx, "unable to read request body", logData)
+		log.Info(ctx, "unable to read request body", logData)
 		handleError(ctx, w, r, appErrors.ErrUnableToParseBody)
 		return
 	}
 
 	var req StateChangeRequest
 	if err := json.Unmarshal(bodyBytes, &req); err != nil {
-		log.Warn(ctx, "failed to decode request body", logData)
+		log.Info(ctx, "failed to decode request body", logData)
 		handleError(ctx, w, r, appErrors.ErrUnableToParseBody)
 		return
 	}
@@ -218,20 +230,20 @@ func (api *MigrationAPI) updateJobState(
 
 	// Validate state is known
 	if !domain.IsValidState(req.State) {
-		log.Warn(ctx, "invalid state provided", logData)
+		log.Info(ctx, "invalid state provided", logData)
 		handleError(ctx, w, r, appErrors.ErrJobStateInvalid)
 		return
 	}
 
 	// Validate state is allowed for this endpoint
-	if !stateengine.IsAllowedStateForJobUpdate(req.State) {
-		log.Warn(ctx, "state not allowed for this endpoint", logData)
+	if !statemachine.IsAllowedStateForJobUpdate(req.State) {
+		log.Info(ctx, "state not allowed for this endpoint", logData)
 		handleError(ctx, w, r, appErrors.ErrJobStateNotAllowed)
 		return
 	}
 
 	// Get current job
-	job, err := api.JobService.GetJob(ctx, jobID)
+	job, err := api.JobService.GetJob(ctx, jobNumber)
 	if err != nil {
 		if !errors.Is(err, appErrors.ErrJobNotFound) {
 			log.Error(ctx, "failed to get job", err, logData)
@@ -244,11 +256,11 @@ func (api *MigrationAPI) updateJobState(
 	logData["current_state"] = job.State
 
 	// Attempt state transition
-	err = api.JobService.UpdateJobState(ctx, jobID, req.State)
+	err = api.JobService.UpdateJobState(ctx, jobNumber, req.State)
 	if err != nil {
-		var transitionErr *stateengine.TransitionError
+		var transitionErr *statemachine.TransitionError
 		if errors.As(err, &transitionErr) {
-			log.Warn(ctx, "invalid state transition", logData)
+			log.Info(ctx, "invalid state transition", logData)
 			handleError(ctx, w, r, appErrors.ErrJobStateTransitionNotAllowed)
 			return
 		}

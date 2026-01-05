@@ -13,7 +13,6 @@ import (
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/store"
 	storeMocks "github.com/ONSdigital/dis-migration-service/store/mock"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -468,7 +467,7 @@ func TestUpdateJobState(t *testing.T) {
 	Convey("Given a job service and store that returns an error when updating a job", t, func() {
 		fakeJob := &domain.Job{
 			JobNumber: testJobNumber,
-			State: domain.StateSubmitted,
+			State:     domain.StateSubmitted,
 		}
 
 		mockMongo := &storeMocks.MongoDBMock{
@@ -504,7 +503,7 @@ func TestUpdateJobState(t *testing.T) {
 	Convey("Given a job service where state transition validation fails", t, func() {
 		fakeJob := &domain.Job{
 			JobNumber: testJobNumber,
-			State: domain.StateCompleted,
+			State:     domain.StateCompleted,
 		}
 
 		mockMongo := &storeMocks.MongoDBMock{
@@ -702,7 +701,7 @@ func TestCreateTask(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
 					JobNumber: jobNumber,
-					State: domain.StateSubmitted,
+					State:     domain.StateSubmitted,
 				}, nil
 			},
 			CreateTaskFunc: func(ctx context.Context, task *domain.Task) error {
@@ -809,7 +808,7 @@ func TestCreateTask(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
 					JobNumber: jobNumber,
-					State: domain.StateSubmitted,
+					State:     domain.StateSubmitted,
 				}, nil
 			},
 			CreateTaskFunc: func(ctx context.Context, task *domain.Task) error {
@@ -855,7 +854,7 @@ func TestUpdateTaskState(t *testing.T) {
 		fakeTask := &domain.Task{
 			ID:        "task-123",
 			JobNumber: testJobNumber,
-			State: domain.StateSubmitted,
+			State:     domain.StateSubmitted,
 		}
 
 		mockMongo := &storeMocks.MongoDBMock{
@@ -927,7 +926,7 @@ func TestUpdateTaskState(t *testing.T) {
 		fakeTask := &domain.Task{
 			ID:        "task-123",
 			JobNumber: testJobNumber,
-			State: domain.StateCompleted,
+			State:     domain.StateCompleted,
 		}
 
 		mockMongo := &storeMocks.MongoDBMock{
@@ -960,9 +959,9 @@ func TestUpdateTaskState(t *testing.T) {
 
 	Convey("Given a job service and store that returns an error when updating task state", t, func() {
 		fakeTask := &domain.Task{
-			ID:    "task-123",
+			ID:        "task-123",
 			JobNumber: testJobNumber,
-			State: domain.StateSubmitted,
+			State:     domain.StateSubmitted,
 		}
 
 		mockMongo := &storeMocks.MongoDBMock{
