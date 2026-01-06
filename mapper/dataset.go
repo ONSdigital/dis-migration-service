@@ -43,7 +43,7 @@ func MapDatasetLandingPageToDatasetAPI(datasetID string, pageData zebedee.Datase
 	return dataset, nil
 }
 
-func getQMILink(methodologyLinks []zebedee.Related) *datasetModels.GeneralDetails {
+func getQMILink(methodologyLinks []zebedee.Link) *datasetModels.GeneralDetails {
 	for _, link := range methodologyLinks {
 		if strings.Contains(link.URI, "/qmi/") {
 			return &datasetModels.GeneralDetails{

@@ -40,7 +40,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 					return zebedee.DatasetLandingPage{
 						Type: "dataset_landing_page",
-						Datasets: []zebedee.Related{
+						Datasets: []zebedee.Link{
 							{
 								URI: "/datasets/test-dataset/editions/2021/versions/1",
 							},
@@ -198,7 +198,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 					return zebedee.DatasetLandingPage{
 						Type: "dataset_landing_page",
-						Datasets: []zebedee.Related{
+						Datasets: []zebedee.Link{
 							{
 								URI: "/datasets/test-dataset/editions/2021/versions/1",
 							},
@@ -255,7 +255,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 					return zebedee.DatasetLandingPage{
 						Type: "dataset_landing_page",
-						Datasets: []zebedee.Related{
+						Datasets: []zebedee.Link{
 							{
 								URI: "/datasets/test-dataset/editions/2021/versions/1",
 							},
@@ -306,7 +306,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 					return zebedee.DatasetLandingPage{
 						Type: "dataset_landing_page",
-						Datasets: []zebedee.Related{
+						Datasets: []zebedee.Link{
 							{
 								URI: "/datasets/test-dataset/editions/2021/versions/1",
 							},

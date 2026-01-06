@@ -71,7 +71,7 @@ func getTestDatasetLandingPage() zebedee.DatasetLandingPage {
 			Keywords:    []string{"test", "dataset", "sample"},
 			NextRelease: "2024-12-31",
 		},
-		RelatedMethodology: []zebedee.Related{
+		RelatedMethodology: []zebedee.Link{
 			{
 				URI:     "/methodology/qmi/test-qmi",
 				Title:   "Test QMI Title",
