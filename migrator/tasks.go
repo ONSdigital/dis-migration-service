@@ -277,7 +277,8 @@ func (mig *migrator) notifyTaskExecutorMissingWarning(
 	}
 }
 
-// notifyUnsupportedTaskState sends a Slack warning when a task is in an unsupported state
+// notifyUnsupportedTaskState sends a Slack warning
+// when a task is in an unsupported state
 func (mig *migrator) notifyUnsupportedTaskState(
 	ctx context.Context,
 	task *domain.Task,

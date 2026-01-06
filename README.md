@@ -36,7 +36,8 @@ To validate the swagger specification you can do this via:
 make validate-specification
 ```
 
-To run this, you will need to run Node > v22 and have [redocly CLI v2](https://github.com/Redocly/redocly-cli) installed:
+To run this, you will need to run Node > v22 and have [redocly CLI v2](https://github.com/Redocly/redocly-cli)
+installed:
 
 ```sh
 npm install -g @redocly/cli
@@ -63,6 +64,11 @@ npm install -g @redocly/cli
 | OTEL_BATCH_TIMEOUT                        | 5s                    | Timeout for OpenTelemetry                                                                                          |
 | OTEL_ENABLED                              | false                 | Feature flag to enable OpenTelemetry                                                                               |
 | REDIRECT_API_URL                          | localhost:29900       | Address for the Redirect API                                                                                       |
+| SLACK_ENABLED                             | false                 | Feature flag to enable Slack notifications                                                                         |
+| SLACK_API_TOKEN                           |                       | Slack bot token for authentication                                                                                 |
+| SLACK_INFO_CHANNEL                        |                       | Slack channel for informational notifications                                                                      |
+| SLACK_WARNING_CHANNEL                     |                       | Slack channel for warning notifications                                                                            |
+| SLACK_ALARM_CHANNEL                       |                       | Slack channel for alarm/error notifications                                                                        |
 | UPLOAD_SERVICE_URL                        | localhost:25100       | Address for Upload Service                                                                                         |
 | ZEBEDEE_URL                               | localhost:8082        | Address for Zebedee                                                                                                |
 | AUTHORISATION_ENABLED                     | false                 | Feature flag to enable authorisation to be required on endpoints                                                   |

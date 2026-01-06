@@ -219,7 +219,8 @@ func (mig *migrator) notifyJobExecutorMissingWarning(
 	}
 }
 
-// notifyUnsupportedJobState sends a Slack warning when a job is in an unsupported state
+// notifyUnsupportedJobState sends a Slack warning
+// when a job is in an unsupported state
 func (mig *migrator) notifyUnsupportedJobState(
 	ctx context.Context,
 	job *domain.Job,
