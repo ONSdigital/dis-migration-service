@@ -27,9 +27,9 @@ type migrator struct {
 // NewDefaultMigrator creates a new default migrator with the
 // provided job service and clients
 func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, appClients *clients.ClientList) *migrator {
-	// Calling GetJobNumberCounter to create the JobNumber counter in MongoDB if it does not already exist
+	// Calling GetNextJobNumber to create the JobNumber counter in MongoDB if it does not already exist
 	ctx := context.Background()
-	_, err := jobService.GetJobNumberCounter(ctx)
+	_, err := jobService.GetNextJobNumber(ctx)
 	if err != nil {
 		log.Error(ctx, "error getting or creating job number counter", err)
 	}

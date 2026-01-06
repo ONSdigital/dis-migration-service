@@ -43,7 +43,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				}, nil
 			},
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) { return &domain.Job{}, nil },
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -96,7 +96,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.TaskState) error {
 				return nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -152,7 +152,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.JobState) error {
 				return nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -194,7 +194,7 @@ func TestMigratorFailTask(t *testing.T) {
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.TaskState) error {
 				return nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -242,7 +242,7 @@ func TestMigratorFailTask(t *testing.T) {
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.TaskState) error {
 				return errors.New("update error")
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -282,7 +282,7 @@ func TestGetTaskExecutor(t *testing.T) {
 		}
 
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -346,7 +346,7 @@ func TestMonitorTasks(t *testing.T) {
 			ClaimTaskFunc: func(ctx context.Context) (*domain.Task, error) {
 				return nil, nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -391,7 +391,7 @@ func TestMonitorTasks(t *testing.T) {
 					return nil, nil
 				}
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},

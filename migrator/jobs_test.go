@@ -37,7 +37,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 		}
 
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -96,7 +96,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.JobState) error {
 				return nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -147,7 +147,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.JobState) error {
 				return nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -186,7 +186,7 @@ func TestMigratorFailJob(t *testing.T) {
 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.JobState) error {
 				return nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -234,7 +234,7 @@ func TestMigratorFailJob(t *testing.T) {
 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.JobState) error {
 				return nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -274,7 +274,7 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.JobState) error {
 				return nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -306,7 +306,7 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 					State:     domain.JobStateFailedMigration,
 				}, nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -332,7 +332,7 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return nil, errors.New("test error")
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -368,7 +368,7 @@ func TestGetJobExecutor(t *testing.T) {
 		}
 
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -419,7 +419,7 @@ func TestMonitorJobs(t *testing.T) {
 			ClaimJobFunc: func(ctx context.Context) (*domain.Job, error) {
 				return nil, nil
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
@@ -466,7 +466,7 @@ func TestMonitorJobs(t *testing.T) {
 					return nil, nil
 				}
 			},
-			GetJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},

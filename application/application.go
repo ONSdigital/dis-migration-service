@@ -25,7 +25,6 @@ type JobService interface {
 	UpdateTaskState(ctx context.Context, taskID string, newState domain.TaskState) error
 	ClaimTask(ctx context.Context) (*domain.Task, error)
 	CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error)
-	GetJobNumberCounter(ctx context.Context) (*domain.Counter, error)
 	GetNextJobNumber(ctx context.Context) (*domain.Counter, error)
 	CreateEvent(ctx context.Context, jobNumber int, event *domain.Event) (*domain.Event, error)
 	GetJobEvents(ctx context.Context, jobNumber int, limit, offset int) ([]*domain.Event, int, error)
@@ -84,14 +83,8 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 	return &job, nil
 }
 
-// GetJobNumberCounter will return the domain.Counter with
-// counter_name = "job_number_counter"
-func (js *jobService) GetJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
-	return js.store.GetJobNumberCounter(ctx)
-}
-
 // GetNextJobNumber increments the job number counter,
-// in mongoDB, and then 	returns it
+// in mongoDB, and then returns it.
 func (js *jobService) GetNextJobNumber(ctx context.Context) (*domain.Counter, error) {
 	return js.store.GetNextJobNumberCounter(ctx)
 }

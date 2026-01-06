@@ -39,27 +39,6 @@ func (m *Mongo) createJobNumberCounter(ctx context.Context) error {
 	return nil
 }
 
-// GetJobNumberCounter retrieves the current value from the JobNumberCounter.
-// If the JobNumberCounter does not exist then it creates it.
-func (m *Mongo) GetJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
-	var jobNumberCounter domain.Counter
-	if err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).
-		FindOne(ctx, bson.M{"counter_name": "job_number_counter"}, &jobNumberCounter); err != nil {
-		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
-			log.Error(ctx, "the job number counter does not exist so shall create it",
-				appErrors.ErrJobNumberCounterNotFound)
-			err = m.createJobNumberCounter(ctx)
-			if err != nil {
-				log.Error(ctx, "error creating job number counter", err)
-				return nil, err
-			}
-		} else {
-			return nil, appErrors.ErrInternalServerError
-		}
-	}
-	return &jobNumberCounter, nil
-}
-
 // GetNextJobNumberCounter increments the job number counter,
 // in mongoDB, and then returns it
 func (m *Mongo) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
@@ -71,7 +50,13 @@ func (m *Mongo) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, e
 
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
-			return nil, appErrors.ErrJobNumberCounterNotFound
+			log.Error(ctx, "the job number counter does not exist so shall create it",
+				appErrors.ErrJobNumberCounterNotFound)
+			err = m.createJobNumberCounter(ctx)
+			if err != nil {
+				log.Error(ctx, "error creating job number counter", err)
+				return nil, err
+			}
 		}
 		return nil, appErrors.ErrInternalServerError
 	}

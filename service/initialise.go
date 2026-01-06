@@ -167,14 +167,14 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 							Keywords:    []string{"some", "keywords", "here"},
 							NextRelease: "2024-12-31",
 						},
-						RelatedMethodology: []zebedee.Related{
+						RelatedMethodology: []zebedee.Link{
 							{
 								URI:     "/qmi/real-qmi",
 								Title:   "This is a real QMI",
 								Summary: "This is the summary of the real QMI",
 							},
 						},
-						Datasets: []zebedee.Related{
+						Datasets: []zebedee.Link{
 							{
 								URI: "/mock-dataset/editions/2024",
 							},
