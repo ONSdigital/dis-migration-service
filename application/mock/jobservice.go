@@ -56,8 +56,8 @@ var _ application.JobService = &JobServiceMock{}
 // 			GetJobsFunc: func(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error) {
 // 				panic("mock out the GetJobs method")
 // 			},
-// 			GetNextJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
-// 				panic("mock out the GetNextJobNumberCounter method")
+// 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
+// 				panic("mock out the GetNextJobNumber method")
 // 			},
 // 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.JobState) error {
 // 				panic("mock out the UpdateJobState method")
@@ -111,8 +111,8 @@ type JobServiceMock struct {
 	// GetJobsFunc mocks the GetJobs method.
 	GetJobsFunc func(ctx context.Context, states []domain.JobState, limit int, offset int) ([]*domain.Job, int, error)
 
-	// GetNextJobNumberCounterFunc mocks the GetNextJobNumberCounter method.
-	GetNextJobNumberCounterFunc func(ctx context.Context) (*domain.Counter, error)
+	// GetNextJobNumberFunc mocks the GetNextJobNumber method.
+	GetNextJobNumberFunc func(ctx context.Context) (*domain.Counter, error)
 
 	// UpdateJobStateFunc mocks the UpdateJobState method.
 	UpdateJobStateFunc func(ctx context.Context, jobNumber int, newState domain.JobState) error
@@ -221,8 +221,8 @@ type JobServiceMock struct {
 			// Offset is the offset argument value.
 			Offset int
 		}
-		// GetNextJobNumberCounter holds details about calls to the GetNextJobNumberCounter method.
-		GetNextJobNumberCounter []struct {
+		// GetNextJobNumber holds details about calls to the GetNextJobNumber method.
+		GetNextJobNumber []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
@@ -252,22 +252,22 @@ type JobServiceMock struct {
 			NewState domain.TaskState
 		}
 	}
-	lockClaimJob                sync.RWMutex
-	lockClaimTask               sync.RWMutex
-	lockCountEventsByJobNumber  sync.RWMutex
-	lockCountTasksByJobNumber   sync.RWMutex
-	lockCreateEvent             sync.RWMutex
-	lockCreateJob               sync.RWMutex
-	lockCreateTask              sync.RWMutex
-	lockGetJob                  sync.RWMutex
-	lockGetJobEvents            sync.RWMutex
-	lockGetJobNumberCounter     sync.RWMutex
-	lockGetJobTasks             sync.RWMutex
-	lockGetJobs                 sync.RWMutex
-	lockGetNextJobNumberCounter sync.RWMutex
-	lockUpdateJobState          sync.RWMutex
-	lockUpdateTask              sync.RWMutex
-	lockUpdateTaskState         sync.RWMutex
+	lockClaimJob               sync.RWMutex
+	lockClaimTask              sync.RWMutex
+	lockCountEventsByJobNumber sync.RWMutex
+	lockCountTasksByJobNumber  sync.RWMutex
+	lockCreateEvent            sync.RWMutex
+	lockCreateJob              sync.RWMutex
+	lockCreateTask             sync.RWMutex
+	lockGetJob                 sync.RWMutex
+	lockGetJobEvents           sync.RWMutex
+	lockGetJobNumberCounter    sync.RWMutex
+	lockGetJobTasks            sync.RWMutex
+	lockGetJobs                sync.RWMutex
+	lockGetNextJobNumber       sync.RWMutex
+	lockUpdateJobState         sync.RWMutex
+	lockUpdateTask             sync.RWMutex
+	lockUpdateTaskState        sync.RWMutex
 }
 
 // ClaimJob calls ClaimJobFunc.
@@ -714,34 +714,34 @@ func (mock *JobServiceMock) GetJobsCalls() []struct {
 	return calls
 }
 
-// GetNextJobNumberCounter calls GetNextJobNumberCounterFunc.
-func (mock *JobServiceMock) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
-	if mock.GetNextJobNumberCounterFunc == nil {
-		panic("JobServiceMock.GetNextJobNumberCounterFunc: method is nil but JobService.GetNextJobNumberCounter was just called")
+// GetNextJobNumber calls GetNextJobNumberFunc.
+func (mock *JobServiceMock) GetNextJobNumber(ctx context.Context) (*domain.Counter, error) {
+	if mock.GetNextJobNumberFunc == nil {
+		panic("JobServiceMock.GetNextJobNumberFunc: method is nil but JobService.GetNextJobNumber was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
 	}{
 		Ctx: ctx,
 	}
-	mock.lockGetNextJobNumberCounter.Lock()
-	mock.calls.GetNextJobNumberCounter = append(mock.calls.GetNextJobNumberCounter, callInfo)
-	mock.lockGetNextJobNumberCounter.Unlock()
-	return mock.GetNextJobNumberCounterFunc(ctx)
+	mock.lockGetNextJobNumber.Lock()
+	mock.calls.GetNextJobNumber = append(mock.calls.GetNextJobNumber, callInfo)
+	mock.lockGetNextJobNumber.Unlock()
+	return mock.GetNextJobNumberFunc(ctx)
 }
 
-// GetNextJobNumberCounterCalls gets all the calls that were made to GetNextJobNumberCounter.
+// GetNextJobNumberCalls gets all the calls that were made to GetNextJobNumber.
 // Check the length with:
-//     len(mockedJobService.GetNextJobNumberCounterCalls())
-func (mock *JobServiceMock) GetNextJobNumberCounterCalls() []struct {
+//     len(mockedJobService.GetNextJobNumberCalls())
+func (mock *JobServiceMock) GetNextJobNumberCalls() []struct {
 	Ctx context.Context
 } {
 	var calls []struct {
 		Ctx context.Context
 	}
-	mock.lockGetNextJobNumberCounter.RLock()
-	calls = mock.calls.GetNextJobNumberCounter
-	mock.lockGetNextJobNumberCounter.RUnlock()
+	mock.lockGetNextJobNumber.RLock()
+	calls = mock.calls.GetNextJobNumber
+	mock.lockGetNextJobNumber.RUnlock()
 	return calls
 }
 

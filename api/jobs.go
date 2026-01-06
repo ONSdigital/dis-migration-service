@@ -20,15 +20,15 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 	jobNumberStr := vars[PathParameterJobNumber]
 	jobNumber, err := strconv.Atoi(jobNumberStr)
 	if err != nil {
-		log.Error(ctx, "failed to get job -  job number must be an int", err)
-		handleError(ctx, w, r, err)
+		log.Info(ctx, "failed to get job - job number must be an int")
+		handleError(ctx, w, r, appErrors.ErrJobNumberMustBeInt)
 		return
 	}
 
 	job, err := api.JobService.GetJob(ctx, jobNumber)
 	if err != nil {
 		if !errors.Is(err, appErrors.ErrJobNotFound) {
-			log.Error(ctx, "failed to get job", err)
+			log.Error(ctx, "failed to get job with job number: "+strconv.Itoa(jobNumber), err)
 		}
 		handleError(ctx, w, r, err)
 		return

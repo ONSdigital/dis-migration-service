@@ -37,6 +37,7 @@ var (
 	ErrJobNotFound               = errors.New("job not found")
 	ErrUnableToParseBody         = errors.New("unable to read submitted body")
 	ErrJobNumberNotProvided      = errors.New("job number not provided")
+	ErrJobNumberMustBeInt        = errors.New("job number must be an integer")
 	ErrSourceIDNotProvided       = errors.New("source ID not provided")
 	ErrTargetIDNotProvided       = errors.New("target ID not provided")
 	ErrJobTypeNotProvided        = errors.New("job type not provided")
