@@ -29,7 +29,7 @@ func MapDatasetLandingPageToDatasetAPI(datasetID string, pageData zebedee.Datase
 		},
 		ID:       datasetID,
 		Keywords: pageData.Description.Keywords,
-		License:  domain.OpenGovermentLicence,
+		License:  domain.OpenGovernmentLicence,
 		// Warning: NextRelease is a string in both Zebedee and Dataset API.
 		NextRelease: pageData.Description.NextRelease,
 		QMI:         getQMILink(pageData.RelatedMethodology),
