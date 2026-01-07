@@ -22,8 +22,8 @@ import (
 *
 * NB. This private function should only be called by GetJobNumberCounter,
 * which will only call it if a JobNumberCounter does not already exist. */
-func (m *Mongo) createJobNumberCounter(ctx context.Context) error {
-	jobNumberCounter := &domain.Counter{
+func (m *Mongo) createJobNumberCounter(ctx context.Context) (domain.Counter, error) {
+	jobNumberCounter := domain.Counter{
 		CounterName:  "job_number_counter",
 		CounterValue: 0,
 	}
@@ -33,10 +33,10 @@ func (m *Mongo) createJobNumberCounter(ctx context.Context) error {
 	_, err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).InsertOne(ctx, jobNumberCounter)
 	if err != nil {
 		log.Error(ctx, "failed to insert job number counter into mongo DB", err, logData)
-		return err
+		return jobNumberCounter, err
 	}
 
-	return nil
+	return jobNumberCounter, nil
 }
 
 // GetNextJobNumberCounter increments the job number counter,
@@ -52,10 +52,12 @@ func (m *Mongo) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, e
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
 			log.Error(ctx, "the job number counter does not exist so shall create it",
 				appErrors.ErrJobNumberCounterNotFound)
-			err = m.createJobNumberCounter(ctx)
+			jobNumberCounter, err = m.createJobNumberCounter(ctx)
 			if err != nil {
 				log.Error(ctx, "error creating job number counter", err)
 				return nil, err
+			} else {
+				return &jobNumberCounter, nil
 			}
 		}
 		return nil, appErrors.ErrInternalServerError
