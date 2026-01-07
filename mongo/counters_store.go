@@ -20,7 +20,7 @@ import (
 * counter_name = "job_number_counter"
 * counter_value = "0"
 *
-* NB. This private function should only be called by GetJobNumberCounter,
+* NB. This private function should only be called by GetNextJobNumberCounter,
 * which will only call it if a JobNumberCounter does not already exist. */
 func (m *Mongo) createJobNumberCounter(ctx context.Context) (domain.Counter, error) {
 	jobNumberCounter := domain.Counter{
@@ -54,7 +54,7 @@ func (m *Mongo) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, e
 				appErrors.ErrJobNumberCounterNotFound)
 			jobNumberCounter, err = m.createJobNumberCounter(ctx)
 			if err != nil {
-				log.Error(ctx, "error creating job number counter", err)
+				log.Info(ctx, "error creating job number counter")
 				return nil, err
 			} else {
 				return &jobNumberCounter, nil
