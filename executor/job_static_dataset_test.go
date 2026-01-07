@@ -11,6 +11,10 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+const (
+	testJobID = "job-1"
+)
+
 func TestJobStaticDataset(t *testing.T) {
 	Convey("Given a static dataset job executor and a job service that does not error", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
