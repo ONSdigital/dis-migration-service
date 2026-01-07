@@ -2,11 +2,13 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -36,8 +38,14 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		return err
 	}
 
-	editionID := extractLastSegmentFromURI(sourceData.URI)
+	if sourceData.Type != zebedee.PageTypeDataset {
+		err := errors.New("source data is not a dataset page")
+		log.Error(ctx, "source data is not a dataset page", err, logData)
+		return err
+	}
 
+	editionID := extractLastSegmentFromURI(sourceData.URI)
+	// TODO: deal with 'current' here.
 	logData["editionID"] = editionID
 
 	task.Target.ID = editionID
