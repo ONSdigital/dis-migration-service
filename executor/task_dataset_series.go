@@ -35,7 +35,7 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 
 	sourceData, err := e.clientList.Zebedee.GetDatasetLandingPage(ctx, "", "", "en", task.Source.ID)
 	if err != nil {
-		log.Error(ctx, "failed to get source dataset data from zebedee", err, logData)
+		log.Error(ctx, "failed to get source dataset series data from zebedee", err, logData)
 		return err
 	}
 

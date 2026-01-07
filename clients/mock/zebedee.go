@@ -18,21 +18,27 @@ var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 //
 // 	func TestSomethingThatUsesZebedeeClient(t *testing.T) {
 //
-// 		// make and configure a mocked clients.ZebedeeClient
-// 		mockedZebedeeClient := &ZebedeeClientMock{
-// 			GetDatasetLandingPageFunc: func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.DatasetLandingPage, error) {
-// 				panic("mock out the GetDatasetLandingPage method")
-// 			},
-// 			GetPageDataFunc: func(ctx context.Context, userAuthToken string, collectionID string, lang string, path string) (zebedee.PageData, error) {
-// 				panic("mock out the GetPageData method")
-// 			},
-// 		}
+//		// make and configure a mocked clients.ZebedeeClient
+//		mockedZebedeeClient := &ZebedeeClientMock{
+//			GetDatasetFunc: func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.Dataset, error) {
+//				panic("mock out the GetDataset method")
+//			},
+//			GetDatasetLandingPageFunc: func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.DatasetLandingPage, error) {
+//				panic("mock out the GetDatasetLandingPage method")
+//			},
+//			GetPageDataFunc: func(ctx context.Context, userAuthToken string, collectionID string, lang string, path string) (zebedee.PageData, error) {
+//				panic("mock out the GetPageData method")
+//			},
+//		}
 //
 // 		// use mockedZebedeeClient in code that requires clients.ZebedeeClient
 // 		// and then make assertions.
 //
 // 	}
 type ZebedeeClientMock struct {
+	// GetDatasetFunc mocks the GetDataset method.
+	GetDatasetFunc func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.Dataset, error)
+
 	// GetDatasetLandingPageFunc mocks the GetDatasetLandingPage method.
 	GetDatasetLandingPageFunc func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.DatasetLandingPage, error)
 
@@ -41,6 +47,19 @@ type ZebedeeClientMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// GetDataset holds details about calls to the GetDataset method.
+		GetDataset []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserAccessToken is the userAccessToken argument value.
+			UserAccessToken string
+			// CollectionID is the collectionID argument value.
+			CollectionID string
+			// Lang is the lang argument value.
+			Lang string
+			// Path is the path argument value.
+			Path string
+		}
 		// GetDatasetLandingPage holds details about calls to the GetDatasetLandingPage method.
 		GetDatasetLandingPage []struct {
 			// Ctx is the ctx argument value.
@@ -68,8 +87,57 @@ type ZebedeeClientMock struct {
 			Path string
 		}
 	}
+	lockGetDataset            sync.RWMutex
 	lockGetDatasetLandingPage sync.RWMutex
 	lockGetPageData           sync.RWMutex
+}
+
+// GetDataset calls GetDatasetFunc.
+func (mock *ZebedeeClientMock) GetDataset(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.Dataset, error) {
+	if mock.GetDatasetFunc == nil {
+		panic("ZebedeeClientMock.GetDatasetFunc: method is nil but ZebedeeClient.GetDataset was just called")
+	}
+	callInfo := struct {
+		Ctx             context.Context
+		UserAccessToken string
+		CollectionID    string
+		Lang            string
+		Path            string
+	}{
+		Ctx:             ctx,
+		UserAccessToken: userAccessToken,
+		CollectionID:    collectionID,
+		Lang:            lang,
+		Path:            path,
+	}
+	mock.lockGetDataset.Lock()
+	mock.calls.GetDataset = append(mock.calls.GetDataset, callInfo)
+	mock.lockGetDataset.Unlock()
+	return mock.GetDatasetFunc(ctx, userAccessToken, collectionID, lang, path)
+}
+
+// GetDatasetCalls gets all the calls that were made to GetDataset.
+// Check the length with:
+//
+//	len(mockedZebedeeClient.GetDatasetCalls())
+func (mock *ZebedeeClientMock) GetDatasetCalls() []struct {
+	Ctx             context.Context
+	UserAccessToken string
+	CollectionID    string
+	Lang            string
+	Path            string
+} {
+	var calls []struct {
+		Ctx             context.Context
+		UserAccessToken string
+		CollectionID    string
+		Lang            string
+		Path            string
+	}
+	mock.lockGetDataset.RLock()
+	calls = mock.calls.GetDataset
+	mock.lockGetDataset.RUnlock()
+	return calls
 }
 
 // GetDatasetLandingPage calls GetDatasetLandingPageFunc.
