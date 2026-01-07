@@ -56,6 +56,7 @@ Feature: Migrate a static dataset job
     Then I should receive the following JSON response with status "200":
       """
       {
+        "id":"2874ee9e-1cec-44f8-9b6d-998cf2062791",
         "job_number": 20,
         "state": "migrating",
         "last_updated": "{{DYNAMIC_TIMESTAMP}}",

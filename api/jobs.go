@@ -34,17 +34,7 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// we don't want to include the Job ID in the API response (although we DO want to include it in the data store)
-	jobResponse := domain.ResponseJob{
-		Config:      job.Config,
-		JobNumber:   job.JobNumber,
-		Label:       job.Label,
-		LastUpdated: job.LastUpdated,
-		Links:       job.Links,
-		State:       job.State,
-	}
-
-	bytes, err := json.Marshal(jobResponse)
+	bytes, err := json.Marshal(job)
 	if err != nil {
 		log.Error(ctx, "failed to marshal response", err)
 		handleError(ctx, w, r, err)
@@ -147,17 +137,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// we don't want to include the Job ID in the API response (although we DO want to include it in the data store)
-	jobResponse := domain.ResponseJob{
-		Config:      job.Config,
-		JobNumber:   job.JobNumber,
-		Label:       job.Label,
-		LastUpdated: job.LastUpdated,
-		Links:       job.Links,
-		State:       job.State,
-	}
-
-	bytes, err := json.Marshal(jobResponse)
+	bytes, err := json.Marshal(job)
 	if err != nil {
 		log.Error(ctx, "failed to marshal response", err)
 		handleError(ctx, w, r, err)

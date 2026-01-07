@@ -27,6 +27,7 @@ Feature: Get a Job
       Then I should receive the following JSON response with status "200":
         """
         {
+          "id":"1",
           "job_number": 19,
           "label": "Labour Market statistics",
           "last_updated": "2025-11-19T13:28:00Z",
