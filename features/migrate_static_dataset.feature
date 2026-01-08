@@ -84,6 +84,7 @@ Feature: Migrate a static dataset job
       """
       {
         "_id": "13de71de-4201-494a-851b-3d65575235e6",
+        "job_number": 21,
         "last_updated": "2025-11-19T13:28:00Z",
         "links": {
           "self": {
@@ -100,11 +101,12 @@ Feature: Migrate a static dataset job
       }
       """
     And I wait 3 seconds for the job processor to process tasks and jobs
-    When I GET "/v1/migration-jobs/13de71de-4201-494a-851b-3d65575235e6"
+    When I GET "/v1/migration-jobs/21"
     Then I should receive the following JSON response with status "200":
       """
       {
         "id": "13de71de-4201-494a-851b-3d65575235e6",
+        "job_number": 21,
         "state": "failed_migration",
         "last_updated": "{{DYNAMIC_TIMESTAMP}}",
         "config": {
@@ -120,14 +122,14 @@ Feature: Migrate a static dataset job
         }
       }
       """
-    When I GET "/v1/migration-jobs/13de71de-4201-494a-851b-3d65575235e6/tasks"
+    When I GET "/v1/migration-jobs/21/tasks"
     Then I should receive the following JSON response with status "200":
       """
       {
         "items": [
           {
             "id": "{{DYNAMIC_UUID}}",
-            "job_id": "13de71de-4201-494a-851b-3d65575235e6",
+            "job_number": 21,
             "type": "dataset_series",
             "state": "failed_migration",
             "last_updated": "{{DYNAMIC_RECENT_TIMESTAMP}}",

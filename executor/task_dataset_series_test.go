@@ -25,8 +25,8 @@ const (
 
 var (
 	testSeriesTask = &domain.Task{
-		ID:    testSeriesTaskID,
-		JobID: testJobID,
+		ID:        testSeriesTaskID,
+		JobNumber: testJobNumber,
 		Source: &domain.TaskMetadata{
 			ID: testDatasetSeriesURI,
 		},
@@ -43,7 +43,7 @@ func getEditionURI(base, edition string) string {
 func TestDatasetSeriesTaskExecutor(t *testing.T) {
 	Convey("Given a dataset series task executor with a zebedee client mock that returns a dataset series and a dataset API client mock that creates datasets", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.TaskState) error { return nil },
@@ -217,7 +217,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 	Convey("Given a dataset series task executor and a jobService that fails to update a task", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.TaskState) error {
@@ -259,7 +259,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 	Convey("Given a dataset series task executor and a jobService that fails to create an edition task", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return nil, errors.New("failed to create task")
 			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.TaskState) error { return nil },

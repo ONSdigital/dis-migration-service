@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	testJobID = "job-1"
+	testJobNumber = 1
 )
 
 func TestJobStaticDataset(t *testing.T) {
