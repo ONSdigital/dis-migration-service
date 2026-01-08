@@ -42,7 +42,6 @@ var (
 	ErrTargetIDNotProvided          = errors.New("target ID not provided")
 	ErrJobTypeNotProvided           = errors.New("job type not provided")
 	ErrSourceTitleNotFound          = errors.New("source title not found or empty")
-	ErrJobIDNotProvided             = errors.New("job ID not provided")
 	ErrSourceIDInvalid              = errors.New("source ID is invalid")
 	ErrTargetIDInvalid              = errors.New("target ID is invalid")
 	ErrJobTypeInvalid               = errors.New("job type is invalid")
@@ -64,8 +63,10 @@ var (
 
 	StatusCodeMap = map[error]int{
 		ErrJobNotFound:                  http.StatusNotFound,
+		ErrTaskNotFound:                 http.StatusNotFound,
 		ErrUnableToParseBody:            http.StatusBadRequest,
 		ErrJobNumberNotProvided:         http.StatusBadRequest,
+		ErrJobNumberMustBeInt:           http.StatusBadRequest,
 		ErrSourceIDNotProvided:          http.StatusBadRequest,
 		ErrTargetIDNotProvided:          http.StatusBadRequest,
 		ErrJobTypeNotProvided:           http.StatusBadRequest,
@@ -73,6 +74,7 @@ var (
 		ErrSourceTitleNotFound:          http.StatusInternalServerError,
 		ErrSourceIDValidation:           http.StatusInternalServerError,
 		ErrTargetIDValidation:           http.StatusInternalServerError,
+		ErrJobNumberCounterNotFound:     http.StatusInternalServerError,
 		ErrJobAlreadyRunning:            http.StatusConflict,
 		ErrSourceIDInvalid:              http.StatusBadRequest,
 		ErrTargetIDInvalid:              http.StatusBadRequest,

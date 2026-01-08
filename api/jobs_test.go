@@ -135,7 +135,7 @@ func TestGetJob(t *testing.T) {
 			api.Router.ServeHTTP(resp, req)
 
 			Convey("Then a 500 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
 				// you can assert on the body if your handleError writes a specific message
 			})
 		})
