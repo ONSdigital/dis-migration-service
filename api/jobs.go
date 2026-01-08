@@ -198,16 +198,16 @@ func (api *MigrationAPI) updateJobState(
 		handleError(ctx, w, r, appErrors.ErrJobNumberNotProvided)
 	}
 
-	jobNumber, err := strconv.Atoi(jobNumberStr)
-	if err != nil {
-		log.Error(ctx, "failed to get job -  job number must be an int", err)
-		handleError(ctx, w, r, err)
-		return
-	}
-
 	// Base log context reused throughout the handler
 	logData := log.Data{
-		"job_number": jobNumber,
+		"job_number": jobNumberStr,
+	}
+
+	jobNumber, err := strconv.Atoi(jobNumberStr)
+	if err != nil {
+		log.Info(ctx, "failed to get job -  job number must be an int", logData)
+		handleError(ctx, w, r, appErrors.ErrJobNumberMustBeInt)
+		return
 	}
 
 	// Read request body

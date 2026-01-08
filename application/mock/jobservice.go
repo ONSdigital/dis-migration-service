@@ -59,6 +59,9 @@ var _ application.JobService = &JobServiceMock{}
 //			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
 //				panic("mock out the UpdateJobState method")
 //			},
+//			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+//				panic("mock out the UpdateTask method")
+//			},
 //			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.State) error {
 //				panic("mock out the UpdateTaskState method")
 //			},
@@ -107,6 +110,9 @@ type JobServiceMock struct {
 
 	// UpdateJobStateFunc mocks the UpdateJobState method.
 	UpdateJobStateFunc func(ctx context.Context, jobNumber int, newState domain.State) error
+
+	// UpdateTaskFunc mocks the UpdateTask method.
+	UpdateTaskFunc func(ctx context.Context, task *domain.Task) error
 
 	// UpdateTaskStateFunc mocks the UpdateTaskState method.
 	UpdateTaskStateFunc func(ctx context.Context, taskID string, newState domain.State) error
@@ -218,6 +224,13 @@ type JobServiceMock struct {
 			// NewState is the newState argument value.
 			NewState domain.State
 		}
+		// UpdateTask holds details about calls to the UpdateTask method.
+		UpdateTask []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Task is the task argument value.
+			Task *domain.Task
+		}
 		// UpdateTaskState holds details about calls to the UpdateTaskState method.
 		UpdateTaskState []struct {
 			// Ctx is the ctx argument value.
@@ -241,6 +254,7 @@ type JobServiceMock struct {
 	lockGetJobs                sync.RWMutex
 	lockGetNextJobNumber       sync.RWMutex
 	lockUpdateJobState         sync.RWMutex
+	lockUpdateTask             sync.RWMutex
 	lockUpdateTaskState        sync.RWMutex
 }
 
@@ -737,6 +751,42 @@ func (mock *JobServiceMock) UpdateJobStateCalls() []struct {
 	mock.lockUpdateJobState.RLock()
 	calls = mock.calls.UpdateJobState
 	mock.lockUpdateJobState.RUnlock()
+	return calls
+}
+
+// UpdateTask calls UpdateTaskFunc.
+func (mock *JobServiceMock) UpdateTask(ctx context.Context, task *domain.Task) error {
+	if mock.UpdateTaskFunc == nil {
+		panic("JobServiceMock.UpdateTaskFunc: method is nil but JobService.UpdateTask was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Task *domain.Task
+	}{
+		Ctx:  ctx,
+		Task: task,
+	}
+	mock.lockUpdateTask.Lock()
+	mock.calls.UpdateTask = append(mock.calls.UpdateTask, callInfo)
+	mock.lockUpdateTask.Unlock()
+	return mock.UpdateTaskFunc(ctx, task)
+}
+
+// UpdateTaskCalls gets all the calls that were made to UpdateTask.
+// Check the length with:
+//
+//	len(mockedJobService.UpdateTaskCalls())
+func (mock *JobServiceMock) UpdateTaskCalls() []struct {
+	Ctx  context.Context
+	Task *domain.Task
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Task *domain.Task
+	}
+	mock.lockUpdateTask.RLock()
+	calls = mock.calls.UpdateTask
+	mock.lockUpdateTask.RUnlock()
 	return calls
 }
 

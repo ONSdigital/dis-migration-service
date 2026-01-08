@@ -24,6 +24,7 @@ type JobService interface {
 	GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
 	GetJobTasks(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error)
 	CreateTask(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error)
+	UpdateTask(ctx context.Context, task *domain.Task) error
 	UpdateTaskState(ctx context.Context, taskID string, newState domain.State) error
 	ClaimTask(ctx context.Context) (*domain.Task, error)
 	CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, error)
@@ -159,6 +160,19 @@ func (js *jobService) CreateTask(ctx context.Context, jobNumber int, task *domai
 	}
 
 	return task, nil
+}
+
+// UpdateTask updates a migration task.
+func (js *jobService) UpdateTask(ctx context.Context, task *domain.Task) error {
+	err := js.store.UpdateTask(ctx, task)
+	if err != nil {
+		log.Error(ctx, "failed to update task", err, log.Data{
+			"task_id": task.ID,
+		})
+		return appErrors.ErrInternalServerError
+	}
+
+	return nil
 }
 
 // UpdateTaskState updates the state of a migration task.
