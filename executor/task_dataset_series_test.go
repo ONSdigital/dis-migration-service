@@ -46,7 +46,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
-			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.TaskState) error { return nil },
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
 			CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
@@ -100,7 +100,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 						Convey("And the task state is updated to InReview", func() {
 							So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
 							So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, testSeriesTask.ID)
-							So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.TaskStateInReview)
+							So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateInReview)
 						})
 					})
 				})
@@ -220,7 +220,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
-			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.TaskState) error {
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
 				return errors.New("failed to update task")
 			},
 		}
@@ -262,7 +262,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return nil, errors.New("failed to create task")
 			},
-			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.TaskState) error { return nil },
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
