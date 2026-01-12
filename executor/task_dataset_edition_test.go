@@ -66,7 +66,6 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList)
 
 		Convey("When migrate is called for a task", func() {
-
 			err := executor.Migrate(ctx, testEditionTask)
 
 			Convey("Then no error is returned", func() {
