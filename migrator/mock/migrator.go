@@ -15,22 +15,22 @@ var _ migrator.Migrator = &MigratorMock{}
 
 // MigratorMock is a mock implementation of migrator.Migrator.
 //
-// 	func TestSomethingThatUsesMigrator(t *testing.T) {
+//	func TestSomethingThatUsesMigrator(t *testing.T) {
 //
-// 		// make and configure a mocked migrator.Migrator
-// 		mockedMigrator := &MigratorMock{
-// 			ShutdownFunc: func(ctx context.Context) error {
-// 				panic("mock out the Shutdown method")
-// 			},
-// 			StartFunc: func(ctx context.Context)  {
-// 				panic("mock out the Start method")
-// 			},
-// 		}
+//		// make and configure a mocked migrator.Migrator
+//		mockedMigrator := &MigratorMock{
+//			ShutdownFunc: func(ctx context.Context) error {
+//				panic("mock out the Shutdown method")
+//			},
+//			StartFunc: func(ctx context.Context)  {
+//				panic("mock out the Start method")
+//			},
+//		}
 //
-// 		// use mockedMigrator in code that requires migrator.Migrator
-// 		// and then make assertions.
+//		// use mockedMigrator in code that requires migrator.Migrator
+//		// and then make assertions.
 //
-// 	}
+//	}
 type MigratorMock struct {
 	// ShutdownFunc mocks the Shutdown method.
 	ShutdownFunc func(ctx context.Context) error
@@ -73,7 +73,8 @@ func (mock *MigratorMock) Shutdown(ctx context.Context) error {
 
 // ShutdownCalls gets all the calls that were made to Shutdown.
 // Check the length with:
-//     len(mockedMigrator.ShutdownCalls())
+//
+//	len(mockedMigrator.ShutdownCalls())
 func (mock *MigratorMock) ShutdownCalls() []struct {
 	Ctx context.Context
 } {
@@ -104,7 +105,8 @@ func (mock *MigratorMock) Start(ctx context.Context) {
 
 // StartCalls gets all the calls that were made to Start.
 // Check the length with:
-//     len(mockedMigrator.StartCalls())
+//
+//	len(mockedMigrator.StartCalls())
 func (mock *MigratorMock) StartCalls() []struct {
 	Ctx context.Context
 } {

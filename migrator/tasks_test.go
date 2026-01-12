@@ -100,19 +100,19 @@ func TestMigratorExecuteTask(t *testing.T) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
 			},
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateMigrating,
+					JobNumber: jobNumber,
+					State:     domain.StateMigrating,
 				}, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobID string, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
 				return nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				return []*domain.Task{}, 0, nil
 			},
-			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 1, nil
 			},
 		}
@@ -163,6 +163,12 @@ func TestMigratorExecuteTask(t *testing.T) {
 					JobNumber: fakeJobNumber,
 					State:     domain.StateMigrating,
 				}, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
+				return []*domain.Task{}, 0, nil
+			},
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 1, nil
 			},
 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
 				return nil
@@ -409,16 +415,16 @@ func TestMonitorTasks(t *testing.T) {
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.State) error {
 				return nil
 			},
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateMigrating,
+					JobNumber: jobNumber,
+					State:     domain.StateMigrating,
 				}, nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				return []*domain.Task{}, 0, nil
 			},
-			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 1, nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {

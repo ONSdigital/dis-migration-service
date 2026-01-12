@@ -15,24 +15,24 @@ import (
 func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 	Convey("Given a migrator and job service where all tasks are in target state", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateMigrating,
+					JobNumber: jobNumber,
+					State:     domain.StateMigrating,
 				}, nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				// All 3 tasks in target state
 				return []*domain.Task{
-					{ID: "task-1", State: domain.StateInReview},
-					{ID: "task-2", State: domain.StateInReview},
-					{ID: "task-3", State: domain.StateInReview},
+					{ID: "task-1", JobNumber: jobNumber, State: domain.StateInReview},
+					{ID: "task-2", JobNumber: jobNumber, State: domain.StateInReview},
+					{ID: "task-3", JobNumber: jobNumber, State: domain.StateInReview},
 				}, 3, nil
 			},
-			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 3, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobID string, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
 				return nil
 			},
 		}
@@ -51,14 +51,14 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
-			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobIDCompletion, rule)
+			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobNumber, rule)
 
 			Convey("Then no error should be returned", func() {
 				So(err, ShouldBeNil)
 
 				Convey("And the job state should be updated to in_review", func() {
 					So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
-					So(mockJobService.UpdateJobStateCalls()[0].JobID, ShouldEqual, fakeJobIDCompletion)
+					So(mockJobService.UpdateJobStateCalls()[0].JobNumber, ShouldEqual, fakeJobNumber)
 					So(mockJobService.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.StateInReview)
 				})
 			})
@@ -67,20 +67,20 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator where not all tasks are in target state", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateMigrating,
+					JobNumber: jobNumber,
+					State:     domain.StateMigrating,
 				}, nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				// Only 2 out of 3 tasks in target state
 				return []*domain.Task{
 					{ID: "task-1", State: domain.StateInReview},
 					{ID: "task-2", State: domain.StateInReview},
 				}, 2, nil
 			},
-			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 3, nil // 3 total tasks
 			},
 		}
@@ -99,7 +99,7 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
-			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobIDCompletion, rule)
+			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobNumber, rule)
 
 			Convey("Then no error should be returned", func() {
 				So(err, ShouldBeNil)
@@ -113,7 +113,7 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator that fails to get the job", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return nil, errors.New("database error")
 			},
 		}
@@ -132,7 +132,7 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
-			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobIDCompletion, rule)
+			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobNumber, rule)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -147,13 +147,13 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator that fails to count tasks in target state", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateMigrating,
+					JobNumber: jobNumber,
+					State:     domain.StateMigrating,
 				}, nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				return nil, 0, errors.New("database error")
 			},
 		}
@@ -172,7 +172,7 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
-			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobIDCompletion, rule)
+			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobNumber, rule)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -187,16 +187,16 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator that fails to count total tasks", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateMigrating,
+					JobNumber: jobNumber,
+					State:     domain.StateMigrating,
 				}, nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				return []*domain.Task{}, 0, nil
 			},
-			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 0, errors.New("database error")
 			},
 		}
@@ -215,7 +215,7 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
-			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobIDCompletion, rule)
+			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobNumber, rule)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -230,21 +230,21 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator that fails to update job state", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateMigrating,
+					JobNumber: jobNumber,
+					State:     domain.StateMigrating,
 				}, nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				return []*domain.Task{
 					{ID: "task-1", State: domain.StateInReview},
 				}, 1, nil
 			},
-			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 1, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobID string, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
 				return errors.New("database error")
 			},
 		}
@@ -263,7 +263,7 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
-			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobIDCompletion, rule)
+			err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, fakeJobNumber, rule)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -280,17 +280,17 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 	Convey("Given a migrator with multiple transition rules where no conditions are met", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateMigrating,
+					JobNumber: jobNumber,
+					State:     domain.StateMigrating,
 				}, nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				// No tasks in target state
 				return []*domain.Task{}, 0, nil
 			},
-			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 3, nil
 			},
 		}
@@ -304,7 +304,7 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When triggering job state transition", func() {
-			err := mig.TriggerJobStateTransitions(ctx, fakeJobIDCompletion)
+			err := mig.TriggerJobStateTransitions(ctx, fakeJobNumber)
 
 			Convey("Then no error should be returned", func() {
 				So(err, ShouldBeNil)
@@ -318,13 +318,13 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 
 	Convey("Given a migrator where the first rule condition is met", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateMigrating,
+					JobNumber: jobNumber,
+					State:     domain.StateMigrating,
 				}, nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				// For in_review state filter (first rule): return 2 - first rule SHOULD trigger
 				if len(states) > 0 && states[0] == domain.StateInReview {
 					return []*domain.Task{
@@ -339,10 +339,10 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 				// Default
 				return []*domain.Task{}, 0, nil
 			},
-			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 2, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobID string, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
 				return nil
 			},
 		}
@@ -356,7 +356,7 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When triggering job state transition", func() {
-			err := mig.TriggerJobStateTransitions(ctx, fakeJobIDCompletion)
+			err := mig.TriggerJobStateTransitions(ctx, fakeJobNumber)
 
 			Convey("Then no error should be returned", func() {
 				So(err, ShouldBeNil)
@@ -371,13 +371,13 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 
 	Convey("Given a migrator where a transition rule check fails", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateMigrating,
+					JobNumber: jobNumber,
+					State:     domain.StateMigrating,
 				}, nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				return nil, 0, errors.New("database error")
 			},
 		}
@@ -391,7 +391,7 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When triggering job state transition", func() {
-			err := mig.TriggerJobStateTransitions(ctx, fakeJobIDCompletion)
+			err := mig.TriggerJobStateTransitions(ctx, fakeJobNumber)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -402,13 +402,13 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 
 	Convey("Given a migrator where the second rule condition is met", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobID string) (*domain.Job, error) {
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
-					ID:    jobID,
-					State: domain.StateInReview,
+					JobNumber: jobNumber,
+					State:     domain.StateInReview,
 				}, nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobID string, limit, offset int) ([]*domain.Task, int, error) {
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				// Simulate different behavior based on the filter
 				// For in_review state filter (first rule): return 0 - first rule should NOT trigger
 				if len(states) > 0 && states[0] == domain.StateInReview {
@@ -424,10 +424,10 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 				// Default - shouldn't reach here
 				return []*domain.Task{}, 0, nil
 			},
-			CountTasksByJobIDFunc: func(ctx context.Context, jobID string) (int, error) {
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 2, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobID string, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
 				return nil
 			},
 		}
@@ -441,7 +441,7 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When triggering job state transition", func() {
-			err := mig.TriggerJobStateTransitions(ctx, fakeJobIDCompletion)
+			err := mig.TriggerJobStateTransitions(ctx, fakeJobNumber)
 
 			Convey("Then no error should be returned", func() {
 				So(err, ShouldBeNil)
