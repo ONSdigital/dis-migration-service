@@ -28,7 +28,7 @@ func NewDatasetEditionTaskExecutor(jobService application.JobService, clientList
 
 // Migrate handles the migration operations for a dataset edition task.
 func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.Task) error {
-	logData := log.Data{"taskID": task.ID, "jobID": task.JobID}
+	logData := log.Data{"taskID": task.ID, "jobNumber": task.JobNumber}
 
 	log.Info(ctx, "starting migration for dataset edition task", logData)
 
@@ -56,7 +56,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		return err
 	}
 
-	currentVersionTask := domain.NewTask(task.JobID)
+	currentVersionTask := domain.NewTask(task.JobNumber)
 	currentVersionTask.Type = domain.TaskTypeDatasetVersion
 	currentVersionTask.Source = &domain.TaskMetadata{
 		ID: sourceData.URI,
@@ -66,7 +66,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		EditionID: editionID,
 	}
 
-	_, err = e.jobService.CreateTask(ctx, task.JobID, &currentVersionTask)
+	_, err = e.jobService.CreateTask(ctx, task.JobNumber, &currentVersionTask)
 	if err != nil {
 		logData["versionURI"] = currentVersionTask.Source.ID
 		log.Error(ctx, "failed to create migration version task for edition", err, logData)
@@ -74,7 +74,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	}
 
 	for _, previousVersion := range sourceData.Versions {
-		versionTask := domain.NewTask(task.JobID)
+		versionTask := domain.NewTask(task.JobNumber)
 
 		versionTask.Type = domain.TaskTypeDatasetVersion
 		versionTask.Source = &domain.TaskMetadata{
@@ -85,7 +85,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 			EditionID: editionID,
 		}
 
-		_, err := e.jobService.CreateTask(ctx, task.JobID, &versionTask)
+		_, err := e.jobService.CreateTask(ctx, task.JobNumber, &versionTask)
 		if err != nil {
 			logData["versionURI"] = versionTask.Source.ID
 			log.Error(ctx, "failed to create migration task for previous version of edition", err, logData)

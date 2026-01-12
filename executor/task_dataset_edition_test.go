@@ -25,8 +25,8 @@ const (
 
 var (
 	testEditionTask = &domain.Task{
-		ID:    testEditionTaskID,
-		JobID: testJobID,
+		ID:        testEditionTaskID,
+		JobNumber: testJobNumber,
 		Source: &domain.TaskMetadata{
 			ID: testEditionURI,
 		},
@@ -43,7 +43,7 @@ func generatePreviousVersionURI(baseURI string, versionNumber int) string {
 func TestDatasetEditionTaskExecutor(t *testing.T) {
 	Convey("Given a dataset edition task executor with a zebedee client mock that returns a dataset with no versions", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.TaskState) error { return nil },
@@ -93,7 +93,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 
 	Convey("Given a dataset edition task executor with a zebedee client mock that returns a dataset with multiple versions", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.TaskState) error { return nil },
@@ -224,7 +224,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 
 	Convey("Given a dataset edition task executor and a jobService that fails to update a task", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
 			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error { return nil },
@@ -264,7 +264,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 
 	Convey("Given a dataset edition task executor and a jobService that fails to create a version task", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			CreateTaskFunc: func(ctx context.Context, jobID string, task *domain.Task) (*domain.Task, error) {
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return nil, errors.New("failed to create task")
 			},
 			UpdateTaskFunc:      func(ctx context.Context, task *domain.Task) error { return nil },
