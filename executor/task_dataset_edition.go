@@ -93,7 +93,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		}
 	}
 
-	err = e.jobService.UpdateTaskState(ctx, task.ID, domain.TaskStateInReview)
+	err = e.jobService.UpdateTaskState(ctx, task.ID, domain.StateInReview)
 	if err != nil {
 		log.Error(ctx, "failed to update migration task", err, logData)
 		return err
