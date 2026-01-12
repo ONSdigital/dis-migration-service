@@ -50,7 +50,13 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	// TODO: deal with 'current' here.
 	logData["editionID"] = editionID
 
-	task.Target.ID = editionID
+	if task.Target != nil {
+		task.Target.ID = editionID
+	} else {
+		task.Target = &domain.TaskMetadata{
+			ID: editionID,
+		}
+	}
 
 	err = e.jobService.UpdateTask(ctx, task)
 	if err != nil {
@@ -58,15 +64,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		return err
 	}
 
-	currentVersionTask := domain.NewTask(task.JobNumber)
-	currentVersionTask.Type = domain.TaskTypeDatasetVersion
-	currentVersionTask.Source = &domain.TaskMetadata{
-		ID: sourceData.URI,
-	}
-	currentVersionTask.Target = &domain.TaskMetadata{
-		DatasetID: task.Target.DatasetID,
-		EditionID: editionID,
-	}
+	currentVersionTask := createVersionTask(task.JobNumber, sourceData.URI, task.Target.DatasetID, editionID)
 
 	_, err = e.jobService.CreateTask(ctx, task.JobNumber, &currentVersionTask)
 	if err != nil {
@@ -76,16 +74,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	}
 
 	for _, previousVersion := range sourceData.Versions {
-		versionTask := domain.NewTask(task.JobNumber)
-
-		versionTask.Type = domain.TaskTypeDatasetVersion
-		versionTask.Source = &domain.TaskMetadata{
-			ID: previousVersion.URI,
-		}
-		versionTask.Target = &domain.TaskMetadata{
-			DatasetID: task.Target.DatasetID,
-			EditionID: editionID,
-		}
+		versionTask := createVersionTask(task.JobNumber, previousVersion.URI, task.Target.DatasetID, editionID)
 
 		_, err := e.jobService.CreateTask(ctx, task.JobNumber, &versionTask)
 		if err != nil {
@@ -120,6 +109,20 @@ func (e *DatasetEditionTaskExecutor) PostPublish(ctx context.Context, task *doma
 func (e *DatasetEditionTaskExecutor) Revert(ctx context.Context, task *domain.Task) error {
 	// Implementation of revert for dataset edition
 	return nil
+}
+
+func createVersionTask(jobNumber int, sourceURI, datasetID, editionID string) domain.Task {
+	versionTask := domain.NewTask(jobNumber)
+
+	versionTask.Type = domain.TaskTypeDatasetVersion
+	versionTask.Source = &domain.TaskMetadata{
+		ID: sourceURI,
+	}
+	versionTask.Target = &domain.TaskMetadata{
+		DatasetID: datasetID,
+		EditionID: editionID,
+	}
+	return versionTask
 }
 
 func extractLastSegmentFromURI(uri string) string {
