@@ -93,7 +93,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 		}
 
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
 				return nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
@@ -144,7 +144,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 		}
 
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
 				return nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
@@ -183,7 +183,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 func TestMigratorFailJob(t *testing.T) {
 	Convey("Given a migrator with a mock job service", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
 				return nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
@@ -231,7 +231,7 @@ func TestMigratorFailJob(t *testing.T) {
 
 	Convey("Given a migrator with a mock job service that errors when updating job state", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
 				return nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
@@ -271,7 +271,7 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 					State:     domain.StateMigrating,
 				}, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
 				return nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {

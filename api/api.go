@@ -17,10 +17,11 @@ import (
 
 // MigrationAPI provides a struct to wrap the api around
 type MigrationAPI struct {
-	JobService application.JobService
-	Migrator   migrator.Migrator
-	Paginator  *Paginator
-	Router     *mux.Router
+	JobService     application.JobService
+	Migrator       migrator.Migrator
+	Paginator      *Paginator
+	Router         *mux.Router
+	AuthMiddleware auth.Middleware
 }
 
 // Setup function sets up the api and returns an api
@@ -29,9 +30,10 @@ func Setup(_ context.Context, cfg *config.Config, router *mux.Router, jobService
 	paginator := NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
 
 	api := &MigrationAPI{
-		Router:     router,
-		JobService: jobService,
-		Paginator:  paginator,
+		Router:         router,
+		JobService:     jobService,
+		Paginator:      paginator,
+		AuthMiddleware: authMiddleware,
 	}
 
 	api.get("/v1/migration-jobs",

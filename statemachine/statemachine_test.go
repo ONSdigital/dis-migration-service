@@ -195,8 +195,7 @@ func TestValidateTransition(t *testing.T) {
 			name:        "valid rejection transition",
 			from:        domain.StateInReview,
 			to:          domain.StateRejected,
-			expectError: true,
-			errorType:   "TransitionError",
+			expectError: false,
 		},
 		{
 			name:        "invalid transition from terminal state",

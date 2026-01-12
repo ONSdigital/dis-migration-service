@@ -42,7 +42,7 @@ const (
 // IsValidState checks if the provided state is a valid State.
 func IsValidState(state State) bool {
 	switch state {
-	case StateSubmitted, StateInReview, StateApproved, StatePublished,
+	case StateSubmitted, StateInReview, StateApproved, StateRejected, StatePublished,
 		StateCompleted, StateMigrating, StatePublishing, StatePostPublishing,
 		StateReverting, StateFailedMigration, StateFailedPostPublish, StateFailedPublish,
 		StateCancelled:

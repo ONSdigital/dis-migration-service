@@ -11,16 +11,17 @@ import (
 	"github.com/ONSdigital/dis-migration-service/statemachine"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
+	"github.com/google/uuid"
 )
 
 // JobService defines the contract for job-related operations
 //
 //go:generate moq -out mock/jobservice.go -pkg mock . JobService
 type JobService interface {
-	CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error)
+	CreateJob(ctx context.Context, jobConfig *domain.JobConfig, userID string) (*domain.Job, error)
 	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	ClaimJob(ctx context.Context) (*domain.Job, error)
-	UpdateJobState(ctx context.Context, jobNumber int, newState domain.State) error
+	UpdateJobState(ctx context.Context, jobNumber int, newState domain.State, userID string) error
 	GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
 	GetJobTasks(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error)
 	CreateTask(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error)
@@ -49,8 +50,8 @@ func Setup(datastore *store.Datastore, appClients *clients.ClientList) JobServic
 }
 
 // CreateJob creates a new migration job based on the
-// provided job configuration.
-func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error) {
+// provided job configuration and logs an event with the requesting user's ID.
+func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig, userID string) (*domain.Job, error) {
 	label, err := jobConfig.ValidateExternal(ctx, *js.clients)
 	if err != nil {
 		return &domain.Job{}, err
@@ -83,6 +84,15 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 		log.Error(ctx, "failed to create job", err)
 		return &domain.Job{}, appErrors.ErrInternalServerError
 	}
+
+	// Log job submission event
+	if err := js.logJobEvent(ctx, job.JobNumber, string(domain.StateSubmitted), userID); err != nil {
+		log.Error(ctx, "failed to log job submission event", err, log.Data{
+			"job_number": job.JobNumber,
+		})
+		// Continue even if event logging fails
+	}
+
 	return &job, nil
 }
 
@@ -97,8 +107,9 @@ func (js *jobService) GetJob(ctx context.Context, jobNumber int) (*domain.Job, e
 	return js.store.GetJob(ctx, jobNumber)
 }
 
-// UpdateJobState updates the state of a migration job.
-func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newState domain.State) error {
+// UpdateJobState updates the state of a migration job and logs
+// an event with the requesting user's ID.
+func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newState domain.State, userID string) error {
 	job, err := js.store.GetJob(ctx, jobNumber)
 	if err != nil {
 		return err
@@ -112,6 +123,17 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 	err = js.store.UpdateJobState(ctx, job.ID, newState, now)
 	if err != nil {
 		return fmt.Errorf("failed to update job state: %w", err)
+	}
+
+	// Log event for approval or rejected state transitions
+	if newState == domain.StateApproved || newState == domain.StateRejected {
+		if err := js.logJobEvent(ctx, jobNumber, string(newState), userID); err != nil {
+			log.Error(ctx, "failed to log job state transition event", err, log.Data{
+				"job_number": jobNumber,
+				"new_state":  newState,
+			})
+			// Continue even if event logging fails
+		}
 	}
 
 	return nil
@@ -253,4 +275,48 @@ func (js *jobService) GetJobEvents(ctx context.Context, jobNumber, limit, offset
 // CountEventsByJobNumber returns the total count of events for a job.
 func (js *jobService) CountEventsByJobNumber(ctx context.Context, jobNumber int) (int, error) {
 	return js.store.CountEventsByJobNumber(ctx, jobNumber)
+}
+
+// logJobEvent creates and stores an event for a job state transition.
+func (js *jobService) logJobEvent(ctx context.Context, jobNumber int, action, userID string) error {
+	// Use "system" as default if no user ID provided
+	if userID == "" {
+		log.Info(ctx, "no user ID provided for event logging, using 'system'", log.Data{
+			"job_number": jobNumber,
+			"action":     action,
+		})
+		userID = "system"
+	}
+
+	// Get the job to retrieve the job ID
+	job, err := js.store.GetJob(ctx, jobNumber)
+	if err != nil {
+		return fmt.Errorf("failed to get job for event logging: %w", err)
+	}
+
+	// Create the event
+	event := &domain.Event{
+		ID:        uuid.New().String(),
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+		RequestedBy: &domain.User{
+			ID: userID,
+		},
+		Action:    action,
+		JobNumber: jobNumber,
+		Links:     domain.NewEventLinks(uuid.New().String(), job.ID),
+	}
+
+	// Store the event
+	if err := js.store.CreateEvent(ctx, event); err != nil {
+		return fmt.Errorf("failed to create event: %w", err)
+	}
+
+	log.Info(ctx, "job event logged successfully", log.Data{
+		"job_number": jobNumber,
+		"action":     action,
+		"user_id":    userID,
+		"event_id":   event.ID,
+	})
+
+	return nil
 }

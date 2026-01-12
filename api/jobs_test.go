@@ -18,6 +18,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
+	permsdk "github.com/ONSdigital/dp-permissions-api/sdk"
 
 	"github.com/google/uuid"
 
@@ -372,7 +373,7 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockService := applicationMock.JobServiceMock{
-			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig) (*domain.Job, error) {
+			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig, userID string) (*domain.Job, error) {
 				return &createdJob, nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
@@ -1057,6 +1058,132 @@ func TestGetJobEvents(t *testing.T) {
 					So(gotEvents[1].Action, ShouldEqual, "migrating")
 					So(gotEvents[2].Action, ShouldEqual, "completed")
 				})
+			})
+		})
+	})
+}
+
+func TestGetUserID(t *testing.T) {
+	Convey("Given a test API instance with a mocked auth middleware", t, func() {
+		testUserID := "test-user-123"
+		testToken := "test-jwt-token"
+
+		Convey("When the Authorization header contains a valid JWT token", func() {
+			mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+				ParseFunc: func(token string) (*permsdk.EntityData, error) {
+					return &permsdk.EntityData{
+						UserID: testUserID,
+					}, nil
+				},
+			}
+
+			api := &MigrationAPI{
+				AuthMiddleware: mockAuthMiddleware,
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
+			req.Header.Set("Authorization", "Bearer "+testToken)
+
+			Convey("Then GetUserID should return the user ID from the token", func() {
+				userID := api.GetUserID(req)
+
+				So(userID, ShouldEqual, testUserID)
+				So(len(mockAuthMiddleware.ParseCalls()), ShouldEqual, 1)
+				So(mockAuthMiddleware.ParseCalls()[0].Token, ShouldEqual, testToken)
+			})
+		})
+
+		Convey("When the Authorization header contains a token without Bearer prefix", func() {
+			mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+				ParseFunc: func(token string) (*permsdk.EntityData, error) {
+					return &permsdk.EntityData{
+						UserID: testUserID,
+					}, nil
+				},
+			}
+
+			api := &MigrationAPI{
+				AuthMiddleware: mockAuthMiddleware,
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
+			req.Header.Set("Authorization", testToken)
+
+			Convey("Then GetUserID should parse the token and return the user ID", func() {
+				userID := api.GetUserID(req)
+
+				So(userID, ShouldEqual, testUserID)
+				So(len(mockAuthMiddleware.ParseCalls()), ShouldEqual, 1)
+				So(mockAuthMiddleware.ParseCalls()[0].Token, ShouldEqual, testToken)
+			})
+		})
+
+		Convey("When the Authorization header is missing", func() {
+			mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+				ParseFunc: func(token string) (*permsdk.EntityData, error) {
+					return &permsdk.EntityData{
+						UserID: testUserID,
+					}, nil
+				},
+			}
+
+			api := &MigrationAPI{
+				AuthMiddleware: mockAuthMiddleware,
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
+
+			Convey("Then GetUserID should return an empty string", func() {
+				userID := api.GetUserID(req)
+
+				So(userID, ShouldEqual, "")
+				So(len(mockAuthMiddleware.ParseCalls()), ShouldEqual, 0)
+			})
+		})
+
+		Convey("When the JWT token is invalid", func() {
+			mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+				ParseFunc: func(token string) (*permsdk.EntityData, error) {
+					return nil, errors.New("invalid token")
+				},
+			}
+
+			api := &MigrationAPI{
+				AuthMiddleware: mockAuthMiddleware,
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
+			req.Header.Set("Authorization", "Bearer invalid-token")
+
+			Convey("Then GetUserID should return an empty string", func() {
+				userID := api.GetUserID(req)
+
+				So(userID, ShouldEqual, "")
+				So(len(mockAuthMiddleware.ParseCalls()), ShouldEqual, 1)
+			})
+		})
+
+		Convey("When the JWT token parses but has no UserID", func() {
+			mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+				ParseFunc: func(token string) (*permsdk.EntityData, error) {
+					return &permsdk.EntityData{
+						UserID: "",
+					}, nil
+				},
+			}
+
+			api := &MigrationAPI{
+				AuthMiddleware: mockAuthMiddleware,
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
+			req.Header.Set("Authorization", "Bearer "+testToken)
+
+			Convey("Then GetUserID should return an empty string", func() {
+				userID := api.GetUserID(req)
+
+				So(userID, ShouldEqual, "")
+				So(len(mockAuthMiddleware.ParseCalls()), ShouldEqual, 1)
 			})
 		})
 	})

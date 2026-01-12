@@ -89,7 +89,7 @@ func (mig *migrator) CheckAndUpdateJobStateBasedOnTasks(ctx context.Context, job
 	log.Info(ctx, strings.ToLower(rule.Description), logData)
 
 	// Update job state
-	err = mig.jobService.UpdateJobState(ctx, job.JobNumber, rule.JobTargetState)
+	err = mig.jobService.UpdateJobState(ctx, job.JobNumber, rule.JobTargetState, "")
 	if err != nil {
 		log.Error(ctx, "failed to update job state", err, logData)
 		return err

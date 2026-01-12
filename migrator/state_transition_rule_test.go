@@ -32,7 +32,7 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 3, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State, userID string) error {
 				return nil
 			},
 		}
@@ -244,7 +244,7 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 1, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State, userID string) error {
 				return errors.New("database error")
 			},
 		}
@@ -342,7 +342,7 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 2, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State, userID string) error {
 				return nil
 			},
 		}
@@ -427,7 +427,7 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 2, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State, userID string) error {
 				return nil
 			},
 		}

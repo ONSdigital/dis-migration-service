@@ -106,7 +106,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 					State:     domain.StateMigrating,
 				}, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State, userID string) error {
 				return nil
 			},
 			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
@@ -170,7 +170,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 1, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State) error {
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State, userID string) error {
 				return nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {

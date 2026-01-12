@@ -11,6 +11,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/statemachine"
+	dprequest "github.com/ONSdigital/dp-net/v3/request"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
@@ -115,6 +116,9 @@ func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, lim
 func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	// Extract user ID from JWT token
+	userID := api.GetUserID(r)
+
 	jobConfigBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Info(ctx, "unable to read body")
@@ -138,7 +142,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	job, err := api.JobService.CreateJob(ctx, jobConfig)
+	job, err := api.JobService.CreateJob(ctx, jobConfig, userID)
 	if err != nil {
 		handleError(ctx, w, r, err)
 		return
@@ -198,6 +202,9 @@ func (api *MigrationAPI) updateJobState(
 		handleError(ctx, w, r, appErrors.ErrJobNumberNotProvided)
 	}
 
+	// Extract user ID from JWT token
+	userID := api.GetUserID(r)
+
 	// Base log context reused throughout the handler
 	logData := log.Data{
 		"job_number": jobNumberStr,
@@ -256,7 +263,7 @@ func (api *MigrationAPI) updateJobState(
 	logData["current_state"] = job.State
 
 	// Attempt state transition
-	err = api.JobService.UpdateJobState(ctx, jobNumber, req.State)
+	err = api.JobService.UpdateJobState(ctx, jobNumber, req.State, userID)
 	if err != nil {
 		var transitionErr *statemachine.TransitionError
 		if errors.As(err, &transitionErr) {
@@ -272,4 +279,28 @@ func (api *MigrationAPI) updateJobState(
 
 	log.Info(ctx, "job state updated successfully", logData)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// GetUserID extracts the user ID from the Authorization header by parsing
+// the JWT token. Returns the user ID or an empty string if the token
+// cannot be parsed.
+func (api *MigrationAPI) GetUserID(r *http.Request) string {
+	bearerToken := r.Header.Get(dprequest.AuthHeaderKey)
+	if bearerToken == "" {
+		return ""
+	}
+
+	// Remove "Bearer " prefix if present
+	bearerToken = strings.TrimPrefix(bearerToken, dprequest.BearerPrefix)
+
+	// Parse the JWT token to extract user information
+	entityData, err := api.AuthMiddleware.Parse(bearerToken)
+	if err != nil {
+		log.Warn(r.Context(), "failed to parse JWT token for user ID extraction", log.Data{
+			"error": err.Error(),
+		})
+		return ""
+	}
+
+	return entityData.UserID
 }
