@@ -11,6 +11,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/executor"
+	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -78,11 +79,7 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 		taskExecutor, err := mig.getTaskExecutor(ctx, task)
 		if err != nil {
 			log.Error(ctx, "failed to get task executor", err, logData)
-			failErr := mig.failTask(ctx, task)
-			if failErr != nil {
-				log.Error(ctx, "failed to mark task as failed after failing to get executor", failErr, logData)
-				mig.notifyTaskExecutorMissing(ctx, task, err, failErr)
-			}
+			_ = mig.failTask(ctx, task, err, failureReasonExecutorMissing)
 			return
 		}
 
@@ -97,19 +94,17 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 
 		if err != nil {
 			log.Error(ctx, "error executing task", err, logData)
-			failErr := mig.failTask(ctx, task)
+			failErr := mig.failTask(ctx, task, err, failureReasonExecutionFailed)
 			if failErr != nil {
-				log.Error(ctx, "failed to mark task as failed after execution error", failErr, logData)
-				mig.notifyTaskExecutionFailure(ctx, task, err, failErr)
 				return
 			}
 
-			failErr = mig.failJobByJobNumber(ctx, task.JobNumber)
+			failErr = mig.failJobByJobNumber(ctx, task.JobNumber, err, failureReasonExecutionFailed)
 			if failErr != nil {
-				log.Error(ctx, "failed to mark job as failed after task execution error", failErr, logData)
-				mig.notifyJobFailureAfterTaskError(ctx, task, err, failErr)
+				log.Error(ctx, "failed to fail job after task execution error", failErr, logData)
 				return
 			}
+			return
 		}
 
 		// Success: Check if all tasks are complete and update job state if needed
@@ -121,8 +116,14 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 	}()
 }
 
-func (mig *migrator) failTask(ctx context.Context, task *domain.Task) error {
+func (mig *migrator) failTask(ctx context.Context, task *domain.Task, originalErr error, failureReason string) error {
 	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber, "task_state": task.State}
+	slackDetails := slack.SlackDetails{
+		"Task ID":        task.ID,
+		"Job Number":     task.JobNumber,
+		"Task State":     task.State,
+		"Failure Reason": failureReason,
+	}
 
 	failureState, err := domain.GetFailureStateForJobState(task.State)
 	if err != nil {
@@ -135,175 +136,17 @@ func (mig *migrator) failTask(ctx context.Context, task *domain.Task) error {
 	err = mig.jobService.UpdateTaskState(ctx, task.ID, failureState)
 	if err != nil {
 		log.Error(ctx, "failed to update task state to failed", err, logData)
+
+		slackDetails["Failure State"] = failureState
+		slackDetails["Original Error"] = originalErr.Error()
+		slackDetails["Update Error"] = err.Error()
+
+		slackErr := mig.slackClient.SendAlarm(ctx, EventUpdateTaskStateFailed, nil, slackDetails)
+		if slackErr != nil {
+			log.Error(ctx, "failed to send slack notification", slackErr, logData)
+		}
 		return err
 	}
+
 	return nil
-}
-
-// notifyTaskExecutionFailure sends a Slack alarm
-// when a task fails to be marked as failed
-func (mig *migrator) notifyTaskExecutionFailure(
-	ctx context.Context,
-	task *domain.Task,
-	executionErr error,
-	failErr error,
-) {
-	// Get the job to include details in the notification
-	job, err := mig.jobService.GetJob(ctx, task.JobNumber)
-	if err != nil {
-		log.Error(ctx, "failed to get job for slack notification", err, log.Data{"jobNumber": task.JobNumber})
-		return
-	}
-
-	details := map[string]interface{}{
-		"Task ID":         task.ID,
-		"Task Type":       string(task.Type),
-		"Job Number":      task.JobNumber,
-		"Job Label":       job.Label,
-		"Execution Error": executionErr.Error(),
-		"Update Error":    failErr.Error(),
-	}
-
-	summary := "Task execution failed and task state update failed"
-
-	if err := mig.slackClient.SendAlarm(ctx, summary, executionErr, details); err != nil {
-		log.Error(ctx, "failed to send slack alarm for task execution failure", err, log.Data{
-			"taskID":    task.ID,
-			"jobNumber": task.JobNumber,
-		})
-	}
-}
-
-// notifyJobFailureAfterTaskError sends a Slack alarm
-// when a job fails to be marked as failed after a task error
-func (mig *migrator) notifyJobFailureAfterTaskError(
-	ctx context.Context,
-	task *domain.Task,
-	executionErr error,
-	jobFailErr error,
-) {
-	// Get the job to include details in the notification
-	job, err := mig.jobService.GetJob(ctx, task.JobNumber)
-	if err != nil {
-		log.Error(ctx, "failed to get job for slack notification", err, log.Data{"jobNumber": task.JobNumber})
-		return
-	}
-
-	details := map[string]interface{}{
-		"Task ID":          task.ID,
-		"Task Type":        string(task.Type),
-		"Job Number":       task.JobNumber,
-		"Job Label":        job.Label,
-		"Job State":        string(job.State),
-		"Task Error":       executionErr.Error(),
-		"Job Update Error": jobFailErr.Error(),
-	}
-
-	summary := "Job failed to update to failed state after task execution error"
-
-	if err := mig.slackClient.SendAlarm(ctx, summary, executionErr, details); err != nil {
-		log.Error(ctx, "failed to send slack alarm for job failure after task error", err, log.Data{
-			"taskID":    task.ID,
-			"jobNumber": task.JobNumber,
-		})
-	}
-}
-
-// notifyTaskExecutorMissing sends a Slack alarm when a task executor
-// cannot be found AND the task fails to be marked as failed
-func (mig *migrator) notifyTaskExecutorMissing(
-	ctx context.Context,
-	task *domain.Task,
-	executorErr error,
-	failErr error,
-) {
-	// Get the job to include details in the notification
-	job, err := mig.jobService.GetJob(ctx, task.JobNumber)
-	if err != nil {
-		log.Error(ctx, "failed to get job for slack notification", err, log.Data{"jobNumber": task.JobNumber})
-		return
-	}
-
-	details := map[string]interface{}{
-		"Task ID":        task.ID,
-		"Task Type":      string(task.Type),
-		"Task State":     string(task.State),
-		"Job Number":     task.JobNumber,
-		"Job Label":      job.Label,
-		"Executor Error": executorErr.Error(),
-		"Update Error":   failErr.Error(),
-	}
-
-	summary := "Task executor not found and task state update failed"
-
-	if err := mig.slackClient.SendAlarm(ctx, summary, executorErr, details); err != nil {
-		log.Error(ctx, "failed to send slack alarm for missing task executor", err, log.Data{
-			"taskID":    task.ID,
-			"jobNumber": task.JobNumber,
-		})
-	}
-}
-
-// notifyTaskExecutorMissingWarning sends a Slack warning when a task executor
-// cannot be found (but task was successfully marked as failed)
-func (mig *migrator) notifyTaskExecutorMissingWarning(
-	ctx context.Context,
-	task *domain.Task,
-	executorErr error,
-) {
-	// Get the job to include details in the notification
-	job, err := mig.jobService.GetJob(ctx, task.JobNumber)
-	if err != nil {
-		log.Error(ctx, "failed to get job for slack notification", err, log.Data{"jobNumber": task.JobNumber})
-		return
-	}
-
-	details := map[string]interface{}{
-		"Task ID":    task.ID,
-		"Task Type":  string(task.Type),
-		"Task State": string(task.State),
-		"Job Number": task.JobNumber,
-		"Job Label":  job.Label,
-		"Error":      executorErr.Error(),
-	}
-
-	summary := "Task executor not found - check migrator configuration"
-
-	if err := mig.slackClient.SendWarning(ctx, summary, details); err != nil {
-		log.Error(ctx, "failed to send slack warning for missing task executor", err, log.Data{
-			"taskID":    task.ID,
-			"jobNumber": task.JobNumber,
-		})
-	}
-}
-
-// notifyUnsupportedTaskState sends a Slack warning
-// when a task is in an unsupported state
-func (mig *migrator) notifyUnsupportedTaskState(
-	ctx context.Context,
-	task *domain.Task,
-) {
-	// Get the job to include details in the notification
-	job, err := mig.jobService.GetJob(ctx, task.JobNumber)
-	if err != nil {
-		log.Error(ctx, "failed to get job for slack notification", err, log.Data{"jobNumber": task.JobNumber})
-		return
-	}
-
-	details := map[string]interface{}{
-		"Task ID":    task.ID,
-		"Task Type":  string(task.Type),
-		"Task State": string(task.State),
-		"Job Number": task.JobNumber,
-		"Job Label":  job.Label,
-	}
-
-	summary := "Task in unsupported state for execution - check state machine configuration"
-
-	if err := mig.slackClient.SendWarning(ctx, summary, details); err != nil {
-		log.Error(ctx, "failed to send slack warning for unsupported task state", err, log.Data{
-			"taskID":    task.ID,
-			"jobNumber": task.JobNumber,
-		})
-	}
 }

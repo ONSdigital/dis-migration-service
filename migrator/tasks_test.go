@@ -236,7 +236,7 @@ func TestMigratorFailTask(t *testing.T) {
 				State: domain.StateMigrating,
 			}
 
-			err := mig.failTask(ctx, task)
+			err := mig.failTask(ctx, task, errors.New("test error"), failureReasonExecutionFailed)
 
 			Convey("Then the job service is called to update the task state to failed", func() {
 				So(err, ShouldBeNil)
@@ -252,7 +252,7 @@ func TestMigratorFailTask(t *testing.T) {
 				State: domain.StateSubmitted,
 			}
 
-			err := mig.failTask(ctx, task)
+			err := mig.failTask(ctx, task, errors.New("test error"), failureReasonExecutionFailed)
 
 			Convey("Then the job service is not called to update the task", func() {
 				So(err, ShouldNotBeNil)
@@ -265,6 +265,12 @@ func TestMigratorFailTask(t *testing.T) {
 		mockJobService := &applicationMocks.JobServiceMock{
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, newState domain.State) error {
 				return errors.New("update error")
+			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					JobNumber: jobNumber,
+					Label:     "Test Job",
+				}, nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
@@ -287,7 +293,7 @@ func TestMigratorFailTask(t *testing.T) {
 				State: domain.StateMigrating,
 			}
 
-			err := mig.failTask(ctx, task)
+			err := mig.failTask(ctx, task, errors.New("test error"), failureReasonExecutionFailed)
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldNotBeNil)

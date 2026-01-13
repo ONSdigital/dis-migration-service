@@ -11,7 +11,6 @@ import (
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dis-migration-service/slack"
-	slackMocks "github.com/ONSdigital/dis-migration-service/slack/mocks"
 	"github.com/ONSdigital/dis-migration-service/store"
 	redirectAPI "github.com/ONSdigital/dis-redirect-api/sdk/go"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
@@ -145,21 +144,6 @@ func (e *Init) DoGetSlackClient(ctx context.Context, cfg *config.Config) (slack.
 			WarningChannel: cfg.SlackConfig.Channels.WarningChannel,
 			AlarmChannel:   cfg.SlackConfig.Channels.AlarmChannel,
 		},
-	}
-
-	if cfg.EnableMockClients {
-		log.Info(ctx, "returning mock slack client")
-		return &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
-				return nil
-			},
-			SendWarningFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
-				return nil
-			},
-			SendAlarmFunc: func(ctx context.Context, summary string, err error, details map[string]interface{}) error {
-				return nil
-			},
-		}, nil
 	}
 
 	slackClient, err := slack.New(slackCfg)

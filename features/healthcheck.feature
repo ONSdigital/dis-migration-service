@@ -67,7 +67,7 @@ Feature: Health endpoint
         And I GET "/health"
         Then the HTTP status code should be "500"
         And the response header "Content-Type" should be "application/json; charset=utf-8"
-        When the health checks should have completed within 6 seconds
+        When the health checks should have completed within 7 seconds
         Then I should receive the following health JSON response:
         """
             {

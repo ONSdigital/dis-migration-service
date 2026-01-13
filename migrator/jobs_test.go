@@ -27,13 +27,13 @@ const (
 // createMockSlackClient creates a default mock Slack client for testing
 func createMockSlackClient() slack.Clienter {
 	return &slackMocks.ClienterMock{
-		SendInfoFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+		SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
 			return nil
 		},
-		SendWarningFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+		SendWarningFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
 			return nil
 		},
-		SendAlarmFunc: func(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+		SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 			return nil
 		},
 	}
@@ -225,7 +225,7 @@ func TestMigratorFailJob(t *testing.T) {
 				State:     domain.StateMigrating,
 			}
 
-			err := mig.failJob(ctx, job)
+			err := mig.failJob(ctx, job, errors.New("test error"), failureReasonExecutionFailed)
 
 			Convey("Then the job service is called to update the job state to failed", func() {
 				So(err, ShouldBeNil)
@@ -241,7 +241,7 @@ func TestMigratorFailJob(t *testing.T) {
 				State:     domain.StateSubmitted,
 			}
 
-			err := mig.failJob(ctx, job)
+			err := mig.failJob(ctx, job, errors.New("test error"), failureReasonExecutionFailed)
 
 			Convey("Then the job service is not called to update the job", func() {
 				So(err, ShouldNotBeNil)
@@ -275,7 +275,7 @@ func TestMigratorFailJob(t *testing.T) {
 				ID: "test-job-id",
 			}
 
-			err := mig.failJob(ctx, job)
+			err := mig.failJob(ctx, job, errors.New("test error"), failureReasonExecutionFailed)
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldNotBeNil)
@@ -309,7 +309,7 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 		Convey("When failJobByID is called", func() {
-			err := mig.failJobByJobNumber(ctx, 25)
+			err := mig.failJobByJobNumber(ctx, 25, errors.New("test error"), failureReasonExecutionFailed)
 
 			Convey("Then the job service is called to update the job state to failed", func() {
 				So(err, ShouldBeNil)
@@ -342,7 +342,7 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 		Convey("When failJobByID is called", func() {
-			err := mig.failJobByJobNumber(ctx, 25)
+			err := mig.failJobByJobNumber(ctx, 25, errors.New("test error"), failureReasonExecutionFailed)
 
 			Convey("Then the job service is not called to update the job", func() {
 				So(err, ShouldBeNil)
@@ -369,7 +369,7 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
 		ctx := context.Background()
 		Convey("When failJobByJobNumber is called", func() {
-			err := mig.failJobByJobNumber(ctx, 26)
+			err := mig.failJobByJobNumber(ctx, 26, errors.New("test error"), failureReasonExecutionFailed)
 
 			Convey("Then an error is returned", func() {
 				So(err.Error(), ShouldEqual, "test error")

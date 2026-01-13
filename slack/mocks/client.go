@@ -19,13 +19,13 @@ var _ slack.Clienter = &ClienterMock{}
 //
 //		// make and configure a mocked slack.Clienter
 //		mockedClienter := &ClienterMock{
-//			SendAlarmFunc: func(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+//			SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 //				panic("mock out the SendAlarm method")
 //			},
-//			SendInfoFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+//			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
 //				panic("mock out the SendInfo method")
 //			},
-//			SendWarningFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+//			SendWarningFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
 //				panic("mock out the SendWarning method")
 //			},
 //		}
@@ -36,13 +36,13 @@ var _ slack.Clienter = &ClienterMock{}
 //	}
 type ClienterMock struct {
 	// SendAlarmFunc mocks the SendAlarm method.
-	SendAlarmFunc func(ctx context.Context, summary string, err error, details map[string]interface{}) error
+	SendAlarmFunc func(ctx context.Context, summary string, err error, details slack.SlackDetails) error
 
 	// SendInfoFunc mocks the SendInfo method.
-	SendInfoFunc func(ctx context.Context, summary string, details map[string]interface{}) error
+	SendInfoFunc func(ctx context.Context, summary string, details slack.SlackDetails) error
 
 	// SendWarningFunc mocks the SendWarning method.
-	SendWarningFunc func(ctx context.Context, summary string, details map[string]interface{}) error
+	SendWarningFunc func(ctx context.Context, summary string, details slack.SlackDetails) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -55,7 +55,7 @@ type ClienterMock struct {
 			// Err is the err argument value.
 			Err error
 			// Details is the details argument value.
-			Details map[string]interface{}
+			Details slack.SlackDetails
 		}
 		// SendInfo holds details about calls to the SendInfo method.
 		SendInfo []struct {
@@ -64,7 +64,7 @@ type ClienterMock struct {
 			// Summary is the summary argument value.
 			Summary string
 			// Details is the details argument value.
-			Details map[string]interface{}
+			Details slack.SlackDetails
 		}
 		// SendWarning holds details about calls to the SendWarning method.
 		SendWarning []struct {
@@ -73,7 +73,7 @@ type ClienterMock struct {
 			// Summary is the summary argument value.
 			Summary string
 			// Details is the details argument value.
-			Details map[string]interface{}
+			Details slack.SlackDetails
 		}
 	}
 	lockSendAlarm   sync.RWMutex
@@ -82,7 +82,7 @@ type ClienterMock struct {
 }
 
 // SendAlarm calls SendAlarmFunc.
-func (mock *ClienterMock) SendAlarm(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+func (mock *ClienterMock) SendAlarm(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 	if mock.SendAlarmFunc == nil {
 		panic("ClienterMock.SendAlarmFunc: method is nil but Clienter.SendAlarm was just called")
 	}
@@ -90,7 +90,7 @@ func (mock *ClienterMock) SendAlarm(ctx context.Context, summary string, err err
 		Ctx     context.Context
 		Summary string
 		Err     error
-		Details map[string]interface{}
+		Details slack.SlackDetails
 	}{
 		Ctx:     ctx,
 		Summary: summary,
@@ -111,13 +111,13 @@ func (mock *ClienterMock) SendAlarmCalls() []struct {
 	Ctx     context.Context
 	Summary string
 	Err     error
-	Details map[string]interface{}
+	Details slack.SlackDetails
 } {
 	var calls []struct {
 		Ctx     context.Context
 		Summary string
 		Err     error
-		Details map[string]interface{}
+		Details slack.SlackDetails
 	}
 	mock.lockSendAlarm.RLock()
 	calls = mock.calls.SendAlarm
@@ -126,14 +126,14 @@ func (mock *ClienterMock) SendAlarmCalls() []struct {
 }
 
 // SendInfo calls SendInfoFunc.
-func (mock *ClienterMock) SendInfo(ctx context.Context, summary string, details map[string]interface{}) error {
+func (mock *ClienterMock) SendInfo(ctx context.Context, summary string, details slack.SlackDetails) error {
 	if mock.SendInfoFunc == nil {
 		panic("ClienterMock.SendInfoFunc: method is nil but Clienter.SendInfo was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
 		Summary string
-		Details map[string]interface{}
+		Details slack.SlackDetails
 	}{
 		Ctx:     ctx,
 		Summary: summary,
@@ -152,12 +152,12 @@ func (mock *ClienterMock) SendInfo(ctx context.Context, summary string, details 
 func (mock *ClienterMock) SendInfoCalls() []struct {
 	Ctx     context.Context
 	Summary string
-	Details map[string]interface{}
+	Details slack.SlackDetails
 } {
 	var calls []struct {
 		Ctx     context.Context
 		Summary string
-		Details map[string]interface{}
+		Details slack.SlackDetails
 	}
 	mock.lockSendInfo.RLock()
 	calls = mock.calls.SendInfo
@@ -166,14 +166,14 @@ func (mock *ClienterMock) SendInfoCalls() []struct {
 }
 
 // SendWarning calls SendWarningFunc.
-func (mock *ClienterMock) SendWarning(ctx context.Context, summary string, details map[string]interface{}) error {
+func (mock *ClienterMock) SendWarning(ctx context.Context, summary string, details slack.SlackDetails) error {
 	if mock.SendWarningFunc == nil {
 		panic("ClienterMock.SendWarningFunc: method is nil but Clienter.SendWarning was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
 		Summary string
-		Details map[string]interface{}
+		Details slack.SlackDetails
 	}{
 		Ctx:     ctx,
 		Summary: summary,
@@ -192,12 +192,12 @@ func (mock *ClienterMock) SendWarning(ctx context.Context, summary string, detai
 func (mock *ClienterMock) SendWarningCalls() []struct {
 	Ctx     context.Context
 	Summary string
-	Details map[string]interface{}
+	Details slack.SlackDetails
 } {
 	var calls []struct {
 		Ctx     context.Context
 		Summary string
-		Details map[string]interface{}
+		Details slack.SlackDetails
 	}
 	mock.lockSendWarning.RLock()
 	calls = mock.calls.SendWarning

@@ -14,6 +14,10 @@ type Client struct {
 	channels Channels
 }
 
+// SlackDetails is a map of key-value pairs containing details to include
+// in Slack notifications.
+type SlackDetails map[string]interface{}
+
 // New returns a new Client if Slack notifications are enabled.
 // If not enabled, it returns a NoopClient that performs no operations.
 // The config is validated before creating the client.
@@ -40,7 +44,7 @@ func New(cfg *Config) (Clienter, error) {
 
 // SendAlarm sends an error notification to the configured Slack alarm channel.
 // The error will be included in the message fields if provided.
-func (c *Client) SendAlarm(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+func (c *Client) SendAlarm(ctx context.Context, summary string, err error, details SlackDetails) error {
 	if err := c.validateInput(ctx, summary); err != nil {
 		return err
 	}
@@ -57,7 +61,7 @@ func (c *Client) SendAlarm(ctx context.Context, summary string, err error, detai
 
 // SendWarning sends a warning notification to the configured
 // Slack warning channel.
-func (c *Client) SendWarning(ctx context.Context, summary string, details map[string]interface{}) error {
+func (c *Client) SendWarning(ctx context.Context, summary string, details SlackDetails) error {
 	if err := c.validateInput(ctx, summary); err != nil {
 		return err
 	}
@@ -73,7 +77,7 @@ func (c *Client) SendWarning(ctx context.Context, summary string, details map[st
 }
 
 // SendInfo sends an info notification to the configured Slack info channel.
-func (c *Client) SendInfo(ctx context.Context, summary string, details map[string]interface{}) error {
+func (c *Client) SendInfo(ctx context.Context, summary string, details SlackDetails) error {
 	if err := c.validateInput(ctx, summary); err != nil {
 		return err
 	}
@@ -134,7 +138,7 @@ func (c *Client) doSendMessage(
 // buildAttachmentFields constructs Slack attachment fields from the
 // given error and details. If err is not nil, it sets the first field
 // to the error message
-func buildAttachmentFields(err error, details map[string]interface{}) []slack.AttachmentField {
+func buildAttachmentFields(err error, details SlackDetails) []slack.AttachmentField {
 	fields := []slack.AttachmentField{}
 
 	if err != nil {

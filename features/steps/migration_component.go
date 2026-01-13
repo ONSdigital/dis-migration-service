@@ -48,6 +48,7 @@ type MigrationComponent struct {
 	FakeAPIRouter           *FakeAPI
 	AuthorisationMiddleware authorisation.Middleware
 	MockSlackClient         *slackMocks.ClienterMock
+	Migrator                migrator.Migrator
 }
 
 func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *componenttest.AuthorizationFeature) (*MigrationComponent, error) {
@@ -104,21 +105,21 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *comp
 
 	// Initialize mock Slack client
 	c.MockSlackClient = &slackMocks.ClienterMock{
-		SendInfoFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+		SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
 			log.Info(ctx, "mock slack: info notification", log.Data{
 				"summary": summary,
 				"details": details,
 			})
 			return nil
 		},
-		SendWarningFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
+		SendWarningFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
 			log.Info(ctx, "mock slack: warning notification", log.Data{
 				"summary": summary,
 				"details": details,
 			})
 			return nil
 		},
-		SendAlarmFunc: func(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+		SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 			log.Info(ctx, "mock slack: alarm notification", log.Data{
 				"summary": summary,
 				"error":   err,
@@ -242,6 +243,7 @@ func (c *MigrationComponent) DoGetSlackClient(ctx context.Context, cfg *config.C
 
 func (c *MigrationComponent) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
 	mig := migrator.NewDefaultMigrator(cfg, jobService, clientList, slackClient)
+	c.Migrator = mig
 	return mig, nil
 }
 
@@ -298,30 +300,60 @@ func (c *MigrationComponent) AssertSlackInfoCalledWithDetails(expectedKey string
 	return fmt.Errorf("expected SendInfo to be called with details %s=%v, but it was not found", expectedKey, expectedValue)
 }
 
+// AssertSlackWarningCalled asserts that SendWarning was called on the mock Slack client
+func (c *MigrationComponent) AssertSlackWarningCalled(expectedCount int) error {
+	actualCount := len(c.MockSlackClient.SendWarningCalls())
+	if actualCount != expectedCount {
+		return fmt.Errorf("expected SendWarning to be called %d times, but was called %d times", expectedCount, actualCount)
+	}
+	return nil
+}
+
+// AssertSlackWarningCalledWithSummary asserts that SendWarning was called with a specific summary
+func (c *MigrationComponent) AssertSlackWarningCalledWithSummary(expectedSummary string) error {
+	calls := c.MockSlackClient.SendWarningCalls()
+	for _, call := range calls {
+		if call.Summary == expectedSummary {
+			return nil
+		}
+	}
+	return fmt.Errorf("expected SendWarning to be called with summary %q, but it was not found", expectedSummary)
+}
+
+// AssertSlackAlarmCalled asserts that SendAlarm was called on the mock Slack client
+func (c *MigrationComponent) AssertSlackAlarmCalled(expectedCount int) error {
+	actualCount := len(c.MockSlackClient.SendAlarmCalls())
+	if actualCount != expectedCount {
+		return fmt.Errorf("expected SendAlarm to be called %d times, but was called %d times", expectedCount, actualCount)
+	}
+	return nil
+}
+
+// AssertSlackAlarmCalledWithSummary asserts that SendAlarm was called with a specific summary
+func (c *MigrationComponent) AssertSlackAlarmCalledWithSummary(expectedSummary string) error {
+	calls := c.MockSlackClient.SendAlarmCalls()
+	for _, call := range calls {
+		if call.Summary == expectedSummary {
+			return nil
+		}
+	}
+	return fmt.Errorf("expected SendAlarm to be called with summary %q, but it was not found", expectedSummary)
+}
+
 // ResetMockSlackClient resets the mock Slack client call history
 func (c *MigrationComponent) ResetMockSlackClient() {
-	c.MockSlackClient = &slackMocks.ClienterMock{
-		SendInfoFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
-			log.Info(ctx, "mock slack: info notification", log.Data{
-				"summary": summary,
-				"details": details,
-			})
-			return nil
-		},
-		SendWarningFunc: func(ctx context.Context, summary string, details map[string]interface{}) error {
-			log.Info(ctx, "mock slack: warning notification", log.Data{
-				"summary": summary,
-				"details": details,
-			})
-			return nil
-		},
-		SendAlarmFunc: func(ctx context.Context, summary string, err error, details map[string]interface{}) error {
-			log.Info(ctx, "mock slack: alarm notification", log.Data{
-				"summary": summary,
-				"error":   err,
-				"details": details,
-			})
-			return nil
-		},
+	// Get all existing calls to clear them
+	// This maintains the same mock instance that the migrator holds a reference to
+	_ = c.MockSlackClient.SendInfoCalls()
+	_ = c.MockSlackClient.SendWarningCalls()
+	_ = c.MockSlackClient.SendAlarmCalls()
+
+	// The moq-generated mock doesn't provide a Reset method,
+	// so we need to recreate the mock while maintaining the reference
+	// by keeping the same pointer but replacing its contents
+	*c.MockSlackClient = slackMocks.ClienterMock{
+		SendInfoFunc:    c.MockSlackClient.SendInfoFunc,
+		SendWarningFunc: c.MockSlackClient.SendWarningFunc,
+		SendAlarmFunc:   c.MockSlackClient.SendAlarmFunc,
 	}
 }

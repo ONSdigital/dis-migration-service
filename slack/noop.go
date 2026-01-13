@@ -8,16 +8,16 @@ import "context"
 type NoopClient struct{}
 
 // SendAlarm is a no-op implementation
-func (n *NoopClient) SendAlarm(ctx context.Context, summary string, err error, details map[string]interface{}) error {
+func (n *NoopClient) SendAlarm(ctx context.Context, summary string, err error, details SlackDetails) error {
 	return nil
 }
 
 // SendWarning is a no-op implementation
-func (n *NoopClient) SendWarning(ctx context.Context, summary string, details map[string]interface{}) error {
+func (n *NoopClient) SendWarning(ctx context.Context, summary string, details SlackDetails) error {
 	return nil
 }
 
 // SendInfo is a no-op implementation
-func (n *NoopClient) SendInfo(ctx context.Context, summary string, details map[string]interface{}) error {
+func (n *NoopClient) SendInfo(ctx context.Context, summary string, details SlackDetails) error {
 	return nil
 }

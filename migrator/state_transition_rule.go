@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dis-migration-service/domain"
+	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -98,9 +99,18 @@ func (mig *migrator) CheckAndUpdateJobStateBasedOnTasks(ctx context.Context, job
 	logData["new_state"] = rule.JobTargetState
 	log.Info(ctx, "job state updated successfully", logData)
 
-	// Send Slack notification for completed active states
+	// Send notification for completed active states
 	if isActiveStateCompletion(job.State, rule.JobTargetState) {
-		mig.notifyJobStateCompletion(ctx, job, rule.JobTargetState)
+		slackDetails := slack.SlackDetails{
+			"Job Number": job.JobNumber,
+			"Job Label":  job.Label,
+			"Old State":  job.State,
+			"New State":  rule.JobTargetState,
+		}
+		err = mig.slackClient.SendInfo(ctx, mig.getJobCompletionSummary(job.State, rule.JobTargetState), slackDetails)
+		if err != nil {
+			log.Error(ctx, "failed to send slack notification", err, logData)
+		}
 	}
 
 	return nil
@@ -143,6 +153,20 @@ func (mig *migrator) TriggerJobStateTransitions(ctx context.Context, jobNumber i
 		}
 	}
 	return nil
+}
+
+// getJobCompletionSummary returns a human-readable summary for state completion
+func (mig *migrator) getJobCompletionSummary(fromState, toState domain.State) string {
+	switch fromState {
+	case domain.StateMigrating:
+		return "Job migration completed successfully"
+	case domain.StatePublishing:
+		return "Job publishing completed successfully"
+	case domain.StatePostPublishing:
+		return "Job post-publishing completed successfully"
+	default:
+		return "Job state updated"
+	}
 }
 
 // isActiveStateCompletion checks if the transition represents completion

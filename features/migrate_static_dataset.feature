@@ -59,6 +59,7 @@ Feature: Migrate a static dataset job
         }
       }
       """
+    And 1 Slack info notification should have been sent
 
   Scenario: Failed to migrate a dataset series
     Given a get page data request to zebedee for "/test-static-dataset-job-failed" returns with status 404 and payload:
@@ -73,7 +74,7 @@ Feature: Migrate a static dataset job
         "last_updated": "2025-11-19T13:28:00Z",
         "links": {
           "self": {
-            "href": "/v1/migration-jobs/13de71de-4201-494a-851b-3d65575235e6"
+            "href": "/v1/migration-jobs/21"
           }
         },
         "state": "submitted",
@@ -85,7 +86,7 @@ Feature: Migrate a static dataset job
         }
       }
       """
-    And I wait 3 seconds for the job processor to process tasks and jobs
+    And I wait 5 seconds for the job processor to process tasks and jobs
     When I GET "/v1/migration-jobs/21"
     Then I should receive the following JSON response with status "200":
       """
@@ -102,7 +103,7 @@ Feature: Migrate a static dataset job
         "label": "Test Failed Dataset Series",
         "links": {
           "self": {
-            "href": "/v1/migration-jobs/13de71de-4201-494a-851b-3d65575235e6"
+            "href": "/v1/migration-jobs/21"
           }
         }
       }
@@ -123,11 +124,11 @@ Feature: Migrate a static dataset job
                 "href": "{{DYNAMIC_URI_PATH}}"
               },
               "job": {
-                "href": "/v1/migration-jobs/13de71de-4201-494a-851b-3d65575235e6"
+                "href": "/v1/migration-jobs/21"
               }
             },
             "source": {
-              "id": "/test-dataset-1",
+              "id": "/test-static-dataset-job-failed",
               "label": ""
             },
             "target": {
@@ -142,3 +143,4 @@ Feature: Migrate a static dataset job
         "limit": 10
       }
       """
+    And 1 Slack info notifications should have been sent
