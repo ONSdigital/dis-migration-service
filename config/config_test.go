@@ -60,11 +60,13 @@ func TestConfig(t *testing.T) {
 							},
 						},
 					},
-					AuthConfig:       authorisation.NewDefaultConfig(),
-					SlackConfig:      &slack.Config{},
-					RedirectAPIURL:   "http://localhost:29900",
-					UploadServiceURL: "http://localhost:25100",
-					ZebedeeURL:       "http://localhost:8082",
+					AuthConfig:               authorisation.NewDefaultConfig(),
+					SlackConfig:              &slack.Config{},
+					RedirectAPIURL:           "http://localhost:29900",
+					TopicAPIURL:              "http://localhost:25300",
+					TopicCacheUpdateInterval: 10 * time.Minute,
+					UploadServiceURL:         "http://localhost:25100",
+					ZebedeeURL:               "http://localhost:8082",
 				})
 			})
 

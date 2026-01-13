@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
@@ -117,12 +118,17 @@ func TestRun(t *testing.T) {
 
 		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
 			return &migratorMock.MigratorMock{
-				StartFunc: func(ctx context.Context) {},
+				StartFunc:         func(ctx context.Context) {},
+				SetTopicCacheFunc: func(topicCache *cache.TopicCache) {},
 			}, nil
 		}
 
 		funcDoGetAppClientsOk := func(context.Context, *config.Config) *clients.ClientList {
 			return &clients.ClientList{}
+		}
+
+		funcDoGetTopicCacheOk := func(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
+			return nil, nil
 		}
 
 		funcDoGetAuthOk := func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
@@ -138,6 +144,7 @@ func TestRun(t *testing.T) {
 				DoGetMigratorFunc:    funcDoGetMigrator,
 				DoGetMongoDBFunc:     funcDoGetMongoDBOk,
 				DoGetAppClientsFunc:  funcDoGetAppClientsOk,
+				DoGetTopicCacheFunc:  funcDoGetTopicCacheOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -164,6 +171,7 @@ func TestRun(t *testing.T) {
 				DoGetMigratorFunc:                funcDoGetMigrator,
 				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
 				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
+				DoGetTopicCacheFunc:              funcDoGetTopicCacheOk,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
@@ -211,6 +219,7 @@ func TestRun(t *testing.T) {
 				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
 				DoGetMigratorFunc:                funcDoGetMigrator,
 				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
+				DoGetTopicCacheFunc:              funcDoGetTopicCacheOk,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
@@ -240,6 +249,7 @@ func TestRun(t *testing.T) {
 				DoGetMigratorFunc:                funcDoGetMigrator,
 				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
 				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
+				DoGetTopicCacheFunc:              funcDoGetTopicCacheOk,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
@@ -316,8 +326,9 @@ func TestClose(t *testing.T) {
 
 		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
 			return &migratorMock.MigratorMock{
-				StartFunc:    func(ctx context.Context) {},
-				ShutdownFunc: funcClose,
+				StartFunc:         func(ctx context.Context) {},
+				SetTopicCacheFunc: func(topicCache *cache.TopicCache) {},
+				ShutdownFunc:      funcClose,
 			}, nil
 		}
 
@@ -329,6 +340,10 @@ func TestClose(t *testing.T) {
 
 		funcDoGetAppClientsOk := func(context.Context, *config.Config) *clients.ClientList {
 			return &clients.ClientList{}
+		}
+
+		funcDoGetTopicCacheOk := func(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
+			return nil, nil
 		}
 
 		funcDoGetAuthOk := func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
@@ -345,6 +360,7 @@ func TestClose(t *testing.T) {
 				DoGetMigratorFunc:                funcDoGetMigrator,
 				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
 				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
+				DoGetTopicCacheFunc:              funcDoGetTopicCacheOk,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 
@@ -379,6 +395,7 @@ func TestClose(t *testing.T) {
 				DoGetMigratorFunc:                funcDoGetMigrator,
 				DoGetMongoDBFunc:                 funcDoGetMongoDBOk,
 				DoGetAppClientsFunc:              funcDoGetAppClientsOk,
+				DoGetTopicCacheFunc:              funcDoGetTopicCacheOk,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 

@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
@@ -9,10 +10,11 @@ import (
 
 func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 	Convey("Given a Zebedee dataset landing page", t, func() {
+		ctx := context.Background()
 		pageData := getTestDatasetLandingPage()
 
 		Convey("When it is mapped to a Dataset API dataset", func() {
-			dataset, err := MapDatasetLandingPageToDatasetAPI("test-dataset-id", pageData)
+			dataset, err := MapDatasetLandingPageToDatasetAPI(ctx, "test-dataset-id", pageData, nil)
 
 			Convey("Then no error is returned", func() {
 				So(err, ShouldBeNil)
@@ -38,12 +40,13 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 	})
 
 	Convey("Given a Zebedee page that is not a dataset landing page", t, func() {
+		ctx := context.Background()
 		pageData := zebedee.DatasetLandingPage{
 			Type: "unknown type",
 		}
 
 		Convey("When it is mapped to a Dataset API dataset", func() {
-			dataset, err := MapDatasetLandingPageToDatasetAPI("test-dataset-id", pageData)
+			dataset, err := MapDatasetLandingPageToDatasetAPI(ctx, "test-dataset-id", pageData, nil)
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldNotBeNil)

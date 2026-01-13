@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
@@ -137,6 +138,7 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *comp
 		DoGetMigratorFunc:                c.DoGetMigrator,
 		DoGetAppClientsFunc:              c.DoGetAppClients,
 		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddleware,
+		DoGetTopicCacheFunc:              c.DoGetTopicCache,
 	}
 
 	c.Config.HealthCheckInterval = 1 * time.Second
@@ -356,4 +358,14 @@ func (c *MigrationComponent) ResetMockSlackClient() {
 		SendWarningFunc: c.MockSlackClient.SendWarningFunc,
 		SendAlarmFunc:   c.MockSlackClient.SendAlarmFunc,
 	}
+}
+
+func (c *MigrationComponent) DoGetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
+	// For component tests, create a topic cache but don't start updates
+	// This avoids external dependencies during testing
+	topicCache, err := cache.NewTopicCache(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return topicCache, nil
 }

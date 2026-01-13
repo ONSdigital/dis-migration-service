@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/mapper"
@@ -17,14 +18,16 @@ type DatasetSeriesTaskExecutor struct {
 	jobService       application.JobService
 	clientList       *clients.ClientList
 	serviceAuthToken string
+	topicCache       *cache.TopicCache
 }
 
 // NewDatasetSeriesTaskExecutor creates a new DatasetSeriesTaskExecutor
-func NewDatasetSeriesTaskExecutor(jobService application.JobService, clientList *clients.ClientList, serviceAuthToken string) *DatasetSeriesTaskExecutor {
+func NewDatasetSeriesTaskExecutor(jobService application.JobService, clientList *clients.ClientList, serviceAuthToken string, topicCache *cache.TopicCache) *DatasetSeriesTaskExecutor {
 	return &DatasetSeriesTaskExecutor{
 		jobService:       jobService,
 		clientList:       clientList,
 		serviceAuthToken: serviceAuthToken,
+		topicCache:       topicCache,
 	}
 }
 
@@ -40,7 +43,7 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 		return err
 	}
 
-	targetData, err := mapper.MapDatasetLandingPageToDatasetAPI(task.Target.ID, sourceData)
+	targetData, err := mapper.MapDatasetLandingPageToDatasetAPI(ctx, task.Target.ID, sourceData, e.topicCache)
 	if err != nil {
 		log.Error(ctx, "failed to map dataset landing page to dataset API model", err, logData)
 		return err

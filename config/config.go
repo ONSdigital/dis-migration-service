@@ -35,6 +35,8 @@ type Config struct {
 	OtelEnabled                     bool          `envconfig:"OTEL_ENABLED"`
 	RedirectAPIURL                  string        `envconfig:"REDIRECT_API_URL"`
 	ServiceAuthToken                string        `envconfig:"SERVICE_AUTH_TOKEN"`
+	TopicAPIURL                     string        `envconfig:"TOPIC_API_URL"`
+	TopicCacheUpdateInterval        time.Duration `envconfig:"TOPIC_CACHE_UPDATE_INTERVAL"`
 	UploadServiceURL                string        `envconfig:"UPLOAD_SERVICE_URL"`
 	ZebedeeURL                      string        `envconfig:"ZEBEDEE_URL"`
 	MongoConfig
@@ -113,11 +115,13 @@ func Get() (*Config, error) {
 				},
 			},
 		},
-		AuthConfig:       authorisation.NewDefaultConfig(),
-		SlackConfig:      &slack.Config{},
-		RedirectAPIURL:   "http://localhost:29900",
-		UploadServiceURL: "http://localhost:25100",
-		ZebedeeURL:       "http://localhost:8082",
+		AuthConfig:               authorisation.NewDefaultConfig(),
+		SlackConfig:              &slack.Config{},
+		RedirectAPIURL:           "http://localhost:29900",
+		TopicAPIURL:              "http://localhost:25300",
+		TopicCacheUpdateInterval: 10 * time.Minute,
+		UploadServiceURL:         "http://localhost:25100",
+		ZebedeeURL:               "http://localhost:8082",
 	}
 
 	return cfg, envconfig.Process("", cfg)

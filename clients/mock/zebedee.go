@@ -16,7 +16,7 @@ var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 
 // ZebedeeClientMock is a mock implementation of clients.ZebedeeClient.
 //
-// 	func TestSomethingThatUsesZebedeeClient(t *testing.T) {
+//	func TestSomethingThatUsesZebedeeClient(t *testing.T) {
 //
 //		// make and configure a mocked clients.ZebedeeClient
 //		mockedZebedeeClient := &ZebedeeClientMock{
@@ -31,10 +31,10 @@ var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 //			},
 //		}
 //
-// 		// use mockedZebedeeClient in code that requires clients.ZebedeeClient
-// 		// and then make assertions.
+//		// use mockedZebedeeClient in code that requires clients.ZebedeeClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ZebedeeClientMock struct {
 	// GetDatasetFunc mocks the GetDataset method.
 	GetDatasetFunc func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.Dataset, error)
@@ -166,7 +166,8 @@ func (mock *ZebedeeClientMock) GetDatasetLandingPage(ctx context.Context, userAc
 
 // GetDatasetLandingPageCalls gets all the calls that were made to GetDatasetLandingPage.
 // Check the length with:
-//     len(mockedZebedeeClient.GetDatasetLandingPageCalls())
+//
+//	len(mockedZebedeeClient.GetDatasetLandingPageCalls())
 func (mock *ZebedeeClientMock) GetDatasetLandingPageCalls() []struct {
 	Ctx             context.Context
 	UserAccessToken string
@@ -213,7 +214,8 @@ func (mock *ZebedeeClientMock) GetPageData(ctx context.Context, userAuthToken st
 
 // GetPageDataCalls gets all the calls that were made to GetPageData.
 // Check the length with:
-//     len(mockedZebedeeClient.GetPageDataCalls())
+//
+//	len(mockedZebedeeClient.GetPageDataCalls())
 func (mock *ZebedeeClientMock) GetPageDataCalls() []struct {
 	Ctx           context.Context
 	UserAuthToken string

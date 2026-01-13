@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -24,13 +25,17 @@ type migrator struct {
 	semaphore     chan struct{}
 	pollInterval  time.Duration
 	stopJobsFunc  context.CancelFunc
+	topicCache    *cache.TopicCache
+	cfg           *config.Config
+	appClients    *clients.ClientList
 }
 
 // NewDefaultMigrator creates a new default migrator with the
 // provided job service and clients
 func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, appClients *clients.ClientList, slackClient slack.Clienter) *migrator {
 	jobExecutors := getJobExecutors(jobService, appClients)
-	taskExecutors := getTaskExecutors(jobService, appClients, cfg)
+	// Task executors will be created when topic cache is set
+	taskExecutors := make(map[domain.TaskType]executor.TaskExecutor)
 
 	return &migrator{
 		jobService:    jobService,
@@ -38,9 +43,17 @@ func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, a
 		taskExecutors: taskExecutors,
 		slackClient:   slackClient,
 		pollInterval:  cfg.MigratorPollInterval,
+		cfg:           cfg,
+		appClients:    appClients,
 		// Semaphore to limit concurrent migrations
 		semaphore: make(chan struct{}, cfg.MigratorMaxConcurrentExecutions),
 	}
+}
+
+// SetTopicCache sets the topic cache and initializes task executors
+func (mig *migrator) SetTopicCache(topicCache *cache.TopicCache) {
+	mig.topicCache = topicCache
+	mig.taskExecutors = getTaskExecutors(mig.jobService, mig.appClients, mig.cfg, topicCache)
 }
 
 // Start begins monitoring for jobs and tasks to process

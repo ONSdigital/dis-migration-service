@@ -13,6 +13,7 @@ require (
 	github.com/ONSdigital/dp-mongodb/v3 v3.11.0
 	github.com/ONSdigital/dp-net/v3 v3.9.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
+	github.com/ONSdigital/dp-topic-api v1.3.1
 	github.com/ONSdigital/dp-permissions-api v1.10.1
 	github.com/ONSdigital/dp-upload-service v1.13.0
 	github.com/ONSdigital/log.go/v2 v2.5.1

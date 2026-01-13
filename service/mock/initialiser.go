@@ -6,6 +6,7 @@ package mock
 import (
 	"context"
 	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
@@ -48,6 +49,9 @@ var _ service.Initialiser = &InitialiserMock{}
 //			DoGetSlackClientFunc: func(ctx context.Context, cfg *config.Config) (slack.Clienter, error) {
 //				panic("mock out the DoGetSlackClient method")
 //			},
+//			DoGetTopicCacheFunc: func(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
+//				panic("mock out the DoGetTopicCache method")
+//			},
 //		}
 //
 //		// use mockedInitialiser in code that requires service.Initialiser
@@ -75,6 +79,9 @@ type InitialiserMock struct {
 
 	// DoGetSlackClientFunc mocks the DoGetSlackClient method.
 	DoGetSlackClientFunc func(ctx context.Context, cfg *config.Config) (slack.Clienter, error)
+
+	// DoGetTopicCacheFunc mocks the DoGetTopicCache method.
+	DoGetTopicCacheFunc func(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -137,6 +144,15 @@ type InitialiserMock struct {
 			// Cfg is the cfg argument value.
 			Cfg *config.Config
 		}
+		// DoGetTopicCache holds details about calls to the DoGetTopicCache method.
+		DoGetTopicCache []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
+			// ClientList is the clientList argument value.
+			ClientList *clients.ClientList
+		}
 	}
 	lockDoGetAppClients              sync.RWMutex
 	lockDoGetAuthorisationMiddleware sync.RWMutex
@@ -145,6 +161,7 @@ type InitialiserMock struct {
 	lockDoGetMigrator                sync.RWMutex
 	lockDoGetMongoDB                 sync.RWMutex
 	lockDoGetSlackClient             sync.RWMutex
+	lockDoGetTopicCache              sync.RWMutex
 }
 
 // DoGetAppClients calls DoGetAppClientsFunc.
@@ -416,5 +433,45 @@ func (mock *InitialiserMock) DoGetSlackClientCalls() []struct {
 	mock.lockDoGetSlackClient.RLock()
 	calls = mock.calls.DoGetSlackClient
 	mock.lockDoGetSlackClient.RUnlock()
+	return calls
+}
+
+// DoGetTopicCache calls DoGetTopicCacheFunc.
+func (mock *InitialiserMock) DoGetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
+	if mock.DoGetTopicCacheFunc == nil {
+		panic("InitialiserMock.DoGetTopicCacheFunc: method is nil but Initialiser.DoGetTopicCache was just called")
+	}
+	callInfo := struct {
+		Ctx        context.Context
+		Cfg        *config.Config
+		ClientList *clients.ClientList
+	}{
+		Ctx:        ctx,
+		Cfg:        cfg,
+		ClientList: clientList,
+	}
+	mock.lockDoGetTopicCache.Lock()
+	mock.calls.DoGetTopicCache = append(mock.calls.DoGetTopicCache, callInfo)
+	mock.lockDoGetTopicCache.Unlock()
+	return mock.DoGetTopicCacheFunc(ctx, cfg, clientList)
+}
+
+// DoGetTopicCacheCalls gets all the calls that were made to DoGetTopicCache.
+// Check the length with:
+//
+//	len(mockedInitialiser.DoGetTopicCacheCalls())
+func (mock *InitialiserMock) DoGetTopicCacheCalls() []struct {
+	Ctx        context.Context
+	Cfg        *config.Config
+	ClientList *clients.ClientList
+} {
+	var calls []struct {
+		Ctx        context.Context
+		Cfg        *config.Config
+		ClientList *clients.ClientList
+	}
+	mock.lockDoGetTopicCache.RLock()
+	calls = mock.calls.DoGetTopicCache
+	mock.lockDoGetTopicCache.RUnlock()
 	return calls
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
@@ -26,6 +27,7 @@ type Initialiser interface {
 	DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.MongoDB, error)
 	DoGetSlackClient(ctx context.Context, cfg *config.Config) (slack.Clienter, error)
 	DoGetAppClients(ctx context.Context, cfg *config.Config) *clients.ClientList
+	DoGetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error)
 	DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error)
 }
 

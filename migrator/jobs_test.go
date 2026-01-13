@@ -54,6 +54,9 @@ func TestMigratorExecuteJob(t *testing.T) {
 		}
 
 		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
+				return nil
+			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil

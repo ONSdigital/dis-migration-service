@@ -6,6 +6,7 @@ import (
 
 	"github.com/ONSdigital/dis-migration-service/api"
 	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
@@ -31,6 +32,7 @@ type Service struct {
 	migrator    migrator.Migrator
 	slackClient slack.Clienter
 	clients     *clients.ClientList
+	topicCache  *cache.TopicCache
 }
 
 // MigrationServiceStore wraps the MongoDB client to implement
@@ -79,10 +81,22 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 
 	// Get Migrator
 	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, svc.Config, svc.JobService, svc.clients, svc.slackClient)
+	// Get Migrator (before topic cache so it can be configured later)
+	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, svc.Config, svc.JobService, svc.clients)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise migrator", err)
 		return err
 	}
+
+	// Get topic cache (after migrator so we can set it)
+	svc.topicCache, err = svc.ServiceList.GetTopicCache(ctx, svc.Config, svc.clients)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise topic cache", err)
+		return err
+	}
+
+	// Set topic cache on migrator so it can initialize task executors
+	svc.migrator.SetTopicCache(svc.topicCache)
 
 	// Setup healthcheck
 	svc.HealthCheck, err = svc.ServiceList.GetHealthCheck(svc.Config, buildTime, gitCommit, version)

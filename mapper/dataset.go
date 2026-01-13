@@ -1,19 +1,29 @@
 package mapper
 
 import (
+	"context"
 	"errors"
 	"strings"
 
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 )
 
-// MapDatasetLandingPageToDatasetAPI maps a Zebedee dataset landing page to a
-// Dataset API dataset model.
-func MapDatasetLandingPageToDatasetAPI(datasetID string, pageData zebedee.DatasetLandingPage) (*datasetModels.Dataset, error) {
+// MapDatasetLandingPageToDatasetAPI maps a Zebedee dataset landing page
+// to a Dataset API dataset model. It extracts topic IDs from the URI and
+// merges them with any existing topics from the page data.
+func MapDatasetLandingPageToDatasetAPI(ctx context.Context, datasetID string, pageData zebedee.DatasetLandingPage, topicCache *cache.TopicCache) (*datasetModels.Dataset, error) {
 	if pageData.Type != zebedee.PageTypeDatasetLandingPage {
 		return nil, errors.New("invalid page type for dataset landing page")
+	}
+
+	// Extract topic IDs from the URI using the topic cache
+	// There are no existing topics in Zebedee data - they are derived from the URI
+	var topicIDs []string
+	if topicCache != nil {
+		topicIDs = cache.ExtractTopicIDsFromURI(ctx, pageData.URI, nil, topicCache)
 	}
 
 	// TODO: confirm handling of NextRelease field if unset.
@@ -40,10 +50,8 @@ func MapDatasetLandingPageToDatasetAPI(datasetID string, pageData zebedee.Datase
 		NextRelease: nextRelease,
 		QMI:         getQMILink(pageData.RelatedMethodology),
 		Title:       pageData.Description.Title,
-		//TODO: populate topics correctly - dataset api expects a list of topic ids
-		// and so this has been hardcoded for now.
-		Topics: []string{"not a real topic"},
-		Type:   datasetModels.Static.String(),
+		Topics:      topicIDs,
+		Type:        datasetModels.Static.String(),
 	}
 
 	return dataset, nil

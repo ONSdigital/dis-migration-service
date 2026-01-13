@@ -18,19 +18,19 @@ var _ clients.RedirectAPIClient = &RedirectAPIClientMock{}
 
 // RedirectAPIClientMock is a mock implementation of clients.RedirectAPIClient.
 //
-// 	func TestSomethingThatUsesRedirectAPIClient(t *testing.T) {
+//	func TestSomethingThatUsesRedirectAPIClient(t *testing.T) {
 //
-// 		// make and configure a mocked clients.RedirectAPIClient
-// 		mockedRedirectAPIClient := &RedirectAPIClientMock{
-// 			PutRedirectFunc: func(ctx context.Context, options redirectSDK.Options, id string, payload redirectModels.Redirect) redirectErrors.Error {
-// 				panic("mock out the PutRedirect method")
-// 			},
-// 		}
+//		// make and configure a mocked clients.RedirectAPIClient
+//		mockedRedirectAPIClient := &RedirectAPIClientMock{
+//			PutRedirectFunc: func(ctx context.Context, options redirectSDK.Options, id string, payload redirectModels.Redirect) redirectErrors.Error {
+//				panic("mock out the PutRedirect method")
+//			},
+//		}
 //
-// 		// use mockedRedirectAPIClient in code that requires clients.RedirectAPIClient
-// 		// and then make assertions.
+//		// use mockedRedirectAPIClient in code that requires clients.RedirectAPIClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type RedirectAPIClientMock struct {
 	// PutRedirectFunc mocks the PutRedirect method.
 	PutRedirectFunc func(ctx context.Context, options redirectSDK.Options, id string, payload redirectModels.Redirect) redirectErrors.Error
@@ -76,7 +76,8 @@ func (mock *RedirectAPIClientMock) PutRedirect(ctx context.Context, options redi
 
 // PutRedirectCalls gets all the calls that were made to PutRedirect.
 // Check the length with:
-//     len(mockedRedirectAPIClient.PutRedirectCalls())
+//
+//	len(mockedRedirectAPIClient.PutRedirectCalls())
 func (mock *RedirectAPIClientMock) PutRedirectCalls() []struct {
 	Ctx     context.Context
 	Options redirectSDK.Options

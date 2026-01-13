@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -21,6 +22,7 @@ import (
 	datasetAPIMocks "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
 	filesAPI "github.com/ONSdigital/dp-files-api/sdk"
 	filesAPIMocks "github.com/ONSdigital/dp-files-api/sdk/mocks"
+	topicAPI "github.com/ONSdigital/dp-topic-api/sdk"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v3/http"
 	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
@@ -36,6 +38,7 @@ type ExternalServiceList struct {
 	MongoDB     bool
 	Migrator    bool
 	SlackClient bool
+	TopicCache  bool
 }
 
 // NewServiceList creates a new service list with the provided initialiser
@@ -104,6 +107,16 @@ func (e *ExternalServiceList) GetAppClients(ctx context.Context, cfg *config.Con
 	return e.Init.DoGetAppClients(ctx, cfg)
 }
 
+// GetTopicCache returns the topic cache
+func (e *ExternalServiceList) GetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
+	topicCache, err := e.Init.DoGetTopicCache(ctx, cfg, clientList)
+	if err != nil {
+		return nil, err
+	}
+	e.TopicCache = true
+	return topicCache, nil
+}
+
 // DoGetHTTPServer creates an HTTP Server with the provided
 // bind address and router
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
@@ -167,6 +180,43 @@ func (e *Init) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService
 	return mig, nil
 }
 
+// DoGetTopicCache creates and initializes the topic cache
+func (e *Init) DoGetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
+	// Create topic cache with update interval
+	topicCache, err := cache.NewTopicCache(ctx, &cfg.TopicCacheUpdateInterval)
+	if err != nil {
+		log.Error(ctx, "failed to create topic cache", err)
+		return nil, err
+	}
+
+	// Add update function to populate the cache
+	topicCache.AddUpdateFunc(
+		topicCache.GetTopicCacheKey(),
+		cache.UpdateTopicCache(ctx, cfg.ServiceAuthToken, clientList.TopicAPI),
+	)
+
+	// Start the cache updates in the background (this will trigger the initial update and periodic updates)
+	// Create a dedicated error channel for cache updates
+	cacheErrorChan := make(chan error, 1)
+	go func() {
+		topicCache.StartUpdates(ctx, cacheErrorChan)
+	}()
+
+	// Listen for cache errors and log them
+	go func() {
+		for err := range cacheErrorChan {
+			if err != nil {
+				log.Error(ctx, "topic cache update error", err)
+			}
+		}
+	}()
+
+	log.Info(ctx, "topic cache initialised", log.Data{
+		"update_interval": cfg.TopicCacheUpdateInterval,
+	})
+	return topicCache, nil
+}
+
 // DoGetAppClients returns a set of app clients for the migration service
 func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients.ClientList {
 	if cfg.EnableMockClients {
@@ -179,6 +229,7 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 			},
 			FilesAPI:      &filesAPIMocks.ClienterMock{},
 			RedirectAPI:   &clientMocks.RedirectAPIClientMock{},
+			TopicAPI:      nil, // Mock topic API client can be added if needed
 			UploadService: &uploadSDKMocks.ClienterMock{},
 			Zebedee: &clientMocks.ZebedeeClientMock{
 				GetPageDataFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (zebedee.PageData, error) {
@@ -221,11 +272,13 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 	}
 
 	log.Info(ctx, "initialising app clients")
+	topicAPIClient := topicAPI.New(cfg.TopicAPIURL)
 
 	return &clients.ClientList{
 		DatasetAPI:    datasetAPI.New(cfg.DatasetAPIURL),
 		FilesAPI:      filesAPI.New(cfg.FilesAPIURL, cfg.ServiceAuthToken),
 		RedirectAPI:   redirectAPI.NewClient(cfg.RedirectAPIURL),
+		TopicAPI:      topicAPIClient,
 		UploadService: uploadSDK.New(cfg.UploadServiceURL),
 		Zebedee:       zebedee.New(cfg.ZebedeeURL),
 	}

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	applicationMocks "github.com/ONSdigital/dis-migration-service/application/mock"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -75,7 +76,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -122,7 +123,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -157,7 +158,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -200,7 +201,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -246,7 +247,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -289,7 +290,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -303,4 +304,161 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given a dataset series task executor with a valid topic cache", t, func() {
+		ctx := context.Background()
+
+		// Create and populate topic cache
+		topicCache, err := NewTopicCacheForTest(ctx)
+		So(err, ShouldBeNil)
+
+		mockJobService := &applicationMocks.JobServiceMock{
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
+				return &domain.Task{}, nil
+			},
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
+		}
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				// Verify topics are set
+				So(dataset.Topics, ShouldNotBeNil)
+				return models.DatasetUpdate{}, nil
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
+					return zebedee.DatasetLandingPage{
+						Type: zebedee.PageTypeDatasetLandingPage,
+						URI:  "/economy/inflationandpriceindices/datasets/cpih01",
+						Datasets: []zebedee.Link{
+							{
+								URI: getEditionURI(testDatasetSeriesURI, "2021"),
+							},
+						},
+					}, nil
+				},
+			},
+		}
+
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
+
+		Convey("When migrate is called for a task with topic cache", func() {
+			err := executor.Migrate(ctx, testSeriesTask)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And the datasetAPI is called to create a dataset with topics", func() {
+					So(len(mockDatasetClient.CreateDatasetCalls()), ShouldEqual, 1)
+					So(mockDatasetClient.CreateDatasetCalls()[0].Dataset.ID, ShouldEqual, testDatasetSeriesID)
+				})
+			})
+		})
+	})
+
+	Convey("Given a dataset series task executor with empty topic cache", t, func() {
+		ctx := context.Background()
+
+		// Create empty topic cache
+		topicCache, err := NewEmptyTopicCacheForTest(ctx)
+		So(err, ShouldBeNil)
+
+		mockJobService := &applicationMocks.JobServiceMock{
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
+				return &domain.Task{}, nil
+			},
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
+		}
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				// With empty cache, topics may be empty or nil
+				return models.DatasetUpdate{}, nil
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
+					return zebedee.DatasetLandingPage{
+						Type: zebedee.PageTypeDatasetLandingPage,
+						URI:  "/nonexistent/topic/path",
+						Datasets: []zebedee.Link{
+							{
+								URI: getEditionURI(testDatasetSeriesURI, "2021"),
+							},
+						},
+					}, nil
+				},
+			},
+		}
+
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
+
+		Convey("When migrate is called with empty topic cache", func() {
+			err := executor.Migrate(ctx, testSeriesTask)
+
+			Convey("Then no error is returned (graceful handling)", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And the datasetAPI is still called to create a dataset", func() {
+					So(len(mockDatasetClient.CreateDatasetCalls()), ShouldEqual, 1)
+				})
+			})
+		})
+	})
+}
+
+// NewTopicCacheForTest creates a topic cache with test data
+func NewTopicCacheForTest(ctx context.Context) (*cache.TopicCache, error) {
+	topicCache, err := cache.NewTopicCache(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Populate with realistic test data
+	subtopicsMap := cache.NewSubTopicsMap()
+	subtopicsMap.AppendSubtopicID("economy", cache.Subtopic{
+		ID:         "economy-topic-id",
+		Slug:       "economy",
+		ParentSlug: "",
+	})
+	subtopicsMap.AppendSubtopicID("inflationandpriceindices", cache.Subtopic{
+		ID:         "inflation-topic-id",
+		Slug:       "inflationandpriceindices",
+		ParentSlug: "economy",
+	})
+	subtopicsMap.AppendSubtopicID("business", cache.Subtopic{
+		ID:         "business-topic-id",
+		Slug:       "business",
+		ParentSlug: "",
+	})
+
+	testTopic := &cache.Topic{
+		ID:   cache.TopicCacheKey,
+		List: subtopicsMap,
+	}
+	topicCache.Set(cache.TopicCacheKey, testTopic)
+
+	return topicCache, nil
+}
+
+// NewEmptyTopicCacheForTest creates an empty topic cache
+func NewEmptyTopicCacheForTest(ctx context.Context) (*cache.TopicCache, error) {
+	topicCache, err := cache.NewTopicCache(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set empty topic
+	emptyTopic := &cache.Topic{
+		ID:   cache.TopicCacheKey,
+		List: cache.NewSubTopicsMap(),
+	}
+	topicCache.Set(cache.TopicCacheKey, emptyTopic)
+
+	return topicCache, nil
 }
