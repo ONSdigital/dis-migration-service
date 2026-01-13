@@ -40,6 +40,7 @@ type TaskMetadata struct {
 	ID        string `json:"id" bson:"id"`
 	DatasetID string `json:"dataset_id,omitempty" bson:"dataset_id"`
 	EditionID string `json:"edition_id,omitempty" bson:"edition_id"`
+	VersionID string `json:"version_id,omitempty" bson:"version_id"`
 	Label     string `json:"label" bson:"label"`
 }
 

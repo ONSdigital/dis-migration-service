@@ -14,15 +14,17 @@ import (
 
 // DatasetEditionTaskExecutor executes migration tasks for dataset editions.
 type DatasetEditionTaskExecutor struct {
-	jobService application.JobService
-	clientList *clients.ClientList
+	jobService       application.JobService
+	clientList       *clients.ClientList
+	serviceAuthToken string
 }
 
 // NewDatasetEditionTaskExecutor creates a new DatasetEditionTaskExecutor
-func NewDatasetEditionTaskExecutor(jobService application.JobService, clientList *clients.ClientList) *DatasetEditionTaskExecutor {
+func NewDatasetEditionTaskExecutor(jobService application.JobService, clientList *clients.ClientList, serviceAuthToken string) *DatasetEditionTaskExecutor {
 	return &DatasetEditionTaskExecutor{
-		jobService: jobService,
-		clientList: clientList,
+		jobService:       jobService,
+		clientList:       clientList,
+		serviceAuthToken: serviceAuthToken,
 	}
 }
 
@@ -32,7 +34,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 
 	log.Info(ctx, "starting migration for dataset edition task", logData)
 
-	sourceData, err := e.clientList.Zebedee.GetDataset(ctx, "", "", "en", task.Source.ID)
+	sourceData, err := e.clientList.Zebedee.GetDataset(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Source.ID)
 	if err != nil {
 		log.Error(ctx, "failed to get source edition data from zebedee", err, logData)
 		return err

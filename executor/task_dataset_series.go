@@ -7,6 +7,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/mapper"
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-dataset-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -33,7 +34,7 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 
 	log.Info(ctx, "starting migration for dataset series task", logData)
 
-	sourceData, err := e.clientList.Zebedee.GetDatasetLandingPage(ctx, "", "", "en", task.Source.ID)
+	sourceData, err := e.clientList.Zebedee.GetDatasetLandingPage(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Source.ID)
 	if err != nil {
 		log.Error(ctx, "failed to get source dataset series data from zebedee", err, logData)
 		return err

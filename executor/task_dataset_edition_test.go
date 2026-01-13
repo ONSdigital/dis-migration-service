@@ -63,7 +63,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList, "")
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testEditionTask)
@@ -120,7 +120,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList, "")
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testEditionTask)
@@ -170,7 +170,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList, "")
 
 		Convey("When migrate is called for a task", func() {
 			task := testEditionTask
@@ -204,7 +204,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList, "")
 
 		Convey("When migrate is called for a task", func() {
 			task := testEditionTask
@@ -248,7 +248,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList, "")
 
 		Convey("When migrate is called for a task", func() {
 			task := testEditionTask
@@ -291,7 +291,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList)
+		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList, "")
 
 		Convey("When migrate is called for a task", func() {
 			task := testEditionTask

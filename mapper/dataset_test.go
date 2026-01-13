@@ -78,5 +78,9 @@ func getTestDatasetLandingPage() zebedee.DatasetLandingPage {
 				Summary: "This is a summary of the test QMI.",
 			},
 		},
+		Section: zebedee.Section{
+			Title:    "Usage Notes",
+			Markdown: "These are the usage notes for the dataset.",
+		},
 	}
 }
