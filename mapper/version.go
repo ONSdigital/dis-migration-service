@@ -15,10 +15,11 @@ func MapDatasetVersionToDatasetAPI(editionID string, pageData zebedee.Dataset, s
 	}
 
 	version := &datasetModels.Version{
-		Edition:      editionID,
-		EditionTitle: pageData.Description.Edition,
-		Version:      getVersion(pageData.Versions),
-		ReleaseDate:  pageData.Description.ReleaseDate,
+		Edition:       editionID,
+		EditionTitle:  pageData.Description.Edition,
+		Version:       getVersion(pageData.Versions),
+		ReleaseDate:   pageData.Description.ReleaseDate,
+		Type:          clients.DatasetVersionTypeStatic,
 	}
 
 	if pageData.Description.NationalStatistic {
