@@ -27,7 +27,7 @@ func (m *Mongo) createJobNumberCounter(ctx context.Context) (domain.Counter, err
 		CounterName:  "job_number_counter",
 		CounterValue: 0,
 	}
-	logData := log.Data{"jobNumberCounter": jobNumberCounter}
+	logData := log.Data{"job_number_counter": jobNumberCounter}
 	log.Info(ctx, "creating job number counter in mongo DB", logData)
 
 	_, err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).InsertOne(ctx, jobNumberCounter)

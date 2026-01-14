@@ -25,7 +25,8 @@ func NewStaticDatasetJobExecutor(jobService application.JobService, clientList *
 
 // Migrate handles the migration operations for a static dataset job.
 func (e *StaticDatasetJobExecutor) Migrate(ctx context.Context, job *domain.Job) error {
-	log.Info(ctx, "starting migration for job", log.Data{"jobID": job.ID})
+	logData := log.Data{"job_id": job.ID}
+	log.Info(ctx, "starting migration for job", logData)
 
 	datasetSeriesTask := domain.NewTask(job.JobNumber)
 
@@ -40,7 +41,8 @@ func (e *StaticDatasetJobExecutor) Migrate(ctx context.Context, job *domain.Job)
 
 	_, err := e.jobService.CreateTask(ctx, job.JobNumber, &datasetSeriesTask)
 	if err != nil {
-		log.Error(ctx, "failed to create migration task", err, log.Data{"jobID": job.ID, "task": datasetSeriesTask})
+		logData["task_source_id"] = datasetSeriesTask.Source.ID
+		log.Error(ctx, "failed to create migration task", err, logData)
 		return err
 	}
 

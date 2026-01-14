@@ -31,7 +31,7 @@ func (mig *migrator) getTaskExecutor(ctx context.Context, task *domain.Task) (ex
 }
 
 func (mig *migrator) monitorTasks(ctx context.Context) {
-	log.Info(ctx, "monitoring tasks", log.Data{"pollInterval": mig.pollInterval})
+	log.Info(ctx, "monitoring tasks", log.Data{"poll_interval": mig.pollInterval})
 
 	for {
 		select {
@@ -54,7 +54,7 @@ func (mig *migrator) monitorTasks(ctx context.Context) {
 					continue
 				}
 			}
-			log.Info(ctx, "claimed task", log.Data{"taskID": task.ID, "taskState": task.State})
+			log.Info(ctx, "claimed task", log.Data{"task_id": task.ID, "task_state": task.State})
 			mig.executeTask(ctx, task)
 		}
 	}
@@ -66,6 +66,8 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 	go func() {
 		defer mig.wg.Done()
 
+		logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber, "task_type": task.Type}
+
 		select {
 		case mig.semaphore <- struct{}{}:
 			defer func() { <-mig.semaphore }()
@@ -75,10 +77,10 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 
 		taskExecutor, err := mig.getTaskExecutor(ctx, task)
 		if err != nil {
-			log.Error(ctx, "failed to get task executor", err, log.Data{"task": task.ID, "jobNumber": task.JobNumber, "taskType": task.Type})
+			log.Error(ctx, "failed to get task executor", err, logData)
 			failErr := mig.failTask(ctx, task)
 			if failErr != nil {
-				log.Error(ctx, "failed to mark task as failed after failing to get executor", failErr, log.Data{"taskID": task.ID, "taskState": task.State})
+				log.Error(ctx, "failed to mark task as failed after failing to get executor", failErr, logData)
 			}
 			return
 		}
@@ -89,45 +91,43 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 			err = taskExecutor.Migrate(ctx, task)
 		default:
 			err = fmt.Errorf("unsupported task state: %s", task.State)
-			log.Error(ctx, "unsupported task state for execution", err, log.Data{"taskID": task.ID, "taskState": task.State})
+			log.Error(ctx, "unsupported task state for execution", err, logData)
 		}
 
 		if err != nil {
-			log.Error(ctx, "error executing task", err, log.Data{"taskID": task.ID, "taskState": task.State})
+			log.Error(ctx, "error executing task", err, logData)
 			failErr := mig.failTask(ctx, task)
 			if failErr != nil {
 				//TODO: flag this in slack.
-				log.Error(ctx, "failed to mark task as failed after execution error", failErr, log.Data{"taskID": task.ID, "taskState": task.State})
+				log.Error(ctx, "failed to mark task as failed after execution error", failErr, logData)
 			}
 
 			failErr = mig.failJobByJobNumber(ctx, task.JobNumber)
 			if failErr != nil {
 				//TODO: flag this in slack.
-				log.Error(ctx, "failed to mark job as failed after task execution error", failErr, log.Data{"taskID": task.ID, "taskState": task.State, "jobNumber": task.JobNumber})
+				log.Error(ctx, "failed to mark job as failed after task execution error", failErr, logData)
 			}
 		}
 
 		// Success: Check if all tasks are complete and update job state if needed
 		checkErr := mig.TriggerJobStateTransitions(ctx, task.JobNumber)
 		if checkErr != nil {
-			log.Error(ctx, "error checking job state transition", checkErr, log.Data{
-				"taskID": task.ID, "jobNumber": task.JobNumber,
-			})
+			log.Error(ctx, "error checking job state transition", checkErr, logData)
 			// Log but don't fail - the job can be checked again later
 		}
 	}()
 }
 
 func (mig *migrator) failTask(ctx context.Context, task *domain.Task) error {
-	logData := log.Data{"taskID": task.ID, "jobNumber": task.JobNumber, "taskState": task.State}
+	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber, "task_state": task.State}
 
 	failureState, err := domain.GetFailureStateForJobState(task.State)
 	if err != nil {
-		log.Error(ctx, "failed to get failure state for task state", err, log.Data{"taskState": task.State})
+		log.Error(ctx, "failed to get failure state for task state", err, logData)
 		return err
 	}
 
-	logData["failureState"] = failureState
+	logData["failure_state"] = failureState
 
 	err = mig.jobService.UpdateTaskState(ctx, task.ID, failureState)
 	if err != nil {

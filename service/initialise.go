@@ -121,7 +121,7 @@ func (e *Init) DoGetMongoDB(ctx context.Context, cfg config.MongoConfig) (store.
 	if err := mongodb.Init(ctx); err != nil {
 		return nil, err
 	}
-	log.Info(ctx, "listening to mongo db session", log.Data{"URI": mongodb.ClusterEndpoint})
+	log.Info(ctx, "listening to mongo db session", log.Data{"mongo_uri": mongodb.ClusterEndpoint})
 	return mongodb, nil
 }
 

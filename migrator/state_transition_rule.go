@@ -43,9 +43,9 @@ func (mig *migrator) GetStateTransitionRules() map[domain.State][]StateTransitio
 // the target state and updates the job accordingly
 func (mig *migrator) CheckAndUpdateJobStateBasedOnTasks(ctx context.Context, jobNumber int, rule StateTransitionRule) error {
 	logData := log.Data{
-		"jobNumber":       jobNumber,
-		"taskTargetState": rule.TaskTargetState,
-		"jobTargetState":  rule.JobTargetState,
+		"job_number":        jobNumber,
+		"task_target_state": rule.TaskTargetState,
+		"job_target_state":  rule.JobTargetState,
 	}
 
 	// Get the job
@@ -73,8 +73,8 @@ func (mig *migrator) CheckAndUpdateJobStateBasedOnTasks(ctx context.Context, job
 		return err
 	}
 
-	logData["tasksInTargetState"] = tasksInTargetState
-	logData["totalTasks"] = totalTasks
+	logData["tasks_in_target_state"] = tasksInTargetState
+	logData["total_tasks"] = totalTasks
 
 	// Check if all tasks have reached the target state
 	if tasksInTargetState < totalTasks {
@@ -95,7 +95,7 @@ func (mig *migrator) CheckAndUpdateJobStateBasedOnTasks(ctx context.Context, job
 		return err
 	}
 
-	logData["newState"] = rule.JobTargetState
+	logData["new_state"] = rule.JobTargetState
 	log.Info(ctx, "job state updated successfully", logData)
 
 	return nil

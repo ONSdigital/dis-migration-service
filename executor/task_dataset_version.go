@@ -31,7 +31,7 @@ func NewDatasetVersionTaskExecutor(jobService application.JobService, clientList
 
 // Migrate handles the migration operations for a dataset edition task.
 func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.Task) error {
-	logData := log.Data{"taskID": task.ID, "jobNumber": task.JobNumber, "sourceID": task.Source.ID}
+	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber, "source_id": task.Source.ID}
 
 	log.Info(ctx, "starting migration for dataset version task", logData)
 
@@ -44,7 +44,7 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	// Usage notes only appear at the series level so we need that too.
 	seriesData, err := e.clientList.Zebedee.GetDatasetLandingPage(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Target.DatasetID)
 	if err != nil {
-		logData["datasetID"] = task.Target.DatasetID
+		logData["dataset_id"] = task.Target.DatasetID
 		log.Error(ctx, "failed to get dataset series data from zebedee", err, logData)
 		return err
 	}
@@ -52,7 +52,7 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	// Correction notes only appear at the edition level so we need that too.
 	editionData, err := e.clientList.Zebedee.GetDataset(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Target.EditionID)
 	if err != nil {
-		logData["editionID"] = task.Target.EditionID
+		logData["edition_id"] = task.Target.EditionID
 		log.Error(ctx, "failed to get edition data from zebedee", err, logData)
 		return err
 	}
@@ -66,7 +66,7 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	versionID := datasetVersion.Version
 	versionIDStr := strconv.Itoa(versionID)
 
-	logData["versionID"] = versionID
+	logData["version_id"] = versionID
 	if task.Target != nil {
 		task.Target.ID = versionIDStr
 	} else {
@@ -109,7 +109,7 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 
 		_, err := e.jobService.CreateTask(ctx, task.JobNumber, &downloadTask)
 		if err != nil {
-			logData["versionURI"] = downloadTask.Source.ID
+			logData["version_uri"] = downloadTask.Source.ID
 			log.Error(ctx, "failed to create migration task for download task for version", err, logData)
 			return err
 		}

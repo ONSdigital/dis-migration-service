@@ -30,7 +30,7 @@ func NewDatasetEditionTaskExecutor(jobService application.JobService, clientList
 
 // Migrate handles the migration operations for a dataset edition task.
 func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.Task) error {
-	logData := log.Data{"taskID": task.ID, "jobNumber": task.JobNumber, "sourceID": task.Source.ID}
+	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber, "source_id": task.Source.ID}
 
 	log.Info(ctx, "starting migration for dataset edition task", logData)
 
@@ -42,15 +42,15 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 
 	if sourceData.Type != zebedee.PageTypeDataset {
 		err := errors.ErrSourceDataTypeInvalid
-		logData["actualType"] = sourceData.Type
-		logData["expectedType"] = zebedee.PageTypeDataset
+		logData["actual_type"] = sourceData.Type
+		logData["expected_type"] = zebedee.PageTypeDataset
 		log.Error(ctx, "source data has incorrect page type", err, logData)
 		return err
 	}
 
 	editionID := extractLastSegmentFromURI(sourceData.URI)
 	// TODO: deal with 'current' here.
-	logData["editionID"] = editionID
+	logData["edition_id"] = editionID
 
 	if task.Target != nil {
 		task.Target.ID = editionID
@@ -70,7 +70,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 
 	_, err = e.jobService.CreateTask(ctx, task.JobNumber, &currentVersionTask)
 	if err != nil {
-		logData["versionURI"] = currentVersionTask.Source.ID
+		logData["version_uri"] = currentVersionTask.Source.ID
 		log.Error(ctx, "failed to create migration version task for edition", err, logData)
 		return err
 	}
@@ -80,7 +80,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 
 		_, err := e.jobService.CreateTask(ctx, task.JobNumber, &versionTask)
 		if err != nil {
-			logData["versionURI"] = versionTask.Source.ID
+			logData["version_uri"] = versionTask.Source.ID
 			log.Error(ctx, "failed to create migration task for previous version of edition", err, logData)
 			return err
 		}

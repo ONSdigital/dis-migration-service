@@ -30,7 +30,7 @@ func NewDatasetSeriesTaskExecutor(jobService application.JobService, clientList 
 
 // Migrate handles the migration operations for a dataset series task.
 func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Task) error {
-	logData := log.Data{"taskID": task.ID, "jobNumber": task.JobNumber}
+	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber}
 
 	log.Info(ctx, "starting migration for dataset series task", logData)
 
@@ -69,7 +69,7 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 
 		_, err := e.jobService.CreateTask(ctx, task.JobNumber, &editionTask)
 		if err != nil {
-			logData["editionURI"] = edition.URI
+			logData["edition_uri"] = edition.URI
 			log.Error(ctx, "failed to create migration task for edition", err, logData)
 			return err
 		}
