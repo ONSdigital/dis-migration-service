@@ -20,6 +20,7 @@ type Config struct {
 	DefaultLimit                    int           `envconfig:"DEFAULT_LIMIT"`
 	DefaultOffset                   int           `envconfig:"DEFAULT_OFFSET"`
 	DefaultMaxLimit                 int           `envconfig:"DEFAULT_MAX_LIMIT"`
+	EnableEventLogging              bool          `envconfig:"ENABLE_EVENT_LOGGING"`
 	EnableMockClients               bool          `envconfig:"ENABLE_MOCK_CLIENTS"`
 	FilesAPIURL                     string        `envconfig:"FILES_API_URL"`
 	GracefulShutdownTimeout         time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
@@ -81,6 +82,7 @@ func Get() (*Config, error) {
 		DefaultLimit:                    10,
 		DefaultOffset:                   0,
 		DefaultMaxLimit:                 100,
+		EnableEventLogging:              false,
 		EnableMockClients:               false,
 		FilesAPIURL:                     "http://localhost:26900",
 		GracefulShutdownTimeout:         5 * time.Second,

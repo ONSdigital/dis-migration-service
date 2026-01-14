@@ -2,6 +2,17 @@ package domain
 
 import (
 	"fmt"
+	"strconv"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+const (
+	// SystemUserID is the default user ID used for events when
+	// no user ID is provided. This is typically used for
+	// automated or system-generated events.
+	SystemUserID = "system"
 )
 
 // Event represents a migration job event (state change)
@@ -12,6 +23,25 @@ type Event struct {
 	Action      string     `json:"action" bson:"action"`
 	JobNumber   int        `json:"job_number" bson:"job_number"`
 	Links       EventLinks `json:"links" bson:"links"`
+}
+
+// NewEvent creates a new Event with the provided parameters
+func NewEvent(jobNumber int, action, userID string) *Event {
+	// Use SystemUserID as default if no user ID provided
+	if userID == "" {
+		userID = SystemUserID
+	}
+
+	return &Event{
+		ID:        uuid.New().String(),
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+		RequestedBy: &User{
+			ID: userID,
+		},
+		Action:    action,
+		JobNumber: jobNumber,
+		Links:     NewEventLinks(uuid.New().String(), strconv.Itoa(jobNumber)),
+	}
 }
 
 // User represents a user who initiated an action
@@ -27,13 +57,13 @@ type EventLinks struct {
 }
 
 // NewEventLinks creates EventLinks for an event with the given ID and jobID
-func NewEventLinks(id, jobID string) EventLinks {
+func NewEventLinks(id, jobNumber string) EventLinks {
 	return EventLinks{
 		Self: &LinkObject{
-			HRef: fmt.Sprintf("/v1/migration-jobs/%s/events/%s", jobID, id),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s/events/%s", jobNumber, id),
 		},
 		Job: &LinkObject{
-			HRef: fmt.Sprintf("/v1/migration-jobs/%s", jobID),
+			HRef: fmt.Sprintf("/v1/migration-jobs/%s", jobNumber),
 		},
 	}
 }

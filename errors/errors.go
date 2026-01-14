@@ -57,6 +57,7 @@ var (
 	ErrOffsetInvalid                = errors.New("offset parameter is invalid")
 	ErrLimitInvalid                 = errors.New("limit parameter is invalid")
 	ErrLimitExceeded                = errors.New("limit parameter exceeds maximum allowed")
+	ErrUnauthorized                 = errors.New("unauthorized")
 
 	ErrSourceIDZebedeeURIInvalid = errors.New("source ID URI path must start with '/', not end with '/', not contain query strings or hashbangs")
 	ErrTargetIDDatasetIDInvalid  = errors.New("target id must be lowercase alphanumeric with optional hyphen separators")
@@ -93,5 +94,6 @@ var (
 		ErrTargetIDInvalid:              http.StatusBadRequest,
 		ErrJobTypeInvalid:               http.StatusBadRequest,
 		ErrJobStateNotAllowed:           http.StatusBadRequest,
+		ErrUnauthorized:                 http.StatusUnauthorized,
 	}
 )

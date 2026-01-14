@@ -388,6 +388,11 @@ func TestCreateJob(t *testing.T) {
 			CloseFunc: func(ctx context.Context) error {
 				return nil
 			},
+			ParseFunc: func(token string) (*permsdk.EntityData, error) {
+				return &permsdk.EntityData{
+					UserID: "test-user-123",
+				}, nil
+			},
 		}
 
 		r := mux.NewRouter()
@@ -400,6 +405,7 @@ func TestCreateJob(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			req := httptest.NewRequest(http.MethodPost, "http://localhost:30100/v1/migration-jobs", bytes.NewBuffer(bodyBytes))
+			req.Header.Set("Authorization", "Bearer test-jwt-token")
 			resp := httptest.NewRecorder()
 
 			api.Router.ServeHTTP(resp, req)
@@ -426,6 +432,7 @@ func TestCreateJob(t *testing.T) {
 			bodyBytes := []byte("invalidJson")
 
 			req := httptest.NewRequest(http.MethodPost, "http://localhost:30100/v1/migration-jobs", bytes.NewBuffer(bodyBytes))
+			req.Header.Set("Authorization", "Bearer test-jwt-token")
 			resp := httptest.NewRecorder()
 
 			api.Router.ServeHTTP(resp, req)
@@ -448,6 +455,7 @@ func TestCreateJob(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			req := httptest.NewRequest(http.MethodPost, "http://localhost:30100/v1/migration-jobs", bytes.NewBuffer(bodyBytes))
+			req.Header.Set("Authorization", "Bearer test-jwt-token")
 			resp := httptest.NewRecorder()
 
 			api.Router.ServeHTTP(resp, req)
@@ -469,6 +477,7 @@ func TestCreateJob(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			req := httptest.NewRequest(http.MethodPost, "http://localhost:30100/v1/migration-jobs", bytes.NewBuffer(bodyBytes))
+			req.Header.Set("Authorization", "Bearer test-jwt-token")
 			resp := httptest.NewRecorder()
 
 			api.Router.ServeHTTP(resp, req)
@@ -1085,8 +1094,9 @@ func TestGetUserID(t *testing.T) {
 			req.Header.Set("Authorization", "Bearer "+testToken)
 
 			Convey("Then GetUserID should return the user ID from the token", func() {
-				userID := api.GetUserID(req)
+				userID, err := api.GetUserID(req)
 
+				So(err, ShouldBeNil)
 				So(userID, ShouldEqual, testUserID)
 				So(len(mockAuthMiddleware.ParseCalls()), ShouldEqual, 1)
 				So(mockAuthMiddleware.ParseCalls()[0].Token, ShouldEqual, testToken)
@@ -1110,8 +1120,9 @@ func TestGetUserID(t *testing.T) {
 			req.Header.Set("Authorization", testToken)
 
 			Convey("Then GetUserID should parse the token and return the user ID", func() {
-				userID := api.GetUserID(req)
+				userID, err := api.GetUserID(req)
 
+				So(err, ShouldBeNil)
 				So(userID, ShouldEqual, testUserID)
 				So(len(mockAuthMiddleware.ParseCalls()), ShouldEqual, 1)
 				So(mockAuthMiddleware.ParseCalls()[0].Token, ShouldEqual, testToken)
@@ -1133,9 +1144,10 @@ func TestGetUserID(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
 
-			Convey("Then GetUserID should return an empty string", func() {
-				userID := api.GetUserID(req)
+			Convey("Then GetUserID should return an error", func() {
+				userID, err := api.GetUserID(req)
 
+				So(err, ShouldNotBeNil)
 				So(userID, ShouldEqual, "")
 				So(len(mockAuthMiddleware.ParseCalls()), ShouldEqual, 0)
 			})
@@ -1155,9 +1167,10 @@ func TestGetUserID(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
 			req.Header.Set("Authorization", "Bearer invalid-token")
 
-			Convey("Then GetUserID should return an empty string", func() {
-				userID := api.GetUserID(req)
+			Convey("Then GetUserID should return an error", func() {
+				userID, err := api.GetUserID(req)
 
+				So(err, ShouldNotBeNil)
 				So(userID, ShouldEqual, "")
 				So(len(mockAuthMiddleware.ParseCalls()), ShouldEqual, 1)
 			})
@@ -1179,9 +1192,10 @@ func TestGetUserID(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
 			req.Header.Set("Authorization", "Bearer "+testToken)
 
-			Convey("Then GetUserID should return an empty string", func() {
-				userID := api.GetUserID(req)
+			Convey("Then GetUserID should return an error", func() {
+				userID, err := api.GetUserID(req)
 
+				So(err, ShouldNotBeNil)
 				So(userID, ShouldEqual, "")
 				So(len(mockAuthMiddleware.ParseCalls()), ShouldEqual, 1)
 			})

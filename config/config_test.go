@@ -31,6 +31,7 @@ func TestConfig(t *testing.T) {
 					DefaultLimit:                    10,
 					DefaultOffset:                   0,
 					DefaultMaxLimit:                 100,
+					EnableEventLogging:              false,
 					EnableMockClients:               false,
 					FilesAPIURL:                     "http://localhost:26900",
 					GracefulShutdownTimeout:         5 * time.Second,

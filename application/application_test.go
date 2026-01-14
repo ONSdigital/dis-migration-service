@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dis-migration-service/clients"
+	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	domainMocks "github.com/ONSdigital/dis-migration-service/domain/mock"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
@@ -62,8 +63,8 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 		jobConfig := domain.JobConfig{
 			SourceID:  "/source-id",
 			TargetID:  "target-id",
@@ -98,12 +99,67 @@ func TestCreateJob(t *testing.T) {
 							So(mockMongo.CreateJobCalls()[0].Job.Label, ShouldEqual, testDatasetTitle)
 
 							Convey("And an event should be logged for job submission", func() {
-								So(len(mockMongo.GetJobCalls()), ShouldEqual, 1)
 								So(len(mockMongo.CreateEventCalls()), ShouldEqual, 1)
 								So(mockMongo.CreateEventCalls()[0].Event.Action, ShouldEqual, string(domain.StateSubmitted))
 								So(mockMongo.CreateEventCalls()[0].Event.JobNumber, ShouldEqual, testJobNumberCounterValue)
 							})
 						})
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service with event logging disabled", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error) {
+				return nil, nil
+			},
+			CreateJobFunc: func(ctx context.Context, job *domain.Job) error {
+				return nil
+			},
+			GetNextJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
+				return &domain.Counter{CounterName: testJobNumberCounterName, CounterValue: testJobNumberCounterValue}, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockValidator := &domainMocks.JobValidatorMock{
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+				return testDatasetTitle, nil
+			},
+			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
+				return nil
+			},
+		}
+
+		mockClients := clients.ClientList{}
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
+		jobConfig := domain.JobConfig{
+			SourceID:  "/source-id",
+			TargetID:  "target-id",
+			Type:      domain.JobTypeStaticDataset,
+			Validator: mockValidator,
+		}
+
+		ctx := context.Background()
+
+		Convey("When a job is created", func() {
+			job, err := jobService.CreateJob(ctx, &jobConfig, "")
+
+			Convey("Then no error should be returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And a job should be created", func() {
+					So(job, ShouldNotEqual, &domain.Job{})
+					So(len(mockMongo.CreateJobCalls()), ShouldEqual, 1)
+
+					Convey("And no event should be logged", func() {
+						So(len(mockMongo.CreateEventCalls()), ShouldEqual, 0)
 					})
 				})
 			})
@@ -134,8 +190,8 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 		jobConfig := domain.JobConfig{
 			SourceID:  "/source-id",
 			TargetID:  "target-id",
@@ -194,8 +250,8 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 		jobConfig := domain.JobConfig{
 			SourceID:  "/source-id",
 			TargetID:  "target-id",
@@ -251,8 +307,8 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 		jobConfig := domain.JobConfig{
 			SourceID:  "/source-id",
 			TargetID:  "target-id",
@@ -308,8 +364,8 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 		jobConfig := domain.JobConfig{
 			SourceID:  "/source-id",
 			TargetID:  "target-id",
@@ -353,8 +409,8 @@ func TestGetJob(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 
@@ -385,8 +441,8 @@ func TestGetJob(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 
@@ -418,8 +474,8 @@ func TestGetJob(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := 24
@@ -462,7 +518,8 @@ func TestUpdateJobState(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		newState := domain.StateMigrating
@@ -486,7 +543,7 @@ func TestUpdateJobState(t *testing.T) {
 		})
 	})
 
-	Convey("Given a job service and store with approved state transition", t, func() {
+	Convey("Given a job service with event logging enabled and store with approved state transition", t, func() {
 		fakeJob := &domain.Job{
 			ID:        "test-job-id",
 			JobNumber: testJobNumber,
@@ -510,8 +567,8 @@ func TestUpdateJobState(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		newState := domain.StateApproved
@@ -528,7 +585,7 @@ func TestUpdateJobState(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					Convey("And an event should be logged for approval", func() {
-						So(len(mockMongo.GetJobCalls()), ShouldEqual, 2)
+						So(len(mockMongo.GetJobCalls()), ShouldEqual, 1)
 						So(len(mockMongo.CreateEventCalls()), ShouldEqual, 1)
 						So(mockMongo.CreateEventCalls()[0].Event.Action, ShouldEqual, string(domain.StateApproved))
 						So(mockMongo.CreateEventCalls()[0].Event.JobNumber, ShouldEqual, testJobNumber)
@@ -538,7 +595,7 @@ func TestUpdateJobState(t *testing.T) {
 		})
 	})
 
-	Convey("Given a job service and store with rejected state transition", t, func() {
+	Convey("Given a job service with event logging enabled and store with rejected state transition", t, func() {
 		fakeJob := &domain.Job{
 			ID:        "test-job-id",
 			JobNumber: testJobNumber,
@@ -562,8 +619,8 @@ func TestUpdateJobState(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		newState := domain.StateRejected
@@ -580,10 +637,102 @@ func TestUpdateJobState(t *testing.T) {
 					So(mockMongo.UpdateJobStateCalls()[0].NewState, ShouldEqual, newState)
 
 					Convey("And an event should be logged for reverting", func() {
-						So(len(mockMongo.GetJobCalls()), ShouldEqual, 2)
+						So(len(mockMongo.GetJobCalls()), ShouldEqual, 1)
 						So(len(mockMongo.CreateEventCalls()), ShouldEqual, 1)
 						So(mockMongo.CreateEventCalls()[0].Event.Action, ShouldEqual, string(domain.StateRejected))
 						So(mockMongo.CreateEventCalls()[0].Event.JobNumber, ShouldEqual, testJobNumber)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service with event logging disabled and approved state transition", t, func() {
+		fakeJob := &domain.Job{
+			ID:        "test-job-id",
+			JobNumber: testJobNumber,
+			State:     domain.StateInReview,
+		}
+
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return fakeJob, nil
+			},
+			UpdateJobStateFunc: func(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error {
+				return nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
+
+		ctx := context.Background()
+		newState := domain.StateApproved
+
+		Convey("When a job state is updated to approved", func() {
+			err := jobService.UpdateJobState(ctx, fakeJob.JobNumber, newState, "")
+
+			Convey("Then the store should be called to update the job state", func() {
+				So(len(mockMongo.UpdateJobStateCalls()), ShouldEqual, 1)
+				So(mockMongo.UpdateJobStateCalls()[0].ID, ShouldEqual, fakeJob.ID)
+				So(mockMongo.UpdateJobStateCalls()[0].NewState, ShouldEqual, newState)
+
+				Convey("Then no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And no event should be logged even though state is approved", func() {
+						So(len(mockMongo.CreateEventCalls()), ShouldEqual, 0)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service with event logging disabled and rejected state transition", t, func() {
+		fakeJob := &domain.Job{
+			ID:        "test-job-id",
+			JobNumber: testJobNumber,
+			State:     domain.StateInReview,
+		}
+
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return fakeJob, nil
+			},
+			UpdateJobStateFunc: func(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error {
+				return nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
+
+		ctx := context.Background()
+		newState := domain.StateRejected
+
+		Convey("When a job state is updated to rejected", func() {
+			err := jobService.UpdateJobState(ctx, fakeJob.JobNumber, newState, "")
+
+			Convey("Then no error should be returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("Then the store should be called to update the job state", func() {
+					So(len(mockMongo.UpdateJobStateCalls()), ShouldEqual, 1)
+					So(mockMongo.UpdateJobStateCalls()[0].ID, ShouldEqual, fakeJob.ID)
+					So(mockMongo.UpdateJobStateCalls()[0].NewState, ShouldEqual, newState)
+
+					Convey("And no event should be logged even though state is rejected", func() {
+						So(len(mockMongo.CreateEventCalls()), ShouldEqual, 0)
 					})
 				})
 			})
@@ -610,8 +759,8 @@ func TestUpdateJobState(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		newState := domain.StateMigrating
@@ -643,8 +792,8 @@ func TestUpdateJobState(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		invalidNewState := domain.StateSubmitted // Invalid transition
@@ -679,7 +828,8 @@ func TestGetJobs(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 
@@ -763,8 +913,8 @@ func TestGetJobs(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 
@@ -797,8 +947,8 @@ func TestGetJobs(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 
@@ -840,8 +990,8 @@ func TestCreateTask(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -897,8 +1047,8 @@ func TestCreateTask(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := nonExistentJobNumber
@@ -947,8 +1097,8 @@ func TestCreateTask(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -997,8 +1147,8 @@ func TestUpdateTaskState(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		newState := domain.StateMigrating
@@ -1031,8 +1181,8 @@ func TestUpdateTaskState(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		taskID := "task-123"
@@ -1066,8 +1216,8 @@ func TestUpdateTaskState(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		invalidNewState := domain.StateSubmitted
@@ -1104,7 +1254,8 @@ func TestUpdateTaskState(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		newState := domain.StateMigrating
@@ -1173,8 +1324,8 @@ func TestGetJobTasks(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1269,8 +1420,8 @@ func TestGetJobTasks(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1306,8 +1457,8 @@ func TestGetJobTasks(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1341,8 +1492,8 @@ func TestCountTasksByJobNumber(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1377,8 +1528,8 @@ func TestCountTasksByJobNumber(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1412,8 +1563,8 @@ func TestCountTasksByJobNumber(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1452,8 +1603,8 @@ func TestCreateEvent(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1509,8 +1660,8 @@ func TestCreateEvent(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := nonExistentJobNumber
@@ -1557,8 +1708,8 @@ func TestCreateEvent(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1600,8 +1751,8 @@ func TestCreateEvent(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1665,8 +1816,8 @@ func TestCreateEvent(t *testing.T) {
 				}
 
 				mockClients := clients.ClientList{}
-
-				jobService := Setup(&mockStore, &mockClients)
+				cfg := &config.Config{EnableEventLogging: false}
+				jobService := Setup(&mockStore, &mockClients, cfg)
 
 				ctx := context.Background()
 				jobNumber := testJobNumber
@@ -1729,7 +1880,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			mockStore := store.Datastore{Backend: mockMongo}
 			mockClients := clients.ClientList{}
-			jobService := Setup(&mockStore, &mockClients)
+			cfg := &config.Config{EnableEventLogging: false}
+			jobService := Setup(&mockStore, &mockClients, cfg)
 
 			events, total, err := jobService.GetJobEvents(ctx, jobNumber, 10, 0)
 
@@ -1763,7 +1915,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			mockStore := store.Datastore{Backend: mockMongo}
 			mockClients := clients.ClientList{}
-			jobService := Setup(&mockStore, &mockClients)
+			cfg := &config.Config{EnableEventLogging: false}
+			jobService := Setup(&mockStore, &mockClients, cfg)
 
 			events, total, err := jobService.GetJobEvents(ctx, jobNumber, customLimit, customOffset)
 
@@ -1795,7 +1948,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			mockStore := store.Datastore{Backend: mockMongo}
 			mockClients := clients.ClientList{}
-			jobService := Setup(&mockStore, &mockClients)
+			cfg := &config.Config{EnableEventLogging: false}
+			jobService := Setup(&mockStore, &mockClients, cfg)
 
 			events, total, err := jobService.GetJobEvents(ctx, jobNumber, 10, 0)
 
@@ -1819,7 +1973,8 @@ func TestGetJobEvents(t *testing.T) {
 
 			mockStore := store.Datastore{Backend: mockMongo}
 			mockClients := clients.ClientList{}
-			jobService := Setup(&mockStore, &mockClients)
+			cfg := &config.Config{EnableEventLogging: false}
+			jobService := Setup(&mockStore, &mockClients, cfg)
 
 			events, total, err := jobService.GetJobEvents(ctx, jobNumber, 10, 0)
 
@@ -1852,8 +2007,8 @@ func TestCountEventsByJobNumber(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1889,7 +2044,8 @@ func TestCountEventsByJobNumber(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1924,7 +2080,8 @@ func TestCountEventsByJobNumber(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1956,7 +2113,8 @@ func TestCountEventsByJobNumber(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 		jobNumber := testJobNumber
@@ -1990,7 +2148,8 @@ func TestCountEventsByJobNumber(t *testing.T) {
 
 		mockClients := clients.ClientList{}
 
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 
@@ -2021,8 +2180,8 @@ func TestClaimJob(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 
@@ -2062,8 +2221,8 @@ func TestClaimJob(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 
@@ -2098,8 +2257,8 @@ func TestClaimTask(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 
@@ -2139,8 +2298,8 @@ func TestClaimTask(t *testing.T) {
 		}
 
 		mockClients := clients.ClientList{}
-
-		jobService := Setup(&mockStore, &mockClients)
+		cfg := &config.Config{EnableEventLogging: false}
+		jobService := Setup(&mockStore, &mockClients, cfg)
 
 		ctx := context.Background()
 

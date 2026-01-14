@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dis-migration-service/clients"
+	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/statemachine"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/google/uuid"
 )
 
 // JobService defines the contract for job-related operations
@@ -38,14 +38,16 @@ type JobService interface {
 type jobService struct {
 	store   *store.Datastore
 	clients *clients.ClientList
+	config  *config.Config
 }
 
 // Setup initializes a new JobService with the provided
 // dependencies.
-func Setup(datastore *store.Datastore, appClients *clients.ClientList) JobService {
+func Setup(datastore *store.Datastore, appClients *clients.ClientList, cfg *config.Config) JobService {
 	return &jobService{
 		store:   datastore,
 		clients: appClients,
+		config:  cfg,
 	}
 }
 
@@ -86,11 +88,13 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 	}
 
 	// Log job submission event
-	if err := js.logJobEvent(ctx, job.JobNumber, string(domain.StateSubmitted), userID); err != nil {
-		log.Error(ctx, "failed to log job submission event", err, log.Data{
-			"job_number": job.JobNumber,
-		})
-		// Continue even if event logging fails
+	if js.config.EnableEventLogging {
+		if err := js.logJobEvent(ctx, job.JobNumber, string(domain.StateSubmitted), userID); err != nil {
+			log.Error(ctx, "failed to log job submission event", err, log.Data{
+				"job_number": job.JobNumber,
+			})
+			// TODO: Consider implementing a notification mechanism (e.g., alerts) for event logging failure
+		}
 	}
 
 	return &job, nil
@@ -125,17 +129,16 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 		return fmt.Errorf("failed to update job state: %w", err)
 	}
 
-	// Log event for approval or rejected state transitions
-	if newState == domain.StateApproved || newState == domain.StateRejected {
+	// Log event for approval or rejected state transitions if feature is enabled
+	if js.config.EnableEventLogging && (newState == domain.StateApproved || newState == domain.StateRejected) {
 		if err := js.logJobEvent(ctx, jobNumber, string(newState), userID); err != nil {
 			log.Error(ctx, "failed to log job state transition event", err, log.Data{
 				"job_number": jobNumber,
 				"new_state":  newState,
 			})
-			// Continue even if event logging fails
+			// TODO: Consider implementing a notification mechanism (e.g., alerts) for event logging failure
 		}
 	}
-
 	return nil
 }
 
@@ -279,32 +282,8 @@ func (js *jobService) CountEventsByJobNumber(ctx context.Context, jobNumber int)
 
 // logJobEvent creates and stores an event for a job state transition.
 func (js *jobService) logJobEvent(ctx context.Context, jobNumber int, action, userID string) error {
-	// Use "system" as default if no user ID provided
-	if userID == "" {
-		log.Info(ctx, "no user ID provided for event logging, using 'system'", log.Data{
-			"job_number": jobNumber,
-			"action":     action,
-		})
-		userID = "system"
-	}
-
-	// Get the job to retrieve the job ID
-	job, err := js.store.GetJob(ctx, jobNumber)
-	if err != nil {
-		return fmt.Errorf("failed to get job for event logging: %w", err)
-	}
-
-	// Create the event
-	event := &domain.Event{
-		ID:        uuid.New().String(),
-		CreatedAt: time.Now().UTC().Format(time.RFC3339),
-		RequestedBy: &domain.User{
-			ID: userID,
-		},
-		Action:    action,
-		JobNumber: jobNumber,
-		Links:     domain.NewEventLinks(uuid.New().String(), job.ID),
-	}
+	// Create the event using domain factory
+	event := domain.NewEvent(jobNumber, action, userID)
 
 	// Store the event
 	if err := js.store.CreateEvent(ctx, event); err != nil {
@@ -314,7 +293,7 @@ func (js *jobService) logJobEvent(ctx context.Context, jobNumber int, action, us
 	log.Info(ctx, "job event logged successfully", log.Data{
 		"job_number": jobNumber,
 		"action":     action,
-		"user_id":    userID,
+		"user_id":    event.RequestedBy.ID,
 		"event_id":   event.ID,
 	})
 

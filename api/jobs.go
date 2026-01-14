@@ -117,7 +117,15 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// Extract user ID from JWT token
-	userID := api.GetUserID(r)
+	userID, err := api.GetUserID(r)
+
+	if err != nil {
+		log.Info(ctx, "failed to extract user ID from token", log.Data{
+			"error": err.Error(),
+		})
+		handleError(ctx, w, r, appErrors.ErrUnauthorized)
+		return
+	}
 
 	jobConfigBytes, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -203,7 +211,14 @@ func (api *MigrationAPI) updateJobState(
 	}
 
 	// Extract user ID from JWT token
-	userID := api.GetUserID(r)
+	userID, err := api.GetUserID(r)
+	if err != nil {
+		log.Info(ctx, "failed to extract user ID from token", log.Data{
+			"error": err.Error(),
+		})
+		handleError(ctx, w, r, appErrors.ErrUnauthorized)
+		return
+	}
 
 	// Base log context reused throughout the handler
 	logData := log.Data{
@@ -284,10 +299,10 @@ func (api *MigrationAPI) updateJobState(
 // GetUserID extracts the user ID from the Authorization header by parsing
 // the JWT token. Returns the user ID or an empty string if the token
 // cannot be parsed.
-func (api *MigrationAPI) GetUserID(r *http.Request) string {
+func (api *MigrationAPI) GetUserID(r *http.Request) (string, error) {
 	bearerToken := r.Header.Get(dprequest.AuthHeaderKey)
 	if bearerToken == "" {
-		return ""
+		return "", errors.New("authorization header missing")
 	}
 
 	// Remove "Bearer " prefix if present
@@ -299,8 +314,12 @@ func (api *MigrationAPI) GetUserID(r *http.Request) string {
 		log.Warn(r.Context(), "failed to parse JWT token for user ID extraction", log.Data{
 			"error": err.Error(),
 		})
-		return ""
+		return "", err
 	}
 
-	return entityData.UserID
+	if entityData.UserID == "" {
+		return "", errors.New("token valid but user ID claim is empty")
+	}
+
+	return entityData.UserID, nil
 }
