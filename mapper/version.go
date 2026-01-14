@@ -3,6 +3,7 @@ package mapper
 import (
 	"errors"
 
+	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 )
@@ -14,7 +15,13 @@ func MapDatasetVersionToDatasetAPI(editionID string, pageData zebedee.Dataset, s
 		return nil, errors.New("invalid page type for dataset version page")
 	}
 
+	distributions, err := mapDownloadsToDistributions(pageData.Downloads)
+	if err != nil {
+		return nil, err
+	}
+
 	version := &datasetModels.Version{
+		Distributions: &distributions,
 		Edition:       editionID,
 		EditionTitle:  pageData.Description.Edition,
 		Version:       getVersion(pageData.Versions),
@@ -48,6 +55,30 @@ func MapDatasetVersionToDatasetAPI(editionID string, pageData zebedee.Dataset, s
 	}
 
 	return version, nil
+}
+
+func mapDownloadsToDistributions(downloads []zebedee.Download) ([]datasetModels.Distribution, error) {
+	distributions := make([]datasetModels.Distribution, 0, len(downloads))
+
+	for _, download := range downloads {
+		distributionFormat, err := mapFileNameToDistributionFormat(download.File)
+		if err != nil {
+			return nil, err
+		}
+
+		distribution := datasetModels.Distribution{
+			Title:  download.File,
+			Format: distributionFormat,
+		}
+		distributions = append(distributions, distribution)
+	}
+
+	return distributions, nil
+}
+
+func mapFileNameToDistributionFormat(fileName string) (datasetModels.DistributionFormat, error) {
+	mimeType := DeriveMimeType(fileName)
+	return MapMimeTypeToDistributionFormat(mimeType)
 }
 
 func getVersion(versions []zebedee.Version) int {
