@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	sort "github.com/ONSdigital/dis-migration-service/api/sort"
 	applicationMock "github.com/ONSdigital/dis-migration-service/application/mock"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -146,7 +147,7 @@ func TestGetJob(t *testing.T) {
 func TestGetJobs(t *testing.T) {
 	Convey("Given a test API instance and a mocked jobservice that returns multiple jobs", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobsFunc: func(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 				jobs := []*domain.Job{
 					{ID: "job1", State: domain.StateSubmitted},
 					{ID: "job2", State: domain.StateApproved},
@@ -300,11 +301,57 @@ func TestGetJobs(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("When a request is made with valid sort parameters", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?sort=job_number:asc", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then the server should respond with status 200 OK", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				Convey("And the service is called with the correct field and direction", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
+					So(mockService.GetJobsCalls()[0].Field, ShouldResemble, sort.SortParameterFieldJobNumber)
+					So(mockService.GetJobsCalls()[0].Direction, ShouldResemble, sort.SortParameterDirectionAsc)
+				})
+			})
+		})
+
+		Convey("When a request is made with an invalid field in sort parameter", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?sort=unknown:asc", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 400 Bad Request is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				So(resp.Body.String(), ShouldContainSubstring, "field is invalid in sort parameter")
+
+				Convey("And the service is not called", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 0)
+				})
+			})
+		})
+
+		Convey("When a request is made with an invalid direction in sort parameter", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?sort=job_number:unknown", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 400 Bad Request is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				So(resp.Body.String(), ShouldContainSubstring, "direction is invalid in sort parameter")
+
+				Convey("And the service is not called", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 0)
+				})
+			})
+		})
 	})
 
 	Convey("Given a test API instance and a mocked jobservice that returns no jobs", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobsFunc: func(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 				return []*domain.Job{}, 0, nil
 			},
 		}

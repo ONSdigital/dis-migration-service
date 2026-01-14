@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	sort "github.com/ONSdigital/dis-migration-service/api/sort"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
@@ -21,7 +22,7 @@ type dataMongoDB interface {
 	// Jobs
 	CreateJob(ctx context.Context, job *domain.Job) error
 	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
-	GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
+	GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
 	ClaimJob(ctx context.Context, pendingState domain.State, activeState domain.State) (*domain.Job, error)
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error)
 	GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error)
@@ -86,8 +87,8 @@ func (ds *Datastore) UpdateJob(ctx context.Context, job *domain.Job) error {
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (ds *Datastore) GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
-	return ds.Backend.GetJobs(ctx, states, limit, offset)
+func (ds *Datastore) GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+	return ds.Backend.GetJobs(ctx, field, direction, states, limit, offset)
 }
 
 // GetJobsByConfigAndState retrieves jobs based on the provided job.

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	sort "github.com/ONSdigital/dis-migration-service/api/sort"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
@@ -38,12 +39,28 @@ func (m *Mongo) GetJob(ctx context.Context, jobNumber int) (*domain.Job, error) 
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (m *Mongo) GetJobs(ctx context.Context, stateFilter []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+func (m *Mongo) GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, stateFilter []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 	var results []*domain.Job
 
 	filter := bson.M{}
 	if len(stateFilter) > 0 {
 		filter["state"] = bson.M{"$in": stateFilter}
+	}
+
+	// default to descending
+	sortOrder := -1
+	if direction == sort.SortParameterDirectionAsc {
+		sortOrder = 1
+	}
+
+	// default to field being job_number
+	sortField := sort.SortParameterFieldJobNumber
+	if field == sort.SortParameterFieldLabel {
+		sortField = sort.SortParameterFieldLabel
+	}
+
+	sortBy := bson.D{
+		{Key: string(sortField), Value: sortOrder},
 	}
 
 	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
@@ -53,7 +70,7 @@ func (m *Mongo) GetJobs(ctx context.Context, stateFilter []domain.State, limit, 
 			&results,
 			mongodriver.Limit(limit),
 			mongodriver.Offset(offset),
-			mongodriver.Sort(bson.M{"last_updated": -1}),
+			mongodriver.Sort(sortBy),
 		)
 
 	return results, totalCount, err

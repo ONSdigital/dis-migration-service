@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	sort "github.com/ONSdigital/dis-migration-service/api/sort"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -813,7 +814,7 @@ func TestUpdateJobState(t *testing.T) {
 func TestGetJobs(t *testing.T) {
 	Convey("Given a job service and store that has stored jobs", t, func() {
 		mockMongo := &storeMocks.MongoDBMock{
-			GetJobsFunc: func(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 				jobs := []*domain.Job{
 					{ID: "job1", State: domain.StateSubmitted},
 					{ID: "job2", State: domain.StateApproved},
@@ -839,7 +840,7 @@ func TestGetJobs(t *testing.T) {
 				domain.StateApproved,
 			}
 
-			jobs, total, err := jobService.GetJobs(ctx, states, 20, 5)
+			jobs, total, err := jobService.GetJobs(ctx, "", "", states, 20, 5)
 
 			Convey("Then the store should be called with correct parameters", func() {
 				So(len(mockMongo.GetJobsCalls()), ShouldEqual, 1)
@@ -862,7 +863,7 @@ func TestGetJobs(t *testing.T) {
 		})
 
 		Convey("When GetJobs is called with nil states", func() {
-			jobs, total, err := jobService.GetJobs(ctx, nil, 10, 0)
+			jobs, total, err := jobService.GetJobs(ctx, "", "", nil, 10, 0)
 
 			Convey("Then the store should be called with nil states", func() {
 				So(len(mockMongo.GetJobsCalls()), ShouldEqual, 1)
@@ -883,7 +884,7 @@ func TestGetJobs(t *testing.T) {
 
 		Convey("When GetJobs is called with empty states slice", func() {
 			emptyStates := []domain.State{}
-			jobs, total, err := jobService.GetJobs(ctx, emptyStates, 10, 0)
+			jobs, total, err := jobService.GetJobs(ctx, "", "", emptyStates, 10, 0)
 
 			Convey("Then the store should be called with empty states", func() {
 				So(len(mockMongo.GetJobsCalls()), ShouldEqual, 1)
@@ -899,11 +900,32 @@ func TestGetJobs(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("When GetJobs is called with valid sort parameters provided", func() {
+			field := sort.SortParameterFieldLabel
+			direction := sort.SortParameterDirectionAsc
+			jobs, total, err := jobService.GetJobs(ctx, field, direction, nil, 10, 0)
+
+			Convey("Then the store should be called with the correct sort parameters", func() {
+				So(len(mockMongo.GetJobsCalls()), ShouldEqual, 1)
+				So(mockMongo.GetJobsCalls()[0].Field, ShouldResemble, field)
+				So(mockMongo.GetJobsCalls()[0].Direction, ShouldResemble, direction)
+
+				Convey("Then no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And the jobs should be returned", func() {
+						So(total, ShouldEqual, 3)
+						So(len(jobs), ShouldEqual, 3)
+					})
+				})
+			})
+		})
 	})
 
 	Convey("Given a job service and store that returns an error when getting jobs", t, func() {
 		mockMongo := &storeMocks.MongoDBMock{
-			GetJobsFunc: func(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 				return nil, 0, errors.New("fake error for testing")
 			},
 		}
@@ -919,7 +941,7 @@ func TestGetJobs(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When GetJobs is called", func() {
-			jobs, totalCount, err := jobService.GetJobs(ctx, nil, 10, 0)
+			jobs, totalCount, err := jobService.GetJobs(ctx, "", "", nil, 10, 0)
 
 			Convey("Then the store should be called to get jobs", func() {
 				So(len(mockMongo.GetJobsCalls()), ShouldEqual, 1)
@@ -937,7 +959,7 @@ func TestGetJobs(t *testing.T) {
 
 	Convey("Given a job service and store that returns no jobs", t, func() {
 		mockMongo := &storeMocks.MongoDBMock{
-			GetJobsFunc: func(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 				return []*domain.Job{}, 0, nil
 			},
 		}
@@ -953,7 +975,7 @@ func TestGetJobs(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When GetJobs is called", func() {
-			jobs, totalCount, err := jobService.GetJobs(ctx, nil, 10, 0)
+			jobs, totalCount, err := jobService.GetJobs(ctx, "", "", nil, 10, 0)
 
 			Convey("Then the store should be called", func() {
 				So(len(mockMongo.GetJobsCalls()), ShouldEqual, 1)

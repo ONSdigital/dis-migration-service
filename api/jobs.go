@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	sort "github.com/ONSdigital/dis-migration-service/api/sort"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/statemachine"
@@ -66,7 +67,14 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, 
 			states = append(states, state)
 		}
 	}
-	return api.JobService.GetJobs(r.Context(), states, limit, offset)
+
+	sortParam := r.URL.Query()[QueryParameterSort]
+	field, direction, err := sort.ParseSortParameters(sortParam)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return api.JobService.GetJobs(r.Context(), field, direction, states, limit, offset)
 }
 
 // getJobTasks is an implementation of PaginatedHandler for retrieving

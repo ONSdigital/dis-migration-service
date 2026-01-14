@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	sort "github.com/ONSdigital/dis-migration-service/api/sort"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -22,7 +23,7 @@ type JobService interface {
 	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	ClaimJob(ctx context.Context) (*domain.Job, error)
 	UpdateJobState(ctx context.Context, jobNumber int, newState domain.State, userID string) error
-	GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
+	GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
 	GetJobTasks(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error)
 	CreateTask(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error)
 	UpdateTask(ctx context.Context, task *domain.Task) error
@@ -143,8 +144,8 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (js *jobService) GetJobs(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
-	return js.store.GetJobs(ctx, states, limit, offset)
+func (js *jobService) GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+	return js.store.GetJobs(ctx, field, direction, states, limit, offset)
 }
 
 // ClaimJob claims a pending job for processing.

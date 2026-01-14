@@ -214,7 +214,11 @@ Feature: Get list of jobs
           "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "migrating",
-          "config": {"source_id":"s1","target_id":"t1","type":"type1"}
+          "config": {
+            "source_id": "s1",
+            "target_id": "t1",
+            "type": "type1"
+          }
         }
         """
       And the following document exists in the "jobs" collection:
@@ -225,7 +229,11 @@ Feature: Get list of jobs
           "label": "job-approved-1",
           "last_updated": "2025-11-19T14:00:00Z",
           "state": "approved",
-          "config": {"source_id":"s2","target_id":"t2","type":"type2"}
+          "config": {
+            "source_id": "s2",
+            "target_id": "t2",
+            "type": "type2"
+          }
         }
         """
       When I GET "/v1/migration-jobs?state=migrating"
@@ -263,7 +271,11 @@ Feature: Get list of jobs
           "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "migrating",
-          "config": {"source_id":"s1","target_id":"t1","type":"type1"}
+          "config": {
+            "source_id": "s1",
+            "target_id": "t1",
+            "type": "type1"
+          }
         }
         """
       And the following document exists in the "jobs" collection:
@@ -274,7 +286,11 @@ Feature: Get list of jobs
           "label": "job-approved-1",
           "last_updated": "2025-11-19T14:00:00Z",
           "state": "approved",
-          "config": {"source_id":"s2","target_id":"t2","type":"type2"}
+          "config": {
+            "source_id": "s2",
+            "target_id": "t2",
+            "type": "type2"
+          }
         }
         """
       When I GET "/v1/migration-jobs?state=migrating&state=approved"
@@ -290,7 +306,11 @@ Feature: Get list of jobs
               "last_updated": "2025-11-19T14:00:00Z",
               "links": {},
               "state": "approved",
-              "config": {"source_id":"s2","target_id":"t2","type":"type2"}
+              "config": {
+                "source_id": "s2",
+                "target_id": "t2",
+                "type": "type2"
+              }
             },
             {
               "id": "job-submitted-1",
@@ -299,7 +319,11 @@ Feature: Get list of jobs
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {},
               "state": "migrating",
-              "config": {"source_id":"s1","target_id":"t1","type":"type1"}
+              "config": {
+                "source_id": "s1",
+                "target_id": "t1",
+                "type": "type1"
+              }
             }
           ],
           "limit": 10,
@@ -317,7 +341,11 @@ Feature: Get list of jobs
           "label": "job-submitted-1",
           "last_updated": "2025-11-19T13:28:00Z",
           "state": "migrating",
-          "config": {"source_id":"s1","target_id":"t1","type":"type1"}
+          "config": {
+            "source_id": "s1",
+            "target_id": "t1",
+            "type": "type1"
+          }
         }
         """
       And the following document exists in the "jobs" collection:
@@ -328,7 +356,11 @@ Feature: Get list of jobs
           "label": "job-approved-1",
           "last_updated": "2025-11-19T14:00:00Z",
           "state": "approved",
-          "config": {"source_id":"s2","target_id":"t2","type":"type2"}
+          "config": {
+            "source_id": "s2",
+            "target_id": "t2",
+            "type": "type2"
+          }
         }
         """
       When I GET "/v1/migration-jobs?state=migrating,approved"
@@ -344,7 +376,11 @@ Feature: Get list of jobs
               "last_updated": "2025-11-19T14:00:00Z",
               "links": {},
               "state": "approved",
-              "config": {"source_id":"s2","target_id":"t2","type":"type2"}
+              "config": {
+                "source_id": "s2",
+                "target_id": "t2",
+                "type": "type2"
+              }
             },
             {
               "id": "job-submitted-1",
@@ -353,12 +389,271 @@ Feature: Get list of jobs
               "last_updated": "2025-11-19T13:28:00Z",
               "links": {},
               "state": "migrating",
-              "config": {"source_id":"s1","target_id":"t1","type":"type1"}
+              "config": {
+                "source_id": "s1",
+                "target_id": "t1",
+                "type": "type1"
+              }
             }
           ],
           "limit": 10,
           "offset": 0,
           "total_count": 2
+        }
+        """
+    Scenario: Get a list of 2 jobs using valid sort parameters
+      Given the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 3,
+          "label": "Labour Market statistics",
+          "last_updated": "2025-11-19T13:28:00Z",
+          "links": {
+            "self": {
+              "href": "/v1/migration-jobs/3"
+            }
+          },
+          "state": "migrating",
+          "config": {
+            "source_id": "test-source-id",
+            "target_id": "test-target-id",
+            "type": "test-type"
+          }
+        }
+        """
+      And the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 33,
+          "label": "Retail Sales Index",
+          "last_updated": "2025-11-20T10:15:00Z",
+          "links": {
+            "self": {
+              "href": "/v1/migration-jobs/33"
+            }
+          },
+          "state": "in_progress",
+          "config": {
+            "source_id": "another-source-id",
+            "target_id": "another-target-id",
+            "type": "another-type"
+          }
+        }
+        """
+      When I GET "/v1/migration-jobs?sort=job_number:desc"
+      Then I should receive the following JSON response with status "200":
+        """
+        {
+          "count": 2,
+          "items": [
+            {
+              "id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 33,
+              "label": "Retail Sales Index",
+              "last_updated": "2025-11-20T10:15:00Z",
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/33"
+                }
+              },
+              "state": "in_progress",
+              "config": {
+                "source_id": "another-source-id",
+                "target_id": "another-target-id",
+                "type": "another-type"
+              }
+            },
+            {
+              "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 3,
+              "label": "Labour Market statistics",
+              "last_updated": "2025-11-19T13:28:00Z",
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/3"
+                }
+              },
+              "state": "migrating",
+              "config": {
+                "source_id": "test-source-id",
+                "target_id": "test-target-id",
+                "type": "test-type"
+              }
+            }
+          ],
+          "limit": 10,
+          "offset": 0,
+          "total_count": 2
+        }
+        """
+      When I GET "/v1/migration-jobs?sort=job_number:asc"
+      Then I should receive the following JSON response with status "200":
+        """
+        {
+          "count": 2,
+          "items": [
+            {
+              "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 3,
+              "label": "Labour Market statistics",
+              "last_updated": "2025-11-19T13:28:00Z",
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/3"
+                }
+              },
+              "state": "migrating",
+              "config": {
+                "source_id": "test-source-id",
+                "target_id": "test-target-id",
+                "type": "test-type"
+              }
+            },
+            {
+              "id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 33,
+              "label": "Retail Sales Index",
+              "last_updated": "2025-11-20T10:15:00Z",
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/33"
+                }
+              },
+              "state": "in_progress",
+              "config": {
+                "source_id": "another-source-id",
+                "target_id": "another-target-id",
+                "type": "another-type"
+              }
+            }
+          ],
+          "limit": 10,
+          "offset": 0,
+          "total_count": 2
+        }
+        """
+      When I GET "/v1/migration-jobs?sort=label:asc"
+      Then I should receive the following JSON response with status "200":
+        """
+        {
+          "count": 2,
+          "items": [
+            {
+              "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 3,
+              "label": "Labour Market statistics",
+              "last_updated": "2025-11-19T13:28:00Z",
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/3"
+                }
+              },
+              "state": "migrating",
+              "config": {
+                "source_id": "test-source-id",
+                "target_id": "test-target-id",
+                "type": "test-type"
+              }
+            },
+            {
+              "id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 33,
+              "label": "Retail Sales Index",
+              "last_updated": "2025-11-20T10:15:00Z",
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/33"
+                }
+              },
+              "state": "in_progress",
+              "config": {
+                "source_id": "another-source-id",
+                "target_id": "another-target-id",
+                "type": "another-type"
+              }
+            }
+          ],
+          "limit": 10,
+          "offset": 0,
+          "total_count": 2
+        }
+        """
+      When I GET "/v1/migration-jobs?sort=label:desc"
+      Then I should receive the following JSON response with status "200":
+        """
+        {
+          "count": 2,
+          "items": [
+            {
+              "id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 33,
+              "label": "Retail Sales Index",
+              "last_updated": "2025-11-20T10:15:00Z",
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/33"
+                }
+              },
+              "state": "in_progress",
+              "config": {
+                "source_id": "another-source-id",
+                "target_id": "another-target-id",
+                "type": "another-type"
+              }
+            },
+            {
+              "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 3,
+              "label": "Labour Market statistics",
+              "last_updated": "2025-11-19T13:28:00Z",
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/3"
+                }
+              },
+              "state": "migrating",
+              "config": {
+                "source_id": "test-source-id",
+                "target_id": "test-target-id",
+                "type": "test-type"
+              }
+            }
+          ],
+          "limit": 10,
+          "offset": 0,
+          "total_count": 2
+        }
+        """
+
+    @InvalidInput
+    Scenario: Get a list of jobs with an invalid sort field parameter
+      When I GET "/v1/migration-jobs?sort=unknown:asc"
+      Then I should receive the following JSON response with status "400":
+        """
+        {
+          "errors": [
+            {
+              "code": 400,
+              "description": "field is invalid in sort parameter"
+            }
+          ]
+        }
+        """
+
+    @InvalidInput
+    Scenario: Get a list of jobs with an invalid sort direction parameter
+      When I GET "/v1/migration-jobs?sort=job_number:unknown"
+      Then I should receive the following JSON response with status "400":
+        """
+        {
+          "errors": [
+            {
+              "code": 400,
+              "description": "direction is invalid in sort parameter"
+            }
+          ]
         }
         """
 
@@ -424,7 +719,7 @@ Feature: Get list of jobs
         }
         """
 
-  @Auth
+    @Auth
   Rule: Users that are not authorised or authenticated
     Background:
       Given an admin user has the "incorrect" permission
