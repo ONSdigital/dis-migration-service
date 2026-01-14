@@ -8,6 +8,9 @@ import (
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 )
 
+// MapMimeTypeToDistributionFormat maps a MIME type string to a
+// DistributionFormat as used by the dp-dataset-api. If the MIME type is
+// unsupported, it returns an error.
 func MapMimeTypeToDistributionFormat(mimeType string) (datasetModels.DistributionFormat, error) {
 	switch mimeType {
 	case "text/csv":
