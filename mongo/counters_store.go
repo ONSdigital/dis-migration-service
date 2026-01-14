@@ -18,14 +18,14 @@ import (
 * human-readable job numbers.
 * The new Counter will contain the following values:
 * counter_name = "job_number_counter"
-* counter_value = "0"
+* counter_value = "1"
 *
 * NB. This private function should only be called by GetNextJobNumberCounter,
 * which will only call it if a JobNumberCounter does not already exist. */
 func (m *Mongo) createJobNumberCounter(ctx context.Context) (domain.Counter, error) {
 	jobNumberCounter := domain.Counter{
 		CounterName:  "job_number_counter",
-		CounterValue: 0,
+		CounterValue: 1,
 	}
 	logData := log.Data{"jobNumberCounter": jobNumberCounter}
 	log.Info(ctx, "creating job number counter in mongo DB", logData)
