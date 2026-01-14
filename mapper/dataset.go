@@ -16,6 +16,12 @@ func MapDatasetLandingPageToDatasetAPI(datasetID string, pageData zebedee.Datase
 		return nil, errors.New("invalid page type for dataset landing page")
 	}
 
+	// TODO: confirm handling of NextRelease field if unset.
+	nextRelease := "To be confirmed"
+	if pageData.Description.NextRelease != "" {
+		nextRelease = pageData.Description.NextRelease
+	}
+
 	dataset := &datasetModels.Dataset{
 		Description: pageData.Description.Summary,
 		// Zebedee only allows one contact per dataset landing page.
@@ -31,7 +37,7 @@ func MapDatasetLandingPageToDatasetAPI(datasetID string, pageData zebedee.Datase
 		Keywords: pageData.Description.Keywords,
 		License:  domain.OpenGovernmentLicence,
 		// Warning: NextRelease is a string in both Zebedee and Dataset API.
-		NextRelease: pageData.Description.NextRelease,
+		NextRelease: nextRelease,
 		QMI:         getQMILink(pageData.RelatedMethodology),
 		Title:       pageData.Description.Title,
 		//TODO: populate topics correctly - dataset api expects a list of topic ids
