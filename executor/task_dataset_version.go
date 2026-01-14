@@ -13,7 +13,7 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
-// DatasetVersionTaskExecutor executes migration tasks for dataset editions.
+// DatasetVersionTaskExecutor executes migration tasks for dataset versions.
 type DatasetVersionTaskExecutor struct {
 	jobService       application.JobService
 	clientList       *clients.ClientList
@@ -125,20 +125,20 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	return nil
 }
 
-// Publish handles the publish operations for a dataset edition task.
+// Publish handles the publish operations for a dataset version task.
 func (e *DatasetVersionTaskExecutor) Publish(ctx context.Context, task *domain.Task) error {
-	// Implementation of publish for dataset edition
+	// Implementation of publish for dataset version
 	return nil
 }
 
-// PostPublish handles the post-publish operations for a dataset edition task.
+// PostPublish handles the post-publish operations for a dataset version task.
 func (e *DatasetVersionTaskExecutor) PostPublish(ctx context.Context, task *domain.Task) error {
-	// Implementation of post-publish for dataset edition
+	// Implementation of post-publish for dataset version
 	return nil
 }
 
-// Revert handles the revert operations for a dataset edition task.
+// Revert handles the revert operations for a dataset version task.
 func (e *DatasetVersionTaskExecutor) Revert(ctx context.Context, task *domain.Task) error {
-	// Implementation of revert for dataset edition
+	// Implementation of revert for dataset version
 	return nil
 }
