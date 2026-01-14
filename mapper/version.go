@@ -77,7 +77,7 @@ func mapDownloadsToDistributions(downloads []zebedee.Download) ([]datasetModels.
 }
 
 func mapFileNameToDistributionFormat(fileName string) (datasetModels.DistributionFormat, error) {
-	mimeType := DeriveMimeType(fileName)
+	mimeType := DeriveMimeTypeFromFilename(fileName)
 	return MapMimeTypeToDistributionFormat(mimeType)
 }
 
