@@ -42,7 +42,7 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	}
 
 	// Usage notes only appear at the series level so we need that too.
-	seriesData, err := e.clientList.Zebedee.GetDatasetLandingPage(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Target.DatasetID)
+	seriesData, err := e.clientList.Zebedee.GetDatasetLandingPage(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Source.DatasetID)
 	if err != nil {
 		logData["dataset_id"] = task.Target.DatasetID
 		log.Error(ctx, "failed to get dataset series data from zebedee", err, logData)
@@ -50,7 +50,7 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	}
 
 	// Correction notes only appear at the edition level so we need that too.
-	editionData, err := e.clientList.Zebedee.GetDataset(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Target.EditionID)
+	editionData, err := e.clientList.Zebedee.GetDataset(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Source.EditionID)
 	if err != nil {
 		logData["edition_id"] = task.Target.EditionID
 		log.Error(ctx, "failed to get edition data from zebedee", err, logData)

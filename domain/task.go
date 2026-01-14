@@ -37,11 +37,11 @@ func NewTask(jobNumber int) Task {
 
 // TaskMetadata represents metadata about a task's source or target
 type TaskMetadata struct {
-	ID        string `json:"id" bson:"id"`
-	DatasetID string `json:"dataset_id,omitempty" bson:"dataset_id"`
-	EditionID string `json:"edition_id,omitempty" bson:"edition_id"`
-	VersionID string `json:"version_id,omitempty" bson:"version_id"`
-	Label     string `json:"label" bson:"label"`
+	ID        string `json:"id,omitempty" bson:"id,omitempty"`
+	DatasetID string `json:"dataset_id,omitempty" bson:"dataset_id,omitempty"`
+	EditionID string `json:"edition_id,omitempty" bson:"edition_id,omitempty"`
+	VersionID string `json:"version_id,omitempty" bson:"version_id,omitempty"`
+	Label     string `json:"label,omitempty" bson:"label,omitempty"`
 }
 
 // TaskType represents the type of migration task

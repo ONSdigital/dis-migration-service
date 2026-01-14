@@ -61,7 +61,8 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 
 		editionTask.Type = domain.TaskTypeDatasetEdition
 		editionTask.Source = &domain.TaskMetadata{
-			ID: edition.URI,
+			ID:        edition.URI,
+			DatasetID: task.Source.ID,
 		}
 		editionTask.Target = &domain.TaskMetadata{
 			DatasetID: task.Target.ID,

@@ -2,7 +2,7 @@ package executor
 
 import (
 	"context"
-	"strings"
+	"path/filepath"
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
@@ -48,7 +48,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		return err
 	}
 
-	editionID := extractLastSegmentFromURI(sourceData.URI)
+	editionID := filepath.Base(sourceData.URI)
 	// TODO: deal with 'current' here.
 	logData["edition_id"] = editionID
 
@@ -66,7 +66,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		return err
 	}
 
-	currentVersionTask := createVersionTask(task.JobNumber, sourceData.URI, task.Target.DatasetID, editionID)
+	currentVersionTask := createVersionTask(task.JobNumber, sourceData.URI, task.Source.DatasetID, task.Source.ID, task.Target.DatasetID, editionID)
 
 	_, err = e.jobService.CreateTask(ctx, task.JobNumber, &currentVersionTask)
 	if err != nil {
@@ -76,7 +76,7 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	}
 
 	for _, previousVersion := range sourceData.Versions {
-		versionTask := createVersionTask(task.JobNumber, previousVersion.URI, task.Target.DatasetID, editionID)
+		versionTask := createVersionTask(task.JobNumber, previousVersion.URI, task.Source.DatasetID, task.Source.ID, task.Target.DatasetID, editionID)
 
 		_, err := e.jobService.CreateTask(ctx, task.JobNumber, &versionTask)
 		if err != nil {
@@ -113,26 +113,18 @@ func (e *DatasetEditionTaskExecutor) Revert(ctx context.Context, task *domain.Ta
 	return nil
 }
 
-func createVersionTask(jobNumber int, sourceURI, datasetID, editionID string) domain.Task {
+func createVersionTask(jobNumber int, sourceURI, sourceDatasetID, sourceEditionID, datasetID, editionID string) domain.Task {
 	versionTask := domain.NewTask(jobNumber)
 
 	versionTask.Type = domain.TaskTypeDatasetVersion
 	versionTask.Source = &domain.TaskMetadata{
-		ID: sourceURI,
+		ID:        sourceURI,
+		DatasetID: sourceDatasetID,
+		EditionID: sourceEditionID,
 	}
 	versionTask.Target = &domain.TaskMetadata{
 		DatasetID: datasetID,
 		EditionID: editionID,
 	}
 	return versionTask
-}
-
-func extractLastSegmentFromURI(uri string) string {
-	parts := strings.Split(uri, "/")
-	for i := len(parts) - 1; i >= 0; i-- {
-		if parts[i] != "" {
-			return parts[i]
-		}
-	}
-	return ""
 }
