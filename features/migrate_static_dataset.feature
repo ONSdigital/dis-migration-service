@@ -13,21 +13,6 @@ Feature: Migrate a static dataset job
         "type": "dataset_landing_page",
         "description": {
           "title": "Test Dataset Series"
-        },
-        "datasets": [
-          {
-            "id": "/test-edition-1",
-            "title": "Edition 1"
-          }
-        ]
-      }
-      """
-    And a get page data request to zebedee for "/test-edition-1" returns with status 200 and payload:
-      """
-      {
-        "type": "dataset",
-        "description": {
-          "title": "Edition 1"
         }
       }
       """
@@ -52,14 +37,14 @@ Feature: Migrate a static dataset job
         }
       }
       """
-    And I wait 3 seconds for the job processor to process tasks and jobs
+    And I wait 2 seconds for the job processor to process tasks and jobs
     When I GET "/v1/migration-jobs/20"
     Then I should receive the following JSON response with status "200":
       """
       {
         "id":"2874ee9e-1cec-44f8-9b6d-998cf2062791",
         "job_number": 20,
-        "state": "migrating",
+        "state": "in_review",
         "last_updated": "{{DYNAMIC_TIMESTAMP}}",
         "config": {
           "source_id": "/test-static-dataset-job",

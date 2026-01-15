@@ -67,7 +67,7 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *comp
 		return &MigrationComponent{}, fmt.Errorf("failed to get config: %w", err)
 	}
 
-	c.Config.MigratorPollInterval = 2 * time.Second
+	c.Config.MigratorPollInterval = 500 * time.Millisecond
 
 	mongoURI, err := mongoFeat.GetConnectionString()
 	if err != nil {
