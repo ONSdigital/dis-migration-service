@@ -52,6 +52,7 @@ npm install -g @redocly/cli
 | DEFAULT_LIMIT                             | 10                    | Default limit parameter for paginated endpoints                                                                    |
 | DEFAULT_MAX_LIMIT                         | 100                   | Default max limit for paginated endpoints                                                                          |
 | DEFAULT_OFFSET                            | 0                     | Default offset parameter for paginated endpoints                                                                   |
+| ENABLE_EVENT_LOGGING                      | false                 | Feature flag to enable event logging for migrations                                                                
 | ENABLE_MOCK_CLIENTS                       | false                 | Boolean to inject mock clients to allow for faster development                                                     |
 | FILES_API_URL                             | localhost:26900       | Address for File API                                                                                               |
 | GRACEFUL_SHUTDOWN_TIMEOUT                 | 5s                    | The graceful shutdown timeout in seconds (`time.Duration` format)                                                  |
@@ -69,6 +70,9 @@ npm install -g @redocly/cli
 | SLACK_INFO_CHANNEL                        |                       | Slack channel for informational notifications                                                                      |
 | SLACK_WARNING_CHANNEL                     |                       | Slack channel for warning notifications                                                                            |
 | SLACK_ALARM_CHANNEL                       |                       | Slack channel for alarm/error notifications                                                                        |
+| SERVICE_AUTH_TOKEN                        |                       | Service authentication token for API requests                                                                      |
+| TOPIC_API_URL                             | localhost:25300       | Address for Topic API                                                                                              |
+| TOPIC_CACHE_UPDATE_INTERVAL               | 10m                   | Time interval for refreshing the topic cache from Topic API (`time.Duration` format)                               |
 | UPLOAD_SERVICE_URL                        | localhost:25100       | Address for Upload Service                                                                                         |
 | ZEBEDEE_URL                               | localhost:8082        | Address for Zebedee                                                                                                |
 | AUTHORISATION_ENABLED                     | false                 | Feature flag to enable authorisation to be required on endpoints                                                   |
