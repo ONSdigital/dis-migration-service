@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -43,10 +44,12 @@ func (m *Mongo) createJobNumberCounter(ctx context.Context) (domain.Counter, err
 // in mongoDB, and then returns it
 func (m *Mongo) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error) {
 	var jobNumberCounter domain.Counter
+
+	// Configure FindOneAndUpdate to return the updated document (after increment)
 	err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).FindOneAndUpdate(ctx,
 		bson.M{"counter_name": "job_number_counter"}, bson.D{
 			{Key: "$inc", Value: bson.D{primitive.E{Key: "counter_value", Value: 1}}},
-		}, &jobNumberCounter)
+		}, &jobNumberCounter, mongodriver.ReturnDocument(options.After))
 
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
@@ -56,9 +59,9 @@ func (m *Mongo) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, e
 			if err != nil {
 				log.Info(ctx, "error creating job number counter")
 				return nil, err
-			} else {
-				return &jobNumberCounter, nil
 			}
+			// After creating the counter with value 0, increment it to 1 and return
+			return m.GetNextJobNumberCounter(ctx)
 		}
 		return nil, appErrors.ErrInternalServerError
 	}

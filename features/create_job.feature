@@ -30,7 +30,7 @@ Feature: Create a Job
         """
         {
           "id": "{{DYNAMIC_UUID}}",
-          "job_number":0,
+          "job_number":1,
           "last_updated": "{{DYNAMIC_RECENT_TIMESTAMP}}",
           "label": "Test Dataset Series",
           "state": "submitted",
