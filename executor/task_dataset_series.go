@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/cache"
@@ -36,6 +37,13 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber}
 
 	log.Info(ctx, "starting migration for dataset series task", logData)
+
+	// Validate that topic cache is available - this is critical for migration
+	if e.topicCache == nil {
+		err := fmt.Errorf("topic cache is nil - cannot migrate dataset series without topic cache")
+		log.Error(ctx, "topic cache not available for dataset series migration", err, logData)
+		return err
+	}
 
 	sourceData, err := e.clientList.Zebedee.GetDatasetLandingPage(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Source.ID)
 	if err != nil {

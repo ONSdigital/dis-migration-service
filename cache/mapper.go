@@ -92,7 +92,7 @@ func addTopicWithParents(ctx context.Context, slug, parentSlug string, topicCach
 	topic, err := topicCache.GetTopic(ctx, slug)
 	if err != nil {
 		// Topic not found in cache, skip
-		log.Info(ctx, "topic not found in cache, skipping", log.Data{
+		log.Info(ctx, "topic slug not found in cache, skipping", log.Data{
 			"slug":        slug,
 			"parent_slug": parentSlug,
 		})
@@ -107,9 +107,9 @@ func addTopicWithParents(ctx context.Context, slug, parentSlug string, topicCach
 	// Verify the parent slug matches (or is empty for root topics)
 	if parentSlug != "" && topic.ParentSlug != parentSlug {
 		log.Info(ctx, "parent slug mismatch, skipping topic", log.Data{
-			"slug":               slug,
-			"expected_parent":    parentSlug,
-			"actual_parent_slug": topic.ParentSlug,
+			"slug":                 slug,
+			"expected_parent_slug": parentSlug,
+			"actual_parent_slug":   topic.ParentSlug,
 		})
 		return
 	}

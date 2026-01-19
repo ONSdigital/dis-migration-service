@@ -243,8 +243,11 @@ func (c *MigrationComponent) DoGetSlackClient(ctx context.Context, cfg *config.C
 	return c.MockSlackClient, nil
 }
 
-func (c *MigrationComponent) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
-	mig := migrator.NewDefaultMigrator(cfg, jobService, clientList, slackClient)
+func (c *MigrationComponent) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter, topicCache *cache.TopicCache) (migrator.Migrator, error) {
+	mig, err := migrator.NewDefaultMigrator(cfg, jobService, clientList, slackClient, topicCache)
+	if err != nil {
+		return nil, err
+	}
 	c.Migrator = mig
 	return mig, nil
 }
@@ -360,12 +363,13 @@ func (c *MigrationComponent) ResetMockSlackClient() {
 	}
 }
 
-func (c *MigrationComponent) DoGetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
-	// For component tests, create a topic cache but don't start updates
+func (c *MigrationComponent) DoGetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, chan error, error) {
+	// For component tests, create a populated topic cache
 	// This avoids external dependencies during testing
-	topicCache, err := cache.NewTopicCache(ctx, nil)
+	topicCache, err := cache.NewPopulatedTopicCacheForTest(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return topicCache, nil
+	// Return a dummy error channel for component tests
+	return topicCache, make(chan error, 1), nil
 }

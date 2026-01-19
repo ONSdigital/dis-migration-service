@@ -116,10 +116,9 @@ func TestRun(t *testing.T) {
 			return createMockSlackClient(), nil
 		}
 
-		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
+		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter, topicCache *cache.TopicCache) (migrator.Migrator, error) {
 			return &migratorMock.MigratorMock{
-				StartFunc:         func(ctx context.Context) {},
-				SetTopicCacheFunc: func(topicCache *cache.TopicCache) {},
+				StartFunc: func(ctx context.Context) {},
 			}, nil
 		}
 
@@ -127,8 +126,8 @@ func TestRun(t *testing.T) {
 			return &clients.ClientList{}
 		}
 
-		funcDoGetTopicCacheOk := func(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
-			return nil, nil
+		funcDoGetTopicCacheOk := func(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, chan error, error) {
+			return nil, nil, nil
 		}
 
 		funcDoGetAuthOk := func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
@@ -324,11 +323,10 @@ func TestClose(t *testing.T) {
 			return createMockSlackClient(), nil
 		}
 
-		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
+		funcDoGetMigrator := func(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter, topicCache *cache.TopicCache) (migrator.Migrator, error) {
 			return &migratorMock.MigratorMock{
-				StartFunc:         func(ctx context.Context) {},
-				SetTopicCacheFunc: func(topicCache *cache.TopicCache) {},
-				ShutdownFunc:      funcClose,
+				StartFunc:    func(ctx context.Context) {},
+				ShutdownFunc: funcClose,
 			}, nil
 		}
 
@@ -342,8 +340,8 @@ func TestClose(t *testing.T) {
 			return &clients.ClientList{}
 		}
 
-		funcDoGetTopicCacheOk := func(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
-			return nil, nil
+		funcDoGetTopicCacheOk := func(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, chan error, error) {
+			return nil, nil, nil
 		}
 
 		funcDoGetAuthOk := func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {

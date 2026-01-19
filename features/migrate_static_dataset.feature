@@ -11,6 +11,7 @@ Feature: Migrate a static dataset job
       """
       {
         "type": "dataset_landing_page",
+        "uri": "/economy/datasets/test-dataset",
         "description": {
           "title": "Test Dataset Series"
         }

@@ -61,6 +61,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 					return zebedee.DatasetLandingPage{
 						Type: zebedee.PageTypeDatasetLandingPage,
+						URI:  "/economy/datasets/test-dataset",
 						Datasets: []zebedee.Link{
 							{
 								URI: getEditionURI(testDatasetSeriesURI, "2021"),
@@ -76,7 +77,8 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -123,7 +125,8 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -158,7 +161,8 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -201,7 +205,8 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -247,7 +252,8 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -275,6 +281,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 					return zebedee.DatasetLandingPage{
 						Type: zebedee.PageTypeDatasetLandingPage,
+						URI:  "/economy/datasets/test-dataset",
 						Datasets: []zebedee.Link{
 							{
 								URI: getEditionURI(testDatasetSeriesURI, "2021"),
@@ -290,7 +297,8 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
@@ -309,7 +317,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 		ctx := context.Background()
 
 		// Create and populate topic cache
-		topicCache, err := NewTopicCacheForTest(ctx)
+		topicCache, err := cache.NewPopulatedTopicCacheForTest(ctx)
 		So(err, ShouldBeNil)
 
 		mockJobService := &applicationMocks.JobServiceMock{
@@ -354,16 +362,22 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				Convey("And the datasetAPI is called to create a dataset with topics", func() {
 					So(len(mockDatasetClient.CreateDatasetCalls()), ShouldEqual, 1)
 					So(mockDatasetClient.CreateDatasetCalls()[0].Dataset.ID, ShouldEqual, testDatasetSeriesID)
+
+					Convey("And the topics are mapped from the URI", func() {
+						topics := mockDatasetClient.CreateDatasetCalls()[0].Dataset.Topics
+						So(len(topics), ShouldEqual, 2)
+						So(topics[0], ShouldEqual, "1234")
+						So(topics[1], ShouldEqual, "3456")
+					})
 				})
 			})
 		})
 	})
 
-	Convey("Given a dataset series task executor with empty topic cache", t, func() {
+	Convey("Given a dataset series task executor with a dataset URI containing no valid topic slugs", t, func() {
 		ctx := context.Background()
 
-		// Create empty topic cache
-		topicCache, err := NewEmptyTopicCacheForTest(ctx)
+		topicCache, err := cache.NewPopulatedTopicCacheForTest(ctx)
 		So(err, ShouldBeNil)
 
 		mockJobService := &applicationMocks.JobServiceMock{
@@ -374,7 +388,6 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 		}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
 			CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
-				// With empty cache, topics may be empty or nil
 				return models.DatasetUpdate{}, nil
 			},
 		}
@@ -398,67 +411,17 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
-		Convey("When migrate is called with empty topic cache", func() {
+		Convey("When migrate is called", func() {
 			err := executor.Migrate(ctx, testSeriesTask)
 
-			Convey("Then no error is returned (graceful handling)", func() {
-				So(err, ShouldBeNil)
+			Convey("Then an error is returned as no topics could be extracted from the URI", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "no topics found for dataset")
 
-				Convey("And the datasetAPI is still called to create a dataset", func() {
-					So(len(mockDatasetClient.CreateDatasetCalls()), ShouldEqual, 1)
+				Convey("And the datasetAPI is not called to create a dataset", func() {
+					So(len(mockDatasetClient.CreateDatasetCalls()), ShouldEqual, 0)
 				})
 			})
 		})
 	})
-}
-
-// NewTopicCacheForTest creates a topic cache with test data
-func NewTopicCacheForTest(ctx context.Context) (*cache.TopicCache, error) {
-	topicCache, err := cache.NewTopicCache(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Populate with realistic test data
-	subtopicsMap := cache.NewSubTopicsMap()
-	subtopicsMap.AppendSubtopicID("economy", cache.Subtopic{
-		ID:         "economy-topic-id",
-		Slug:       "economy",
-		ParentSlug: "",
-	})
-	subtopicsMap.AppendSubtopicID("inflationandpriceindices", cache.Subtopic{
-		ID:         "inflation-topic-id",
-		Slug:       "inflationandpriceindices",
-		ParentSlug: "economy",
-	})
-	subtopicsMap.AppendSubtopicID("business", cache.Subtopic{
-		ID:         "business-topic-id",
-		Slug:       "business",
-		ParentSlug: "",
-	})
-
-	testTopic := &cache.Topic{
-		ID:   cache.TopicCacheKey,
-		List: subtopicsMap,
-	}
-	topicCache.Set(cache.TopicCacheKey, testTopic)
-
-	return topicCache, nil
-}
-
-// NewEmptyTopicCacheForTest creates an empty topic cache
-func NewEmptyTopicCacheForTest(ctx context.Context) (*cache.TopicCache, error) {
-	topicCache, err := cache.NewTopicCache(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Set empty topic
-	emptyTopic := &cache.Topic{
-		ID:   cache.TopicCacheKey,
-		List: cache.NewSubTopicsMap(),
-	}
-	topicCache.Set(cache.TopicCacheKey, emptyTopic)
-
-	return topicCache, nil
 }

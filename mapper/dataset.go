@@ -19,11 +19,21 @@ func MapDatasetLandingPageToDatasetAPI(ctx context.Context, datasetID string, pa
 		return nil, errors.New("invalid page type for dataset landing page")
 	}
 
-	// Extract topic IDs from the URI using the topic cache
-	// There are no existing topics in Zebedee data - they are derived from the URI
-	var topicIDs []string
-	if topicCache != nil {
-		topicIDs = cache.ExtractTopicIDsFromURI(ctx, pageData.URI, nil, topicCache)
+	if topicCache == nil {
+		return nil, errors.New("topicCache is required for dataset mapping")
+	}
+
+	// Extract topic IDs from the URI and merge with any existing topics from Zebedee data
+	// Zebedee data contains topicIDs in Description.Topics (secondaryTopics) and CanonicalTopic
+	existingTopicIDs := pageData.Description.Topics
+	if pageData.Description.CanonicalTopic != "" {
+		existingTopicIDs = append(existingTopicIDs, pageData.Description.CanonicalTopic)
+	}
+
+	topicIDs := cache.ExtractTopicIDsFromURI(ctx, pageData.URI, existingTopicIDs, topicCache)
+
+	if len(topicIDs) == 0 {
+		return nil, errors.New("no topics found for dataset - datasets must have at least one topic")
 	}
 
 	// TODO: confirm handling of NextRelease field if unset.

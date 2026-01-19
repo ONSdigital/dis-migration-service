@@ -2,8 +2,6 @@ package migrator
 
 import (
 	"context"
-
-	"github.com/ONSdigital/dis-migration-service/cache"
 )
 
 // Migrator defines the contract for migration operations
@@ -12,5 +10,4 @@ import (
 type Migrator interface {
 	Shutdown(ctx context.Context) error
 	Start(ctx context.Context)
-	SetTopicCache(topicCache *cache.TopicCache)
 }

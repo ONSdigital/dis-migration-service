@@ -4,17 +4,18 @@ go 1.24.7
 
 require (
 	github.com/ONSdigital/dis-redirect-api v0.3.8
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.271.0
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.273.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.33.1
+	github.com/ONSdigital/dp-cache v0.6.1
 	github.com/ONSdigital/dp-component-test v1.2.4-alpha
-	github.com/ONSdigital/dp-dataset-api v1.94.0
-	github.com/ONSdigital/dp-files-api v1.15.0
+	github.com/ONSdigital/dp-dataset-api v1.95.0
+	github.com/ONSdigital/dp-files-api v1.16.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-mongodb/v3 v3.11.0
 	github.com/ONSdigital/dp-net/v3 v3.9.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
-	github.com/ONSdigital/dp-topic-api v1.3.1
 	github.com/ONSdigital/dp-permissions-api v1.10.1
+	github.com/ONSdigital/dp-topic-api v1.3.1
 	github.com/ONSdigital/dp-upload-service v1.13.0
 	github.com/ONSdigital/log.go/v2 v2.5.1
 	github.com/cucumber/godog v0.15.1
@@ -114,7 +115,7 @@ require (
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/klauspost/compress v1.18.2 // indirect
+	github.com/klauspost/compress v1.18.3 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20251013123823-9fd1530e3ec3 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
@@ -132,7 +133,7 @@ require (
 	github.com/morikuni/aec v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
-	github.com/pierrec/lz4/v4 v4.1.23 // indirect
+	github.com/pierrec/lz4/v4 v4.1.25 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect

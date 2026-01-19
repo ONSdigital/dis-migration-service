@@ -8,6 +8,7 @@ import (
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	applicationMocks "github.com/ONSdigital/dis-migration-service/application/mock"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -69,7 +70,8 @@ func TestMigratorExecuteJob(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 
 		Convey("When a job in state migrating is executed", func() {
@@ -129,7 +131,8 @@ func TestMigratorExecuteJob(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 
 		Convey("When a job is executed", func() {
@@ -181,7 +184,8 @@ func TestMigratorExecuteJob(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 
 		Convey("When a job is executed that errors during migration", func() {
@@ -219,7 +223,8 @@ func TestMigratorFailJob(t *testing.T) {
 		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 
 		Convey("When failJob is called for a job with an active state", func() {
@@ -270,7 +275,8 @@ func TestMigratorFailJob(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 
 		Convey("When failJob is called for a job", func() {
@@ -309,7 +315,8 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		Convey("When failJobByID is called", func() {
 			err := mig.failJobByJobNumber(ctx, 25, errors.New("test error"), failureReasonExecutionFailed)
@@ -342,7 +349,8 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		Convey("When failJobByID is called", func() {
 			err := mig.failJobByJobNumber(ctx, 25, errors.New("test error"), failureReasonExecutionFailed)
@@ -369,7 +377,8 @@ func TestMigratorFailJobByJobNumber(t *testing.T) {
 		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		Convey("When failJobByJobNumber is called", func() {
 			err := mig.failJobByJobNumber(ctx, 26, errors.New("test error"), failureReasonExecutionFailed)
@@ -406,7 +415,8 @@ func TestGetJobExecutor(t *testing.T) {
 		mockSlackClient := createMockSlackClient()
 		cfg := &config.Config{}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 
 		Convey("When getJobExecutor is called for a job with a known type", func() {
@@ -460,7 +470,8 @@ func TestMonitorJobs(t *testing.T) {
 			MigratorPollInterval: 10 * time.Millisecond,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx, cancel := context.WithCancel(context.Background())
 
 		Convey("When monitorJobs is started and runs one iteration", func() {
@@ -521,7 +532,8 @@ func TestMonitorJobs(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx, cancel := context.WithCancel(context.Background())
 
 		Convey("When monitorJobs is started and runs one iteration", func() {

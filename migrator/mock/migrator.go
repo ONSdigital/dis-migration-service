@@ -5,7 +5,6 @@ package mock
 
 import (
 	"context"
-	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"sync"
 )
@@ -20,9 +19,6 @@ var _ migrator.Migrator = &MigratorMock{}
 //
 //		// make and configure a mocked migrator.Migrator
 //		mockedMigrator := &MigratorMock{
-//			SetTopicCacheFunc: func(topicCache *cache.TopicCache)  {
-//				panic("mock out the SetTopicCache method")
-//			},
 //			ShutdownFunc: func(ctx context.Context) error {
 //				panic("mock out the Shutdown method")
 //			},
@@ -36,9 +32,6 @@ var _ migrator.Migrator = &MigratorMock{}
 //
 //	}
 type MigratorMock struct {
-	// SetTopicCacheFunc mocks the SetTopicCache method.
-	SetTopicCacheFunc func(topicCache *cache.TopicCache)
-
 	// ShutdownFunc mocks the Shutdown method.
 	ShutdownFunc func(ctx context.Context) error
 
@@ -47,11 +40,6 @@ type MigratorMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// SetTopicCache holds details about calls to the SetTopicCache method.
-		SetTopicCache []struct {
-			// TopicCache is the topicCache argument value.
-			TopicCache *cache.TopicCache
-		}
 		// Shutdown holds details about calls to the Shutdown method.
 		Shutdown []struct {
 			// Ctx is the ctx argument value.
@@ -63,41 +51,8 @@ type MigratorMock struct {
 			Ctx context.Context
 		}
 	}
-	lockSetTopicCache sync.RWMutex
-	lockShutdown      sync.RWMutex
-	lockStart         sync.RWMutex
-}
-
-// SetTopicCache calls SetTopicCacheFunc.
-func (mock *MigratorMock) SetTopicCache(topicCache *cache.TopicCache) {
-	if mock.SetTopicCacheFunc == nil {
-		panic("MigratorMock.SetTopicCacheFunc: method is nil but Migrator.SetTopicCache was just called")
-	}
-	callInfo := struct {
-		TopicCache *cache.TopicCache
-	}{
-		TopicCache: topicCache,
-	}
-	mock.lockSetTopicCache.Lock()
-	mock.calls.SetTopicCache = append(mock.calls.SetTopicCache, callInfo)
-	mock.lockSetTopicCache.Unlock()
-	mock.SetTopicCacheFunc(topicCache)
-}
-
-// SetTopicCacheCalls gets all the calls that were made to SetTopicCache.
-// Check the length with:
-//
-//	len(mockedMigrator.SetTopicCacheCalls())
-func (mock *MigratorMock) SetTopicCacheCalls() []struct {
-	TopicCache *cache.TopicCache
-} {
-	var calls []struct {
-		TopicCache *cache.TopicCache
-	}
-	mock.lockSetTopicCache.RLock()
-	calls = mock.calls.SetTopicCache
-	mock.lockSetTopicCache.RUnlock()
-	return calls
+	lockShutdown sync.RWMutex
+	lockStart    sync.RWMutex
 }
 
 // Shutdown calls ShutdownFunc.

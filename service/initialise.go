@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/ONSdigital/dis-migration-service/application"
@@ -22,9 +23,9 @@ import (
 	datasetAPIMocks "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
 	filesAPI "github.com/ONSdigital/dp-files-api/sdk"
 	filesAPIMocks "github.com/ONSdigital/dp-files-api/sdk/mocks"
-	topicAPI "github.com/ONSdigital/dp-topic-api/sdk"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v3/http"
+	topicAPI "github.com/ONSdigital/dp-topic-api/sdk"
 	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
 	uploadSDKMocks "github.com/ONSdigital/dp-upload-service/sdk/mocks"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -92,8 +93,8 @@ func (e *ExternalServiceList) GetSlackClient(ctx context.Context, cfg *config.Co
 }
 
 // GetMigrator returns the background migrator
-func (e *ExternalServiceList) GetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
-	mig, err := e.Init.DoGetMigrator(ctx, cfg, jobService, clientList, slackClient)
+func (e *ExternalServiceList) GetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter, topicCache *cache.TopicCache) (migrator.Migrator, error) {
+	mig, err := e.Init.DoGetMigrator(ctx, cfg, jobService, clientList, slackClient, topicCache)
 	if err != nil {
 		return nil, err
 	}
@@ -107,14 +108,15 @@ func (e *ExternalServiceList) GetAppClients(ctx context.Context, cfg *config.Con
 	return e.Init.DoGetAppClients(ctx, cfg)
 }
 
-// GetTopicCache returns the topic cache
-func (e *ExternalServiceList) GetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
-	topicCache, err := e.Init.DoGetTopicCache(ctx, cfg, clientList)
+// GetTopicCache returns the topic cache and an error channel
+// for monitoring cache update failures
+func (e *ExternalServiceList) GetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, chan error, error) {
+	topicCache, cacheErrorChan, err := e.Init.DoGetTopicCache(ctx, cfg, clientList)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	e.TopicCache = true
-	return topicCache, nil
+	return topicCache, cacheErrorChan, nil
 }
 
 // DoGetHTTPServer creates an HTTP Server with the provided
@@ -174,47 +176,62 @@ func (e *Init) DoGetSlackClient(ctx context.Context, cfg *config.Config) (slack.
 }
 
 // DoGetMigrator returns a Migrator
-func (e *Init) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter) (migrator.Migrator, error) {
-	mig := migrator.NewDefaultMigrator(cfg, jobService, clientList, slackClient)
+func (e *Init) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService application.JobService, clientList *clients.ClientList, slackClient slack.Clienter, topicCache *cache.TopicCache) (migrator.Migrator, error) {
+	mig, err := migrator.NewDefaultMigrator(cfg, jobService, clientList, slackClient, topicCache)
+	if err != nil {
+		log.Error(ctx, "failed to create migrator", err)
+		return nil, err
+	}
 	log.Info(ctx, "migrator initialised")
 	return mig, nil
 }
 
-// DoGetTopicCache creates and initializes the topic cache
-func (e *Init) DoGetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, error) {
+// DoGetTopicCache creates and initializes the topic cache.
+// This function will fail if the initial cache population fails,
+// as the topic cache is critical for the migration service.
+// Returns the topic cache and error channel for monitoring updates.
+func (e *Init) DoGetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, chan error, error) {
 	// Create topic cache with update interval
 	topicCache, err := cache.NewTopicCache(ctx, &cfg.TopicCacheUpdateInterval)
 	if err != nil {
 		log.Error(ctx, "failed to create topic cache", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Add update function to populate the cache
+	updateFunc := cache.UpdateTopicCache(ctx, cfg.ServiceAuthToken, clientList.TopicAPI)
 	topicCache.AddUpdateFunc(
 		topicCache.GetTopicCacheKey(),
-		cache.UpdateTopicCache(ctx, cfg.ServiceAuthToken, clientList.TopicAPI),
+		updateFunc,
 	)
 
-	// Start the cache updates in the background (this will trigger the initial update and periodic updates)
+	// Perform initial cache population synchronously to ensure it succeeds before starting the service
+	log.Info(ctx, "performing initial topic cache population")
+	initialTopicCache := updateFunc()
+	if initialTopicCache == nil || len(initialTopicCache.List.GetSubtopics()) == 0 {
+		err := fmt.Errorf("initial topic cache population failed - no topics were loaded")
+		log.Error(ctx, "failed to populate topic cache on startup", err)
+		return nil, nil, err
+	}
+
+	// Set the initial cache data
+	topicCache.Set(topicCache.GetTopicCacheKey(), initialTopicCache)
+	log.Info(ctx, "initial topic cache populated successfully", log.Data{
+		"topic_count": len(initialTopicCache.List.GetSubtopics()),
+	})
+
+	// Start the cache updates in the background for periodic updates
 	// Create a dedicated error channel for cache updates
 	cacheErrorChan := make(chan error, 1)
 	go func() {
 		topicCache.StartUpdates(ctx, cacheErrorChan)
 	}()
 
-	// Listen for cache errors and log them
-	go func() {
-		for err := range cacheErrorChan {
-			if err != nil {
-				log.Error(ctx, "topic cache update error", err)
-			}
-		}
-	}()
-
-	log.Info(ctx, "topic cache initialised", log.Data{
+	log.Info(ctx, "topic cache initialised with periodic updates", log.Data{
 		"update_interval": cfg.TopicCacheUpdateInterval,
+		"initial_topics":  len(initialTopicCache.List.GetSubtopics()),
 	})
-	return topicCache, nil
+	return topicCache, cacheErrorChan, nil
 }
 
 // DoGetAppClients returns a set of app clients for the migration service
@@ -276,7 +293,7 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 
 	return &clients.ClientList{
 		DatasetAPI:    datasetAPI.New(cfg.DatasetAPIURL),
-		FilesAPI:      filesAPI.New(cfg.FilesAPIURL, cfg.ServiceAuthToken),
+		FilesAPI:      filesAPI.New(cfg.FilesAPIURL),
 		RedirectAPI:   redirectAPI.NewClient(cfg.RedirectAPIURL),
 		TopicAPI:      topicAPIClient,
 		UploadService: uploadSDK.New(cfg.UploadServiceURL),

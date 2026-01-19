@@ -16,6 +16,7 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
+// getTaskExecutors is a package-level variable that creates task executors.
 var getTaskExecutors = func(jobService application.JobService, appClients *clients.ClientList, cfg *config.Config, topicCache *cache.TopicCache) map[domain.TaskType]executor.TaskExecutor {
 	taskExecutors := make(map[domain.TaskType]executor.TaskExecutor)
 	taskExecutors[domain.TaskTypeDatasetSeries] = executor.NewDatasetSeriesTaskExecutor(jobService, appClients, cfg.ServiceAuthToken, topicCache)

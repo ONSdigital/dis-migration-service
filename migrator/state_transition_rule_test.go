@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	applicationMocks "github.com/ONSdigital/dis-migration-service/application/mock"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -51,7 +52,8 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
 			TaskTargetState: domain.StateInReview,
@@ -115,7 +117,8 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
 			TaskTargetState: domain.StatePublished,
@@ -173,7 +176,8 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
 			TaskTargetState: domain.StateInReview,
@@ -229,7 +233,8 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
 			TaskTargetState: domain.StateInReview,
@@ -272,7 +277,8 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
 			TaskTargetState: domain.StateInReview,
@@ -322,7 +328,8 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
 			TaskTargetState: domain.StateInReview,
@@ -371,7 +378,8 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
 			TaskTargetState: domain.StateInReview,
@@ -425,7 +433,8 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
 			TaskTargetState: domain.StateInReview,
@@ -481,7 +490,8 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 
 		Convey("When triggering job state transition", func() {
@@ -543,7 +553,8 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 
 		Convey("When triggering job state transition", func() {
@@ -589,7 +600,8 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 
 		Convey("When triggering job state transition", func() {
@@ -646,7 +658,8 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 			MigratorMaxConcurrentExecutions: 1,
 		}
 
-		mig := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 
 		Convey("When triggering job state transition", func() {

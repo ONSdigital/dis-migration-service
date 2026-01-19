@@ -31,13 +31,16 @@ type migrator struct {
 }
 
 // NewDefaultMigrator creates a new default migrator with the
-// provided job service and clients
-func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, appClients *clients.ClientList, slackClient slack.Clienter) *migrator {
-	jobExecutors := getJobExecutors(jobService, appClients)
-	// Task executors will be created when topic cache is set
-	taskExecutors := make(map[domain.TaskType]executor.TaskExecutor)
+// provided job service and clients. topicCache must not be nil.
+func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, appClients *clients.ClientList, slackClient slack.Clienter, topicCache *cache.TopicCache) (*migrator, error) {
+	if topicCache == nil {
+		return nil, fmt.Errorf("topicCache is required but was nil - cannot initialize migrator without topic cache")
+	}
 
-	return &migrator{
+	jobExecutors := getJobExecutors(jobService, appClients)
+	taskExecutors := getTaskExecutors(jobService, appClients, cfg, topicCache)
+
+	mig := &migrator{
 		jobService:    jobService,
 		jobExecutors:  jobExecutors,
 		taskExecutors: taskExecutors,
@@ -45,15 +48,11 @@ func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, a
 		pollInterval:  cfg.MigratorPollInterval,
 		cfg:           cfg,
 		appClients:    appClients,
+		topicCache:    topicCache,
 		// Semaphore to limit concurrent migrations
 		semaphore: make(chan struct{}, cfg.MigratorMaxConcurrentExecutions),
 	}
-}
-
-// SetTopicCache sets the topic cache and initializes task executors
-func (mig *migrator) SetTopicCache(topicCache *cache.TopicCache) {
-	mig.topicCache = topicCache
-	mig.taskExecutors = getTaskExecutors(mig.jobService, mig.appClients, mig.cfg, topicCache)
+	return mig, nil
 }
 
 // Start begins monitoring for jobs and tasks to process

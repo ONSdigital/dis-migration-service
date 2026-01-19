@@ -111,7 +111,7 @@ func (tc *TopicCache) GetTopic(ctx context.Context, slug string) (*Subtopic, err
 	topicCacheItem, exists := topicCache.List.Get(slug)
 	if !exists {
 		err := errors.New("requested topic does not exist in cache")
-		log.Error(ctx, "failed to get topic from cache", err, log.Data{
+		log.Info(ctx, "topic slug not found in cache", log.Data{
 			"slug": slug,
 		})
 		return nil, err
