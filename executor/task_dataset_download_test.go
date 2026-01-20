@@ -151,9 +151,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 			executor := NewDatasetDownloadTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
 
 			Convey("When migrate is called for a task", func() {
-				task := testDownloadTask
-
-				err := executor.Migrate(ctx, task)
+				err := executor.Migrate(ctx, testDownloadTask)
 
 				Convey("Then an error is returned", func() {
 					So(err, ShouldNotBeNil)
@@ -198,9 +196,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 			executor := NewDatasetDownloadTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
 
 			Convey("When migrate is called for a task", func() {
-				task := testDownloadTask
-
-				err := executor.Migrate(ctx, task)
+				err := executor.Migrate(ctx, testDownloadTask)
 
 				Convey("Then an error is returned", func() {
 					So(err, ShouldNotBeNil)
@@ -254,9 +250,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 		executor := NewDatasetDownloadTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
 
 		Convey("When migrate is called for a task", func() {
-			task := testDownloadTask
-
-			err := executor.Migrate(ctx, task)
+			err := executor.Migrate(ctx, testDownloadTask)
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldNotBeNil)
