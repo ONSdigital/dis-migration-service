@@ -130,7 +130,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 			})
 		})
 
-		Convey("Given a dataset download task executor with a zebedee client mock that errors", func() {
+		Convey("And a dataset download task executor with a zebedee client mock that errors", func() {
 			mockJobService := &applicationMocks.JobServiceMock{}
 			mockDatasetClient := &datasetSDKMock.ClienterMock{}
 			mockClientList := &clients.ClientList{
@@ -164,7 +164,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 			})
 		})
 
-		Convey("Given a dataset download task executor and an upload service client that fails to upload a file", func() {
+		Convey("And a dataset download task executor and an upload service client that fails to upload a file", func() {
 			mockJobService := &applicationMocks.JobServiceMock{
 				UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
 					return nil
@@ -203,6 +203,50 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 
 					Convey("And no version updates are called", func() {
 						So(len(mockDatasetClient.PutVersionCalls()), ShouldEqual, 0)
+					})
+				})
+			})
+		})
+
+		Convey("And a dataset download task executor and a Zebedee client that fails to get a filesize", func() {
+			mockJobService := &applicationMocks.JobServiceMock{
+				UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+					return nil
+				},
+			}
+			mockUploadClient := &uploadSDKMock.ClienterMock{}
+			mockDatasetClient := &datasetSDKMock.ClienterMock{}
+			mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+				GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
+					return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
+				},
+				GetFileSizeFunc: func(ctx context.Context, userAccessToken, collectionID, lang, uri string) (zebedee.FileSize, error) {
+					return zebedee.FileSize{}, errors.New("failed to get file size")
+				},
+			}
+
+			mockClientList := &clients.ClientList{
+				DatasetAPI:    mockDatasetClient,
+				Zebedee:       mockZebedeeClient,
+				UploadService: mockUploadClient,
+			}
+
+			ctx := context.Background()
+
+			executor := NewDatasetDownloadTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+			Convey("When migrate is called for a task", func() {
+				err := executor.Migrate(ctx, testDownloadTask)
+
+				Convey("Then an error is returned", func() {
+					So(err, ShouldNotBeNil)
+
+					Convey("And zebedee is not called to get a resource stream", func() {
+						So(len(mockZebedeeClient.GetResourceStreamCalls()), ShouldEqual, 0)
+						Convey("And no upload or dataset version updates are called", func() {
+							So(len(mockUploadClient.UploadCalls()), ShouldEqual, 0)
+							So(len(mockDatasetClient.PutVersionCalls()), ShouldEqual, 0)
+						})
 					})
 				})
 			})
