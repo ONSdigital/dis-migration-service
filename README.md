@@ -84,6 +84,8 @@ npm install -g @redocly/cli
 | IDENTITY_WEB_KEY_SET_URL                  | localhost:25600       | Endpoint for the Identity API                                                                                      |
 | AUTHORISATION_IDENTITY_CLIENT_MAX_RETRIES | 2                     | The maximum number of times that the service tries to connect to the Identity API                                  |
 
+The Zebedee Client also takes a `ZEBEDEE_REQUEST_TIMEOUT_SECONDS` parameter - this is required to configure for larger downloads.
+
 ## Contributing
 
 See [CONTRIBUTING](CONTRIBUTING.md) for details.

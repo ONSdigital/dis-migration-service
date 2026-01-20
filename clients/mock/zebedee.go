@@ -7,6 +7,7 @@ import (
 	"context"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	"io"
 	"sync"
 )
 
@@ -26,8 +27,14 @@ var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 //			GetDatasetLandingPageFunc: func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.DatasetLandingPage, error) {
 //				panic("mock out the GetDatasetLandingPage method")
 //			},
+//			GetFileSizeFunc: func(ctx context.Context, userAccessToken string, collectionID string, lang string, uri string) (zebedee.FileSize, error) {
+//				panic("mock out the GetFileSize method")
+//			},
 //			GetPageDataFunc: func(ctx context.Context, userAuthToken string, collectionID string, lang string, path string) (zebedee.PageData, error) {
 //				panic("mock out the GetPageData method")
+//			},
+//			GetResourceStreamFunc: func(ctx context.Context, userAuthToken string, collectionID string, lang string, path string) (io.ReadCloser, error) {
+//				panic("mock out the GetResourceStream method")
 //			},
 //		}
 //
@@ -42,8 +49,14 @@ type ZebedeeClientMock struct {
 	// GetDatasetLandingPageFunc mocks the GetDatasetLandingPage method.
 	GetDatasetLandingPageFunc func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.DatasetLandingPage, error)
 
+	// GetFileSizeFunc mocks the GetFileSize method.
+	GetFileSizeFunc func(ctx context.Context, userAccessToken string, collectionID string, lang string, uri string) (zebedee.FileSize, error)
+
 	// GetPageDataFunc mocks the GetPageData method.
 	GetPageDataFunc func(ctx context.Context, userAuthToken string, collectionID string, lang string, path string) (zebedee.PageData, error)
+
+	// GetResourceStreamFunc mocks the GetResourceStream method.
+	GetResourceStreamFunc func(ctx context.Context, userAuthToken string, collectionID string, lang string, path string) (io.ReadCloser, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -73,8 +86,34 @@ type ZebedeeClientMock struct {
 			// Path is the path argument value.
 			Path string
 		}
+		// GetFileSize holds details about calls to the GetFileSize method.
+		GetFileSize []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserAccessToken is the userAccessToken argument value.
+			UserAccessToken string
+			// CollectionID is the collectionID argument value.
+			CollectionID string
+			// Lang is the lang argument value.
+			Lang string
+			// URI is the uri argument value.
+			URI string
+		}
 		// GetPageData holds details about calls to the GetPageData method.
 		GetPageData []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserAuthToken is the userAuthToken argument value.
+			UserAuthToken string
+			// CollectionID is the collectionID argument value.
+			CollectionID string
+			// Lang is the lang argument value.
+			Lang string
+			// Path is the path argument value.
+			Path string
+		}
+		// GetResourceStream holds details about calls to the GetResourceStream method.
+		GetResourceStream []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// UserAuthToken is the userAuthToken argument value.
@@ -89,7 +128,9 @@ type ZebedeeClientMock struct {
 	}
 	lockGetDataset            sync.RWMutex
 	lockGetDatasetLandingPage sync.RWMutex
+	lockGetFileSize           sync.RWMutex
 	lockGetPageData           sync.RWMutex
+	lockGetResourceStream     sync.RWMutex
 }
 
 // GetDataset calls GetDatasetFunc.
@@ -188,6 +229,54 @@ func (mock *ZebedeeClientMock) GetDatasetLandingPageCalls() []struct {
 	return calls
 }
 
+// GetFileSize calls GetFileSizeFunc.
+func (mock *ZebedeeClientMock) GetFileSize(ctx context.Context, userAccessToken string, collectionID string, lang string, uri string) (zebedee.FileSize, error) {
+	if mock.GetFileSizeFunc == nil {
+		panic("ZebedeeClientMock.GetFileSizeFunc: method is nil but ZebedeeClient.GetFileSize was just called")
+	}
+	callInfo := struct {
+		Ctx             context.Context
+		UserAccessToken string
+		CollectionID    string
+		Lang            string
+		URI             string
+	}{
+		Ctx:             ctx,
+		UserAccessToken: userAccessToken,
+		CollectionID:    collectionID,
+		Lang:            lang,
+		URI:             uri,
+	}
+	mock.lockGetFileSize.Lock()
+	mock.calls.GetFileSize = append(mock.calls.GetFileSize, callInfo)
+	mock.lockGetFileSize.Unlock()
+	return mock.GetFileSizeFunc(ctx, userAccessToken, collectionID, lang, uri)
+}
+
+// GetFileSizeCalls gets all the calls that were made to GetFileSize.
+// Check the length with:
+//
+//	len(mockedZebedeeClient.GetFileSizeCalls())
+func (mock *ZebedeeClientMock) GetFileSizeCalls() []struct {
+	Ctx             context.Context
+	UserAccessToken string
+	CollectionID    string
+	Lang            string
+	URI             string
+} {
+	var calls []struct {
+		Ctx             context.Context
+		UserAccessToken string
+		CollectionID    string
+		Lang            string
+		URI             string
+	}
+	mock.lockGetFileSize.RLock()
+	calls = mock.calls.GetFileSize
+	mock.lockGetFileSize.RUnlock()
+	return calls
+}
+
 // GetPageData calls GetPageDataFunc.
 func (mock *ZebedeeClientMock) GetPageData(ctx context.Context, userAuthToken string, collectionID string, lang string, path string) (zebedee.PageData, error) {
 	if mock.GetPageDataFunc == nil {
@@ -233,5 +322,53 @@ func (mock *ZebedeeClientMock) GetPageDataCalls() []struct {
 	mock.lockGetPageData.RLock()
 	calls = mock.calls.GetPageData
 	mock.lockGetPageData.RUnlock()
+	return calls
+}
+
+// GetResourceStream calls GetResourceStreamFunc.
+func (mock *ZebedeeClientMock) GetResourceStream(ctx context.Context, userAuthToken string, collectionID string, lang string, path string) (io.ReadCloser, error) {
+	if mock.GetResourceStreamFunc == nil {
+		panic("ZebedeeClientMock.GetResourceStreamFunc: method is nil but ZebedeeClient.GetResourceStream was just called")
+	}
+	callInfo := struct {
+		Ctx           context.Context
+		UserAuthToken string
+		CollectionID  string
+		Lang          string
+		Path          string
+	}{
+		Ctx:           ctx,
+		UserAuthToken: userAuthToken,
+		CollectionID:  collectionID,
+		Lang:          lang,
+		Path:          path,
+	}
+	mock.lockGetResourceStream.Lock()
+	mock.calls.GetResourceStream = append(mock.calls.GetResourceStream, callInfo)
+	mock.lockGetResourceStream.Unlock()
+	return mock.GetResourceStreamFunc(ctx, userAuthToken, collectionID, lang, path)
+}
+
+// GetResourceStreamCalls gets all the calls that were made to GetResourceStream.
+// Check the length with:
+//
+//	len(mockedZebedeeClient.GetResourceStreamCalls())
+func (mock *ZebedeeClientMock) GetResourceStreamCalls() []struct {
+	Ctx           context.Context
+	UserAuthToken string
+	CollectionID  string
+	Lang          string
+	Path          string
+} {
+	var calls []struct {
+		Ctx           context.Context
+		UserAuthToken string
+		CollectionID  string
+		Lang          string
+		Path          string
+	}
+	mock.lockGetResourceStream.RLock()
+	calls = mock.calls.GetResourceStream
+	mock.lockGetResourceStream.RUnlock()
 	return calls
 }

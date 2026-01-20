@@ -22,6 +22,7 @@ var getTaskExecutors = func(jobService application.JobService, appClients *clien
 	taskExecutors[domain.TaskTypeDatasetSeries] = executor.NewDatasetSeriesTaskExecutor(jobService, appClients, cfg.ServiceAuthToken, topicCache)
 	taskExecutors[domain.TaskTypeDatasetEdition] = executor.NewDatasetEditionTaskExecutor(jobService, appClients, cfg.ServiceAuthToken)
 	taskExecutors[domain.TaskTypeDatasetVersion] = executor.NewDatasetVersionTaskExecutor(jobService, appClients, cfg.ServiceAuthToken)
+	taskExecutors[domain.TaskTypeDatasetDownload] = executor.NewDatasetDownloadTaskExecutor(jobService, appClients, cfg.ServiceAuthToken)
 	return taskExecutors
 }
 

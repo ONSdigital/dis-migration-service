@@ -19,6 +19,7 @@ import (
 
 var (
 	testVersionTaskID = "task-1"
+	testVersionID     = "1"
 	testVersionTask   = &domain.Task{
 		ID:        testVersionTaskID,
 		JobNumber: testJobNumber,

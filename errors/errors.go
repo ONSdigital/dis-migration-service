@@ -65,6 +65,8 @@ var (
 	ErrSourceDataTypeInvalid         = errors.New("source data has incorrect type")
 	ErrUnsupportedDistributionFormat = errors.New("unsupported mime type for distribution format")
 
+	ErrFailedToUploadFileToUploadService = errors.New("failed to upload file to upload service")
+
 	StatusCodeMap = map[error]int{
 		ErrJobNotFound:                  http.StatusNotFound,
 		ErrTaskNotFound:                 http.StatusNotFound,

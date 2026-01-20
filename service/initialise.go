@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/cache"
@@ -15,6 +16,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/dis-migration-service/store"
 	redirectAPI "github.com/ONSdigital/dis-redirect-api/sdk/go"
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	datasetErrors "github.com/ONSdigital/dp-dataset-api/apierrors"
@@ -303,12 +305,16 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 	log.Info(ctx, "initialising app clients")
 	topicAPIClient := topicAPI.New(cfg.TopicAPIURL)
 
+	uploadServiceClient := dphttp.NewClient()
+	uploadServiceClient.SetTimeout(60 * time.Second)
+	uploadServiceHC := health.NewClientWithClienter("upload-service", cfg.UploadServiceURL, uploadServiceClient)
+
 	return &clients.ClientList{
 		DatasetAPI:    datasetAPI.New(cfg.DatasetAPIURL),
 		FilesAPI:      filesAPI.New(cfg.FilesAPIURL),
 		RedirectAPI:   redirectAPI.NewClient(cfg.RedirectAPIURL),
 		TopicAPI:      topicAPIClient,
-		UploadService: uploadSDK.New(cfg.UploadServiceURL),
+		UploadService: uploadSDK.NewWithHealthClient(uploadServiceHC),
 		Zebedee:       zebedee.New(cfg.ZebedeeURL),
 	}
 }

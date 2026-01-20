@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"io"
 
 	redirectModels "github.com/ONSdigital/dis-redirect-api/models"
 	redirectSDK "github.com/ONSdigital/dis-redirect-api/sdk/go"
@@ -24,5 +25,7 @@ type RedirectAPIClient interface {
 type ZebedeeClient interface {
 	GetDataset(ctx context.Context, userAccessToken, collectionID, lang, path string) (d zebedee.Dataset, err error)
 	GetDatasetLandingPage(ctx context.Context, userAccessToken, collectionID, lang, path string) (d zebedee.DatasetLandingPage, err error)
+	GetFileSize(ctx context.Context, userAccessToken, collectionID, lang, uri string) (f zebedee.FileSize, err error)
 	GetPageData(ctx context.Context, userAuthToken, collectionID, lang, path string) (m zebedee.PageData, err error)
+	GetResourceStream(ctx context.Context, userAuthToken, collectionID, lang, path string) (s io.ReadCloser, err error)
 }
