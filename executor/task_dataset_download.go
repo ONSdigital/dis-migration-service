@@ -37,6 +37,12 @@ func (e *DatasetDownloadTaskExecutor) Migrate(ctx context.Context, task *domain.
 
 	log.Info(ctx, "starting migration for dataset download task", logData)
 
+	if task == nil || task.Source == nil || task.Target == nil || task.Source.ID == "" {
+		err := appErrors.ErrInvalidTask
+		log.Error(ctx, "invalid task or missing source/target information", err, logData)
+		return err
+	}
+
 	fileSize, err := e.clientList.Zebedee.GetFileSize(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Source.ID)
 	if err != nil {
 		log.Error(ctx, "failed to get file size from zebedee", err, logData)

@@ -66,6 +66,7 @@ var (
 	ErrUnsupportedDistributionFormat = errors.New("unsupported mime type for distribution format")
 
 	ErrFailedToUploadFileToUploadService = errors.New("failed to upload file to upload service")
+	ErrInvalidTask                       = errors.New("invalid task or missing source/target information")
 
 	StatusCodeMap = map[error]int{
 		ErrJobNotFound:                  http.StatusNotFound,
