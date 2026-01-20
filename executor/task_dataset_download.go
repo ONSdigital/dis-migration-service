@@ -8,6 +8,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/mapper"
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk"
 	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
@@ -36,13 +37,13 @@ func (e *DatasetDownloadTaskExecutor) Migrate(ctx context.Context, task *domain.
 
 	log.Info(ctx, "starting migration for dataset download task", logData)
 
-	fileSize, err := e.clientList.Zebedee.GetFileSize(ctx, "", "", "en", task.Source.ID)
+	fileSize, err := e.clientList.Zebedee.GetFileSize(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Source.ID)
 	if err != nil {
 		log.Error(ctx, "failed to get file size from zebedee", err, logData)
 		return err
 	}
 
-	resourceStream, err := e.clientList.Zebedee.GetResourceStream(ctx, "", "", "en", task.Source.ID)
+	resourceStream, err := e.clientList.Zebedee.GetResourceStream(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Source.ID)
 	if err != nil {
 		log.Error(ctx, "failed to get file stream from zebedee", err, logData)
 		return err
