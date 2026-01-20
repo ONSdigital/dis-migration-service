@@ -33,15 +33,15 @@ func NewDatasetDownloadTaskExecutor(jobService application.JobService, clientLis
 
 // Migrate handles the migration operations for a dataset download task.
 func (e *DatasetDownloadTaskExecutor) Migrate(ctx context.Context, task *domain.Task) error {
+	if task == nil || task.Source == nil || task.Target == nil || task.Source.ID == "" {
+		err := appErrors.ErrInvalidTask
+		log.Error(ctx, "invalid task or missing source/target information", err)
+		return err
+	}
+
 	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber, "source_id": task.Source.ID}
 
 	log.Info(ctx, "starting migration for dataset download task", logData)
-
-	if task == nil || task.Source == nil || task.Target == nil || task.Source.ID == "" {
-		err := appErrors.ErrInvalidTask
-		log.Error(ctx, "invalid task or missing source/target information", err, logData)
-		return err
-	}
 
 	fileSize, err := e.clientList.Zebedee.GetFileSize(ctx, e.serviceAuthToken, zebedee.EmptyCollectionId, zebedee.EnglishLangCode, task.Source.ID)
 	if err != nil {
