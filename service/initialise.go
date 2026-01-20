@@ -191,6 +191,18 @@ func (e *Init) DoGetMigrator(ctx context.Context, cfg *config.Config, jobService
 // as the topic cache is critical for the migration service.
 // Returns the topic cache and error channel for monitoring updates.
 func (e *Init) DoGetTopicCache(ctx context.Context, cfg *config.Config, clientList *clients.ClientList) (*cache.TopicCache, chan error, error) {
+	// Check if topic cache is disabled
+	if !cfg.EnableTopicCache {
+		log.Info(ctx, "topic cache is disabled, using mock topic cache")
+		topicCache, err := cache.NewMockTopicCache(ctx)
+		if err != nil {
+			log.Error(ctx, "failed to create mock topic cache", err)
+			return nil, nil, err
+		}
+		// Return cache with nil error channel (no updates needed)
+		return topicCache, nil, nil
+	}
+
 	// Create topic cache with update interval
 	topicCache, err := cache.NewTopicCache(ctx, &cfg.TopicCacheUpdateInterval)
 	if err != nil {

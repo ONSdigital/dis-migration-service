@@ -65,6 +65,7 @@ func TestConfig(t *testing.T) {
 					RedirectAPIURL:           "http://localhost:29900",
 					TopicAPIURL:              "http://localhost:25300",
 					TopicCacheUpdateInterval: 10 * time.Minute,
+					EnableTopicCache:         false,
 					UploadServiceURL:         "http://localhost:25100",
 					ZebedeeURL:               "http://localhost:8082",
 				})

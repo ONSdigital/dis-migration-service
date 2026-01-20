@@ -246,6 +246,27 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given a mock topic cache (feature flag disabled)", t, func() {
+		ctx := context.Background()
+		mockCache, _ := cache.NewMockTopicCache(ctx)
+
+		Convey("When mapping a dataset with URI that has no matching topics", func() {
+			pageData := getTestDatasetLandingPage()
+			pageData.URI = "/some/path/with/no/matching/topics"
+
+			dataset, err := MapDatasetLandingPageToDatasetAPI(ctx, "test-dataset-123", pageData, mockCache)
+
+			Convey("Then no error is returned as validation is skipped for mock cache", func() {
+				So(err, ShouldBeNil)
+				So(dataset, ShouldNotBeNil)
+			})
+
+			Convey("And the dataset has an empty topics list", func() {
+				So(len(dataset.Topics), ShouldEqual, 0)
+			})
+		})
+	})
 }
 
 func getTestDatasetLandingPage() zebedee.DatasetLandingPage {

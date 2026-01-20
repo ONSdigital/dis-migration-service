@@ -235,3 +235,40 @@ func TestGetTopicCacheKey(t *testing.T) {
 		})
 	})
 }
+
+func TestNewMockTopicCache(t *testing.T) {
+	Convey("Given a context", t, func() {
+		ctx := context.Background()
+
+		Convey("When creating a mock topic cache", func() {
+			mockCache, err := NewMockTopicCache(ctx)
+
+			Convey("Then it should be created successfully", func() {
+				So(err, ShouldBeNil)
+				So(mockCache, ShouldNotBeNil)
+			})
+
+			Convey("And it should be identified as a mock cache", func() {
+				isMock := mockCache.IsMockCache(ctx)
+				So(isMock, ShouldBeTrue)
+			})
+
+			Convey("And it should contain the mock topic", func() {
+				mockTopic, err := mockCache.GetTopic(ctx, "mock-topic")
+				So(err, ShouldBeNil)
+				So(mockTopic, ShouldNotBeNil)
+				So(mockTopic.ID, ShouldEqual, "0000")
+				So(mockTopic.Slug, ShouldEqual, "mock-topic")
+			})
+		})
+
+		Convey("When using a populated topic cache", func() {
+			populatedCache, _ := NewPopulatedTopicCacheForTest(ctx)
+
+			Convey("Then it should not be identified as a mock cache", func() {
+				isMock := populatedCache.IsMockCache(ctx)
+				So(isMock, ShouldBeFalse)
+			})
+		})
+	})
+}

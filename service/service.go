@@ -88,22 +88,25 @@ func (svc *Service) Run(ctx context.Context, buildTime, gitCommit, version strin
 	}
 
 	// Monitor topic cache update errors and send Slack alarms
-	go func() {
-		for err := range topicCacheErrChan {
-			if err != nil {
-				log.Error(ctx, "topic cache update error", err)
-				// Send Slack alarm for topic cache update failure
-				slackDetails := slack.SlackDetails{
-					"Error":  err.Error(),
-					"Source": "Topic Cache Update",
-				}
-				slackErr := svc.slackClient.SendAlarm(ctx, "TopicCacheUpdateFailed", nil, slackDetails)
-				if slackErr != nil {
-					log.Error(ctx, "failed to send slack alarm for topic cache update failure", slackErr)
+	// Only start monitoring if error channel is not nil (i.e., topic cache is enabled)
+	if topicCacheErrChan != nil {
+		go func() {
+			for err := range topicCacheErrChan {
+				if err != nil {
+					log.Error(ctx, "topic cache update error", err)
+					// Send Slack alarm for topic cache update failure
+					slackDetails := slack.SlackDetails{
+						"Error":  err.Error(),
+						"Source": "Topic Cache Update",
+					}
+					slackErr := svc.slackClient.SendAlarm(ctx, "TopicCacheUpdateFailed", nil, slackDetails)
+					if slackErr != nil {
+						log.Error(ctx, "failed to send slack alarm for topic cache update failure", slackErr)
+					}
 				}
 			}
-		}
-	}()
+		}()
+	}
 
 	// Get Migrator
 	svc.migrator, err = svc.ServiceList.GetMigrator(ctx, svc.Config, svc.JobService, svc.clients, svc.slackClient, svc.topicCache)

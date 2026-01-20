@@ -37,6 +37,7 @@ type Config struct {
 	ServiceAuthToken                string        `envconfig:"SERVICE_AUTH_TOKEN"`
 	TopicAPIURL                     string        `envconfig:"TOPIC_API_URL"`
 	TopicCacheUpdateInterval        time.Duration `envconfig:"TOPIC_CACHE_UPDATE_INTERVAL"`
+	EnableTopicCache                bool          `envconfig:"ENABLE_TOPIC_CACHE"`
 	UploadServiceURL                string        `envconfig:"UPLOAD_SERVICE_URL"`
 	ZebedeeURL                      string        `envconfig:"ZEBEDEE_URL"`
 	MongoConfig
@@ -120,6 +121,7 @@ func Get() (*Config, error) {
 		RedirectAPIURL:           "http://localhost:29900",
 		TopicAPIURL:              "http://localhost:25300",
 		TopicCacheUpdateInterval: 10 * time.Minute,
+		EnableTopicCache:         false,
 		UploadServiceURL:         "http://localhost:25100",
 		ZebedeeURL:               "http://localhost:8082",
 	}

@@ -73,6 +73,7 @@ npm install -g @redocly/cli
 | SERVICE_AUTH_TOKEN                        |                       | Service authentication token for API requests                                                                      |
 | TOPIC_API_URL                             | localhost:25300       | Address for Topic API                                                                                              |
 | TOPIC_CACHE_UPDATE_INTERVAL               | 10m                   | Time interval for refreshing the topic cache from Topic API (`time.Duration` format)                               |
+| ENABLE_TOPIC_CACHE                        | true                  | Feature flag to enable/disable topic cache. When false, uses mock cache with no updates                            |
 | UPLOAD_SERVICE_URL                        | localhost:25100       | Address for Upload Service                                                                                         |
 | ZEBEDEE_URL                               | localhost:8082        | Address for Zebedee                                                                                                |
 | AUTHORISATION_ENABLED                     | false                 | Feature flag to enable authorisation to be required on endpoints                                                   |

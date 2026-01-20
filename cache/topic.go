@@ -127,3 +127,36 @@ func GetEmptyTopic() *Topic {
 		List: NewSubTopicsMap(),
 	}
 }
+
+// NewMockTopicCache creates a topic cache with a single mock topic
+// for when the topic cache feature is disabled
+func NewMockTopicCache(ctx context.Context) (*TopicCache, error) {
+	topicCache, err := NewTopicCache(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a single mock topic
+	subtopicsMap := NewSubTopicsMap()
+	subtopicsMap.AppendSubtopicID("mock-topic", Subtopic{
+		ID:         "0000",
+		Slug:       "mock-topic",
+		ParentSlug: "",
+	})
+
+	mockTopic := &Topic{
+		ID:   TopicCacheKey,
+		List: subtopicsMap,
+	}
+
+	topicCache.Set(TopicCacheKey, mockTopic)
+
+	return topicCache, nil
+}
+
+// IsMockCache checks if this is a mock topic cache
+// by looking for the mock-topic
+func (tc *TopicCache) IsMockCache(ctx context.Context) bool {
+	_, err := tc.GetTopic(ctx, "mock-topic")
+	return err == nil
+}
