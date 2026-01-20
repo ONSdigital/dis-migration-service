@@ -54,7 +54,11 @@ func (e *DatasetDownloadTaskExecutor) Migrate(ctx context.Context, task *domain.
 		log.Error(ctx, "failed to get file stream from zebedee", err, logData)
 		return err
 	}
-	defer resourceStream.Close()
+	defer func() {
+		if closeErr := resourceStream.Close(); closeErr != nil {
+			log.Error(ctx, "failed to close resource stream", closeErr, logData)
+		}
+	}()
 
 	uploadMetadata, err := mapper.MapResourceToUploadServiceMetadata(task.Source.ID, fileSize)
 	if err != nil {
