@@ -128,7 +128,7 @@ Feature: Migrate a static dataset job
               }
             },
             "source": {
-              "id": "/test-dataset-1"
+              "id": "/test-static-dataset-job-failed"
             },
             "target": {
               "id": "test-target-id"
