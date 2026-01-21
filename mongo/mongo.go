@@ -13,18 +13,22 @@ import (
 type Mongo struct {
 	config.MongoConfig
 
-	Connection   *mongodriver.MongoConnection
-	healthClient *mongoHealth.CheckMongoClient
+	Connection         MongoConnection
+	concreteConnection *mongodriver.MongoConnection // Concrete connection for health checks
+	healthClient       *mongoHealth.CheckMongoClient
 }
 
 // Init returns an initialised Mongo object encapsulating a connection
 // to the mongo server/cluster with the given configuration,
 // and a health client to check the health of the mongo server/cluster
 func (m *Mongo) Init(ctx context.Context) (err error) {
-	m.Connection, err = mongodriver.Open(&m.MongoDriverConfig)
+	m.concreteConnection, err = mongodriver.Open(&m.MongoDriverConfig)
 	if err != nil {
 		return err
 	}
+
+	// Wrap the concrete connection with our interface adapter
+	m.Connection = NewMongoConnectionAdapter(m.concreteConnection)
 
 	databaseCollectionBuilder := map[mongoHealth.Database][]mongoHealth.Collection{
 		mongoHealth.Database(m.Database): {
@@ -34,18 +38,33 @@ func (m *Mongo) Init(ctx context.Context) (err error) {
 			mongoHealth.Collection(m.ActualCollectionName(config.TasksCollectionTitle)),
 		},
 	}
-	m.healthClient = mongoHealth.NewClientWithCollections(m.Connection, databaseCollectionBuilder)
+	m.healthClient = mongoHealth.NewClientWithCollections(m.concreteConnection, databaseCollectionBuilder)
 
 	return nil
 }
 
 // Close represents mongo session closing within the context deadline
 func (m *Mongo) Close(ctx context.Context) error {
-	return m.Connection.Close(ctx)
+	if m.concreteConnection != nil {
+		return m.concreteConnection.Close(ctx)
+	}
+	return nil
 }
 
 // Checker is called by the healthcheck library to check the health
 // state of this mongoDB instance
 func (m *Mongo) Checker(ctx context.Context, state *healthcheck.CheckState) error {
 	return m.healthClient.Checker(ctx, state)
+}
+
+// getConnection returns the connection to use for operations.
+// In production, this is the adapter wrapping the real connection.
+// In tests, this is the injected mock connection.
+func (m *Mongo) getConnection() MongoConnection {
+	return m.Connection
+}
+
+// SetConnection allows tests to inject a mock connection
+func (m *Mongo) SetConnection(conn MongoConnection) {
+	m.Connection = conn
 }

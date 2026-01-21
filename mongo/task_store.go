@@ -16,7 +16,7 @@ import (
 
 // CreateTask creates a new migration task.
 func (m *Mongo) CreateTask(ctx context.Context, task *domain.Task) error {
-	_, err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).InsertOne(ctx, task)
+	_, err := m.getConnection().Collection(m.ActualCollectionName(config.TasksCollectionTitle)).InsertOne(ctx, task)
 	if err != nil {
 		return appErrors.ErrInternalServerError
 	}
@@ -27,7 +27,7 @@ func (m *Mongo) CreateTask(ctx context.Context, task *domain.Task) error {
 // GetTask retrieves a task by its ID.
 func (m *Mongo) GetTask(ctx context.Context, taskID string) (*domain.Task, error) {
 	var task domain.Task
-	if err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
+	if err := m.getConnection().Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
 		FindOne(ctx, bson.M{"_id": taskID}, &task); err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, appErrors.ErrTaskNotFound
@@ -42,7 +42,7 @@ func (m *Mongo) UpdateTask(ctx context.Context, task *domain.Task) error {
 	filter := bson.M{"_id": task.ID}
 	update := bson.M{"$set": task}
 
-	result, err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).UpdateOne(ctx, filter, update)
+	result, err := m.getConnection().Collection(m.ActualCollectionName(config.TasksCollectionTitle)).UpdateOne(ctx, filter, update)
 	if err != nil {
 		return appErrors.ErrInternalServerError
 	}
@@ -69,7 +69,7 @@ func (m *Mongo) UpdateTaskState(ctx context.Context, taskID string, newState dom
 	}
 
 	// Update the document
-	result, err := m.Connection.Collection(collectionName).UpdateOne(
+	result, err := m.getConnection().Collection(collectionName).UpdateOne(
 		ctx,
 		filter,
 		update,
@@ -98,7 +98,7 @@ func (m *Mongo) ClaimTask(ctx context.Context, pendingState, activeState domain.
 		},
 	}
 
-	err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
+	err := m.getConnection().Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
 		FindOneAndUpdate(ctx, filter, update, &task, mongodriver.ReturnDocument(options.After))
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
@@ -121,7 +121,7 @@ func (m *Mongo) GetJobTasks(ctx context.Context, stateFilter []domain.State, job
 		filter["state"] = bson.M{"$in": stateFilter}
 	}
 
-	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
+	totalCount, err := m.getConnection().Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
 		Find(
 			ctx,
 			filter,
@@ -144,7 +144,7 @@ func (m *Mongo) CountTasksByJobNumber(ctx context.Context, jobNumber int) (int, 
 
 	// Use Find to get the total count without actually retrieving documents
 	var results []*domain.Task
-	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
+	totalCount, err := m.getConnection().Collection(m.ActualCollectionName(config.TasksCollectionTitle)).
 		Find(ctx, filter, &results, mongodriver.Limit(1))
 
 	if err != nil {

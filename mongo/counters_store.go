@@ -31,7 +31,7 @@ func (m *Mongo) createJobNumberCounter(ctx context.Context) (domain.Counter, err
 	logData := log.Data{"job_number_counter": jobNumberCounter}
 	log.Info(ctx, "creating job number counter in mongo DB", logData)
 
-	_, err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).InsertOne(ctx, jobNumberCounter)
+	_, err := m.getConnection().Collection(m.ActualCollectionName(config.CountersCollectionTitle)).InsertOne(ctx, jobNumberCounter)
 	if err != nil {
 		log.Error(ctx, "failed to insert job number counter into mongo DB", err, logData)
 		return jobNumberCounter, err
@@ -46,7 +46,7 @@ func (m *Mongo) GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, e
 	var jobNumberCounter domain.Counter
 
 	// Configure FindOneAndUpdate to return the updated document (after increment)
-	err := m.Connection.Collection(m.ActualCollectionName(config.CountersCollectionTitle)).FindOneAndUpdate(ctx,
+	err := m.getConnection().Collection(m.ActualCollectionName(config.CountersCollectionTitle)).FindOneAndUpdate(ctx,
 		bson.M{"counter_name": "job_number_counter"}, bson.D{
 			{Key: "$inc", Value: bson.D{primitive.E{Key: "counter_value", Value: 1}}},
 		}, &jobNumberCounter, mongodriver.ReturnDocument(options.After))

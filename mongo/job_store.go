@@ -16,7 +16,7 @@ import (
 
 // CreateJob creates a new migration job.
 func (m *Mongo) CreateJob(ctx context.Context, job *domain.Job) error {
-	_, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).InsertOne(ctx, job)
+	_, err := m.getConnection().Collection(m.ActualCollectionName(config.JobsCollectionTitle)).InsertOne(ctx, job)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func (m *Mongo) CreateJob(ctx context.Context, job *domain.Job) error {
 // GetJob retrieves a job by its job number.
 func (m *Mongo) GetJob(ctx context.Context, jobNumber int) (*domain.Job, error) {
 	var job domain.Job
-	if err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
+	if err := m.getConnection().Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		FindOne(ctx, bson.M{"job_number": jobNumber}, &job); err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, appErrors.ErrJobNotFound
@@ -46,7 +46,7 @@ func (m *Mongo) GetJobs(ctx context.Context, stateFilter []domain.State, limit, 
 		filter["state"] = bson.M{"$in": stateFilter}
 	}
 
-	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
+	totalCount, err := m.getConnection().Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		Find(
 			ctx,
 			filter,
@@ -64,7 +64,7 @@ func (m *Mongo) GetJobs(ctx context.Context, stateFilter []domain.State, limit, 
 func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, stateFilter []domain.State, limit, offset int) ([]*domain.Job, error) {
 	var results []*domain.Job
 
-	_, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
+	_, err := m.getConnection().Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		Find(
 			ctx,
 			bson.M{
@@ -84,7 +84,7 @@ func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfi
 func (m *Mongo) GetJobsByState(ctx context.Context, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 	var results []*domain.Job
 
-	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
+	totalCount, err := m.getConnection().Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		Find(
 			ctx,
 			bson.M{
@@ -109,7 +109,7 @@ func (m *Mongo) ClaimJob(ctx context.Context, pendingState, activeState domain.S
 		},
 	}
 
-	err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
+	err := m.getConnection().Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		FindOneAndUpdate(ctx, filter, update, &job, mongodriver.ReturnDocument(options.After), mongodriver.Sort(bson.M{"last_updated": 1}))
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
@@ -132,7 +132,7 @@ func (m *Mongo) UpdateJob(ctx context.Context, job *domain.Job) error {
 	filter := bson.M{"_id": job.ID}
 	update := bson.M{"$set": job}
 
-	result, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
+	result, err := m.getConnection().Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		UpdateOne(ctx, filter, update)
 	if err != nil {
 		return appErrors.ErrInternalServerError
@@ -158,7 +158,7 @@ func (m *Mongo) UpdateJobState(ctx context.Context, jobID string, newState domai
 	}
 
 	// Update the document
-	result, err := m.Connection.Collection(collectionName).UpdateOne(
+	result, err := m.getConnection().Collection(collectionName).UpdateOne(
 		ctx,
 		filter,
 		update,
