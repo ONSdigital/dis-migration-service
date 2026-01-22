@@ -253,6 +253,102 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 		})
 	})
 
+	Convey("Given a dataset download task executor and a dataset client that fails to get a version", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
+				return &domain.Task{}, nil
+			},
+			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error { return nil },
+		}
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			GetVersionWithHeadersFunc: func(ctx context.Context, headers sdk.Headers, datasetID, edition, version string) (datasetModels.Version, sdk.ResponseHeaders, error) {
+				return datasetModels.Version{}, sdk.ResponseHeaders{}, errors.New("failed to get version")
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+			UploadService: &uploadSDKMock.ClienterMock{
+				UploadFunc: func(ctx context.Context, fileContent io.ReadCloser, metadata api.Metadata, headers uploadSDK.Headers) error {
+					return nil
+				},
+			},
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
+					return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
+				},
+				GetFileSizeFunc: func(ctx context.Context, userAccessToken, collectionID, lang, uri string) (zebedee.FileSize, error) {
+					return zebedee.FileSize{Size: len(testFileData)}, nil
+				},
+			},
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetDownloadTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+		Convey("When migrate is called for a task", func() {
+			err := executor.Migrate(ctx, testDownloadTask)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldNotBeNil)
+
+				Convey("And no dataset version updates are made", func() {
+					datasetClient := mockClientList.DatasetAPI.(*datasetSDKMock.ClienterMock)
+					So(len(datasetClient.PutVersionCalls()), ShouldEqual, 0)
+				})
+			})
+		})
+	})
+
+	Convey("Given a dataset download task executor and a dataset client that fails to update a version", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
+				return &domain.Task{}, nil
+			},
+			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error { return nil },
+		}
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			GetVersionWithHeadersFunc: func(ctx context.Context, headers sdk.Headers, datasetID, edition, version string) (datasetModels.Version, sdk.ResponseHeaders, error) {
+				return datasetModels.Version{
+					Distributions: &[]datasetModels.Distribution{},
+				}, sdk.ResponseHeaders{}, nil
+			},
+			PutVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version datasetModels.Version) (datasetModels.Version, error) {
+				return datasetModels.Version{}, errors.New("failed to put version")
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+			UploadService: &uploadSDKMock.ClienterMock{
+				UploadFunc: func(ctx context.Context, fileContent io.ReadCloser, metadata api.Metadata, headers uploadSDK.Headers) error {
+					return nil
+				},
+			},
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
+					return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
+				},
+				GetFileSizeFunc: func(ctx context.Context, userAccessToken, collectionID, lang, uri string) (zebedee.FileSize, error) {
+					return zebedee.FileSize{Size: len(testFileData)}, nil
+				},
+			},
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetDownloadTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+		Convey("When migrate is called for a task", func() {
+			err := executor.Migrate(ctx, testDownloadTask)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldNotBeNil)
+			})
+		})
+	})
+
 	Convey("Given a dataset download task executor and a jobService that fails to update a task", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
