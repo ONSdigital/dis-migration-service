@@ -2,6 +2,6 @@
 
 # Build the application
 pushd pull_request
-  make build-go
+  make build
   cp build/dis-migration-service Dockerfile.concourse ../build
 popd
