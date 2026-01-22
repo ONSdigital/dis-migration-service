@@ -12,7 +12,7 @@ import (
 
 // CreateEvent creates a new event in the database.
 func (m *Mongo) CreateEvent(ctx context.Context, event *domain.Event) error {
-	_, err := m.Connection.Collection(m.ActualCollectionName(config.EventsCollectionTitle)).InsertOne(ctx, event)
+	_, err := m.getConnection().Collection(m.ActualCollectionName(config.EventsCollectionTitle)).InsertOne(ctx, event)
 	if err != nil {
 		return appErrors.ErrInternalServerError
 	}
@@ -26,7 +26,7 @@ func (m *Mongo) GetJobEvents(ctx context.Context, jobNumber, limit, offset int) 
 
 	filter := bson.M{"job_number": jobNumber}
 
-	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.EventsCollectionTitle)).
+	totalCount, err := m.getConnection().Collection(m.ActualCollectionName(config.EventsCollectionTitle)).
 		Find(
 			ctx,
 			filter,
@@ -49,7 +49,7 @@ func (m *Mongo) CountEventsByJobNumber(ctx context.Context, jobNumber int) (int,
 
 	// Use Find to get the total count without actually retrieving documents
 	var results []*domain.Event
-	totalCount, err := m.Connection.Collection(m.ActualCollectionName(config.EventsCollectionTitle)).
+	totalCount, err := m.getConnection().Collection(m.ActualCollectionName(config.EventsCollectionTitle)).
 		Find(ctx, filter, &results, mongodriver.Limit(1))
 
 	if err != nil {
