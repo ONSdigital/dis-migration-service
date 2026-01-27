@@ -267,6 +267,25 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given a Zebedee dataset landing page with no NextRelease", t, func() {
+		ctx := context.Background()
+		pageData := getTestDatasetLandingPage()
+		pageData.Description.NextRelease = "" // empty to trigger default
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+
+		Convey("When it is mapped to a Dataset API dataset", func() {
+			dataset, err := MapDatasetLandingPageToDatasetAPI(ctx, "test-dataset-id", pageData, topicCache)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("And NextRelease is set to the default 'To be announced'", func() {
+				So(dataset.NextRelease, ShouldEqual, "To be announced")
+			})
+		})
+	})
 }
 
 func getTestDatasetLandingPage() zebedee.DatasetLandingPage {
