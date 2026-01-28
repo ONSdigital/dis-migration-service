@@ -38,8 +38,8 @@ func MapDatasetLandingPageToDatasetAPI(ctx context.Context, datasetID string, pa
 		return nil, errors.New("no topics found for dataset - datasets must have at least one topic")
 	}
 
-	// TODO: confirm handling of NextRelease field if unset.
-	nextRelease := "To be confirmed"
+	// If NextRelease has no value, set to "To be announced".
+	nextRelease := "To be announced"
 	if pageData.Description.NextRelease != "" {
 		nextRelease = pageData.Description.NextRelease
 	}
