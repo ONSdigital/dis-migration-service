@@ -23,13 +23,13 @@ var _ domain.JobValidator = &JobValidatorMock{}
 //			ValidateSourceIDFunc: func(sourceID string) error {
 //				panic("mock out the ValidateSourceID method")
 //			},
-//			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+//			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 //				panic("mock out the ValidateSourceIDWithExternal method")
 //			},
 //			ValidateTargetIDFunc: func(targetID string) error {
 //				panic("mock out the ValidateTargetID method")
 //			},
-//			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
+//			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error {
 //				panic("mock out the ValidateTargetIDWithExternal method")
 //			},
 //		}
@@ -43,13 +43,13 @@ type JobValidatorMock struct {
 	ValidateSourceIDFunc func(sourceID string) error
 
 	// ValidateSourceIDWithExternalFunc mocks the ValidateSourceIDWithExternal method.
-	ValidateSourceIDWithExternalFunc func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error)
+	ValidateSourceIDWithExternalFunc func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error)
 
 	// ValidateTargetIDFunc mocks the ValidateTargetID method.
 	ValidateTargetIDFunc func(targetID string) error
 
 	// ValidateTargetIDWithExternalFunc mocks the ValidateTargetIDWithExternal method.
-	ValidateTargetIDWithExternalFunc func(ctx context.Context, targetID string, appClients *clients.ClientList) error
+	ValidateTargetIDWithExternalFunc func(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -66,6 +66,8 @@ type JobValidatorMock struct {
 			SourceID string
 			// AppClients is the appClients argument value.
 			AppClients *clients.ClientList
+			// UserAuthToken is the userAuthToken argument value.
+			UserAuthToken string
 		}
 		// ValidateTargetID holds details about calls to the ValidateTargetID method.
 		ValidateTargetID []struct {
@@ -80,6 +82,8 @@ type JobValidatorMock struct {
 			TargetID string
 			// AppClients is the appClients argument value.
 			AppClients *clients.ClientList
+			// UserAuthToken is the userAuthToken argument value.
+			UserAuthToken string
 		}
 	}
 	lockValidateSourceID             sync.RWMutex
@@ -121,23 +125,25 @@ func (mock *JobValidatorMock) ValidateSourceIDCalls() []struct {
 }
 
 // ValidateSourceIDWithExternal calls ValidateSourceIDWithExternalFunc.
-func (mock *JobValidatorMock) ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+func (mock *JobValidatorMock) ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 	if mock.ValidateSourceIDWithExternalFunc == nil {
 		panic("JobValidatorMock.ValidateSourceIDWithExternalFunc: method is nil but JobValidator.ValidateSourceIDWithExternal was just called")
 	}
 	callInfo := struct {
-		Ctx        context.Context
-		SourceID   string
-		AppClients *clients.ClientList
+		Ctx           context.Context
+		SourceID      string
+		AppClients    *clients.ClientList
+		UserAuthToken string
 	}{
-		Ctx:        ctx,
-		SourceID:   sourceID,
-		AppClients: appClients,
+		Ctx:           ctx,
+		SourceID:      sourceID,
+		AppClients:    appClients,
+		UserAuthToken: userAuthToken,
 	}
 	mock.lockValidateSourceIDWithExternal.Lock()
 	mock.calls.ValidateSourceIDWithExternal = append(mock.calls.ValidateSourceIDWithExternal, callInfo)
 	mock.lockValidateSourceIDWithExternal.Unlock()
-	return mock.ValidateSourceIDWithExternalFunc(ctx, sourceID, appClients)
+	return mock.ValidateSourceIDWithExternalFunc(ctx, sourceID, appClients, userAuthToken)
 }
 
 // ValidateSourceIDWithExternalCalls gets all the calls that were made to ValidateSourceIDWithExternal.
@@ -145,14 +151,16 @@ func (mock *JobValidatorMock) ValidateSourceIDWithExternal(ctx context.Context, 
 //
 //	len(mockedJobValidator.ValidateSourceIDWithExternalCalls())
 func (mock *JobValidatorMock) ValidateSourceIDWithExternalCalls() []struct {
-	Ctx        context.Context
-	SourceID   string
-	AppClients *clients.ClientList
+	Ctx           context.Context
+	SourceID      string
+	AppClients    *clients.ClientList
+	UserAuthToken string
 } {
 	var calls []struct {
-		Ctx        context.Context
-		SourceID   string
-		AppClients *clients.ClientList
+		Ctx           context.Context
+		SourceID      string
+		AppClients    *clients.ClientList
+		UserAuthToken string
 	}
 	mock.lockValidateSourceIDWithExternal.RLock()
 	calls = mock.calls.ValidateSourceIDWithExternal
@@ -193,23 +201,25 @@ func (mock *JobValidatorMock) ValidateTargetIDCalls() []struct {
 }
 
 // ValidateTargetIDWithExternal calls ValidateTargetIDWithExternalFunc.
-func (mock *JobValidatorMock) ValidateTargetIDWithExternal(ctx context.Context, targetID string, appClients *clients.ClientList) error {
+func (mock *JobValidatorMock) ValidateTargetIDWithExternal(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error {
 	if mock.ValidateTargetIDWithExternalFunc == nil {
 		panic("JobValidatorMock.ValidateTargetIDWithExternalFunc: method is nil but JobValidator.ValidateTargetIDWithExternal was just called")
 	}
 	callInfo := struct {
-		Ctx        context.Context
-		TargetID   string
-		AppClients *clients.ClientList
+		Ctx           context.Context
+		TargetID      string
+		AppClients    *clients.ClientList
+		UserAuthToken string
 	}{
-		Ctx:        ctx,
-		TargetID:   targetID,
-		AppClients: appClients,
+		Ctx:           ctx,
+		TargetID:      targetID,
+		AppClients:    appClients,
+		UserAuthToken: userAuthToken,
 	}
 	mock.lockValidateTargetIDWithExternal.Lock()
 	mock.calls.ValidateTargetIDWithExternal = append(mock.calls.ValidateTargetIDWithExternal, callInfo)
 	mock.lockValidateTargetIDWithExternal.Unlock()
-	return mock.ValidateTargetIDWithExternalFunc(ctx, targetID, appClients)
+	return mock.ValidateTargetIDWithExternalFunc(ctx, targetID, appClients, userAuthToken)
 }
 
 // ValidateTargetIDWithExternalCalls gets all the calls that were made to ValidateTargetIDWithExternal.
@@ -217,14 +227,16 @@ func (mock *JobValidatorMock) ValidateTargetIDWithExternal(ctx context.Context, 
 //
 //	len(mockedJobValidator.ValidateTargetIDWithExternalCalls())
 func (mock *JobValidatorMock) ValidateTargetIDWithExternalCalls() []struct {
-	Ctx        context.Context
-	TargetID   string
-	AppClients *clients.ClientList
+	Ctx           context.Context
+	TargetID      string
+	AppClients    *clients.ClientList
+	UserAuthToken string
 } {
 	var calls []struct {
-		Ctx        context.Context
-		TargetID   string
-		AppClients *clients.ClientList
+		Ctx           context.Context
+		TargetID      string
+		AppClients    *clients.ClientList
+		UserAuthToken string
 	}
 	mock.lockValidateTargetIDWithExternal.RLock()
 	calls = mock.calls.ValidateTargetIDWithExternal

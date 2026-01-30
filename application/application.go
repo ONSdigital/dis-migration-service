@@ -19,7 +19,7 @@ import (
 //
 //go:generate moq -out mock/jobservice.go -pkg mock . JobService
 type JobService interface {
-	CreateJob(ctx context.Context, jobConfig *domain.JobConfig, userID string) (*domain.Job, error)
+	CreateJob(ctx context.Context, jobConfig *domain.JobConfig, userID string, userAuthToken string) (*domain.Job, error)
 	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	ClaimJob(ctx context.Context) (*domain.Job, error)
 	UpdateJobState(ctx context.Context, jobNumber int, newState domain.State, userID string) error
@@ -54,8 +54,8 @@ func Setup(datastore *store.Datastore, appClients *clients.ClientList, cfg *conf
 
 // CreateJob creates a new migration job based on the
 // provided job configuration and logs an event with the requesting user's ID.
-func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig, userID string) (*domain.Job, error) {
-	label, err := jobConfig.ValidateExternal(ctx, *js.clients)
+func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig, userID, userAuthToken string) (*domain.Job, error) {
+	label, err := jobConfig.ValidateExternal(ctx, *js.clients, userAuthToken)
 	if err != nil {
 		return &domain.Job{}, err
 	}

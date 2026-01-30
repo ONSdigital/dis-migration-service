@@ -124,9 +124,13 @@ func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, lim
 func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	userAuthToken, err := dprequest.GetAuthToken(r)
+	if err != nil {
+		handleError(ctx, w, r, appErrors.ErrUnauthorized)
+	}
+
 	// Extract user ID from JWT token
 	userID, err := api.GetUserID(r)
-
 	if err != nil {
 		log.Info(ctx, "failed to extract user ID from token", log.Data{
 			"error": err.Error(),
@@ -158,7 +162,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	job, err := api.JobService.CreateJob(ctx, jobConfig, userID)
+	job, err := api.JobService.CreateJob(ctx, jobConfig, userID, userAuthToken)
 	if err != nil {
 		handleError(ctx, w, r, err)
 		return
@@ -308,13 +312,11 @@ func (api *MigrationAPI) updateJobState(
 // the JWT token. Returns the user ID or an empty string if the token
 // cannot be parsed.
 func (api *MigrationAPI) GetUserID(r *http.Request) (string, error) {
-	bearerToken := r.Header.Get(dprequest.AuthHeaderKey)
-	if bearerToken == "" {
-		return "", errors.New("authorization header missing")
+	// Get JWT token
+	bearerToken, err := dprequest.GetAuthToken(r)
+	if err != nil {
+		return "", err
 	}
-
-	// Remove "Bearer " prefix if present
-	bearerToken = strings.TrimPrefix(bearerToken, dprequest.BearerPrefix)
 
 	// Parse the JWT token to extract user information
 	entityData, err := api.AuthMiddleware.Parse(bearerToken)

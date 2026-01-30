@@ -24,6 +24,7 @@ const (
 	testJobNumberCounterValue = 5
 	testDatasetTitle          = "Test Dataset Title"
 	nonExistentJobNumber      = 101
+	testUserAuthToken         = "test-user-auth-token"
 )
 
 func TestCreateJob(t *testing.T) {
@@ -55,10 +56,10 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockValidator := &domainMocks.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 				return testDatasetTitle, nil
 			},
-			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
+			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error {
 				return nil
 			},
 		}
@@ -76,7 +77,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, "")
+			job, err := jobService.CreateJob(ctx, &jobConfig, testUserAuthToken, "")
 
 			Convey("Then the validator should be called to get the title", func() {
 				So(len(mockValidator.ValidateSourceIDWithExternalCalls()), ShouldEqual, 1)
@@ -129,10 +130,10 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockValidator := &domainMocks.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 				return testDatasetTitle, nil
 			},
-			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
+			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error {
 				return nil
 			},
 		}
@@ -150,7 +151,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, "")
+			job, err := jobService.CreateJob(ctx, &jobConfig, testUserAuthToken, "")
 
 			Convey("Then no error should be returned", func() {
 				So(err, ShouldBeNil)
@@ -182,10 +183,10 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockValidator := &domainMocks.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 				return "", appErrors.ErrSourceTitleNotFound
 			},
-			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
+			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error {
 				return nil
 			},
 		}
@@ -203,7 +204,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, "")
+			job, err := jobService.CreateJob(ctx, &jobConfig, testUserAuthToken, "")
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -242,10 +243,10 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockValidator := &domainMocks.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 				return testDatasetTitle, nil
 			},
-			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
+			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error {
 				return nil
 			},
 		}
@@ -263,7 +264,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, "")
+			job, err := jobService.CreateJob(ctx, &jobConfig, testUserAuthToken, "")
 
 			Convey("Then the store should be checked for matching jobs", func() {
 				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)
@@ -299,10 +300,10 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockValidator := &domainMocks.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 				return testDatasetTitle, nil
 			},
-			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
+			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error {
 				return nil
 			},
 		}
@@ -320,7 +321,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, "")
+			job, err := jobService.CreateJob(ctx, &jobConfig, testUserAuthToken, "")
 
 			Convey("Then the store should be checked for matching jobs", func() {
 				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)
@@ -356,10 +357,10 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockValidator := &domainMocks.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 				return testDatasetTitle, nil
 			},
-			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
+			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error {
 				return nil
 			},
 		}
@@ -377,7 +378,7 @@ func TestCreateJob(t *testing.T) {
 		ctx := context.Background()
 
 		Convey("When a job is created", func() {
-			job, err := jobService.CreateJob(ctx, &jobConfig, "")
+			job, err := jobService.CreateJob(ctx, &jobConfig, testUserAuthToken, "")
 
 			Convey("Then the store should be called to create a job", func() {
 				So(len(mockMongo.GetJobsByConfigAndStateCalls()), ShouldEqual, 1)

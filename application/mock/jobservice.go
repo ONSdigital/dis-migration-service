@@ -36,7 +36,7 @@ var _ application.JobService = &JobServiceMock{}
 //			CreateEventFunc: func(ctx context.Context, jobNumber int, event *domain.Event) (*domain.Event, error) {
 //				panic("mock out the CreateEvent method")
 //			},
-//			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig, userID string) (*domain.Job, error) {
+//			CreateJobFunc: func(ctx context.Context, jobConfig *domain.JobConfig, userID string, userAuthToken string) (*domain.Job, error) {
 //				panic("mock out the CreateJob method")
 //			},
 //			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
@@ -89,7 +89,7 @@ type JobServiceMock struct {
 	CreateEventFunc func(ctx context.Context, jobNumber int, event *domain.Event) (*domain.Event, error)
 
 	// CreateJobFunc mocks the CreateJob method.
-	CreateJobFunc func(ctx context.Context, jobConfig *domain.JobConfig, userID string) (*domain.Job, error)
+	CreateJobFunc func(ctx context.Context, jobConfig *domain.JobConfig, userID string, userAuthToken string) (*domain.Job, error)
 
 	// CreateTaskFunc mocks the CreateTask method.
 	CreateTaskFunc func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error)
@@ -161,6 +161,8 @@ type JobServiceMock struct {
 			JobConfig *domain.JobConfig
 			// UserID is the userID argument value.
 			UserID string
+			// UserAuthToken is the userAuthToken argument value.
+			UserAuthToken string
 		}
 		// CreateTask holds details about calls to the CreateTask method.
 		CreateTask []struct {
@@ -444,23 +446,25 @@ func (mock *JobServiceMock) CreateEventCalls() []struct {
 }
 
 // CreateJob calls CreateJobFunc.
-func (mock *JobServiceMock) CreateJob(ctx context.Context, jobConfig *domain.JobConfig, userID string) (*domain.Job, error) {
+func (mock *JobServiceMock) CreateJob(ctx context.Context, jobConfig *domain.JobConfig, userID string, userAuthToken string) (*domain.Job, error) {
 	if mock.CreateJobFunc == nil {
 		panic("JobServiceMock.CreateJobFunc: method is nil but JobService.CreateJob was just called")
 	}
 	callInfo := struct {
-		Ctx       context.Context
-		JobConfig *domain.JobConfig
-		UserID    string
+		Ctx           context.Context
+		JobConfig     *domain.JobConfig
+		UserID        string
+		UserAuthToken string
 	}{
-		Ctx:       ctx,
-		JobConfig: jobConfig,
-		UserID:    userID,
+		Ctx:           ctx,
+		JobConfig:     jobConfig,
+		UserID:        userID,
+		UserAuthToken: userAuthToken,
 	}
 	mock.lockCreateJob.Lock()
 	mock.calls.CreateJob = append(mock.calls.CreateJob, callInfo)
 	mock.lockCreateJob.Unlock()
-	return mock.CreateJobFunc(ctx, jobConfig, userID)
+	return mock.CreateJobFunc(ctx, jobConfig, userID, userAuthToken)
 }
 
 // CreateJobCalls gets all the calls that were made to CreateJob.
@@ -468,14 +472,16 @@ func (mock *JobServiceMock) CreateJob(ctx context.Context, jobConfig *domain.Job
 //
 //	len(mockedJobService.CreateJobCalls())
 func (mock *JobServiceMock) CreateJobCalls() []struct {
-	Ctx       context.Context
-	JobConfig *domain.JobConfig
-	UserID    string
+	Ctx           context.Context
+	JobConfig     *domain.JobConfig
+	UserID        string
+	UserAuthToken string
 } {
 	var calls []struct {
-		Ctx       context.Context
-		JobConfig *domain.JobConfig
-		UserID    string
+		Ctx           context.Context
+		JobConfig     *domain.JobConfig
+		UserID        string
+		UserAuthToken string
 	}
 	mock.lockCreateJob.RLock()
 	calls = mock.calls.CreateJob

@@ -65,7 +65,7 @@ func (jc *JobConfig) ValidateInternal() []error {
 
 // ValidateExternal performs validation of the JobConfig fields
 // against external systems
-func (jc *JobConfig) ValidateExternal(ctx context.Context, appClients clients.ClientList) (string, error) {
+func (jc *JobConfig) ValidateExternal(ctx context.Context, appClients clients.ClientList, userAuthToken string) (string, error) {
 	var err error
 
 	if jc.Validator == nil {
@@ -75,12 +75,12 @@ func (jc *JobConfig) ValidateExternal(ctx context.Context, appClients clients.Cl
 		}
 	}
 
-	title, err := jc.Validator.ValidateSourceIDWithExternal(ctx, jc.SourceID, &appClients)
+	title, err := jc.Validator.ValidateSourceIDWithExternal(ctx, jc.SourceID, &appClients, userAuthToken)
 	if err != nil {
 		return "", err
 	}
 
-	err = jc.Validator.ValidateTargetIDWithExternal(ctx, jc.TargetID, &appClients)
+	err = jc.Validator.ValidateTargetIDWithExternal(ctx, jc.TargetID, &appClients, userAuthToken)
 	if err != nil {
 		return "", err
 	}

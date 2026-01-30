@@ -22,9 +22,9 @@ import (
 //go:generate moq -out mock/job_validator.go -pkg mock . JobValidator
 type JobValidator interface {
 	ValidateSourceID(sourceID string) error
-	ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error)
+	ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error)
 	ValidateTargetID(targetID string) error
-	ValidateTargetIDWithExternal(ctx context.Context, targetID string, appClients *clients.ClientList) error
+	ValidateTargetIDWithExternal(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error
 }
 
 var validators = map[JobType]JobValidator{
@@ -52,13 +52,14 @@ func (v *StaticDatasetValidator) ValidateSourceID(sourceID string) error {
 
 // ValidateSourceIDWithExternal validates if the given source ID exists in
 // Zebedee and is of the correct type
-func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
-	data, err := checkZebedeeURIExists(ctx, appClients.Zebedee, sourceID)
+func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
+	data, err := checkZebedeeURIExists(ctx, appClients.Zebedee, sourceID, userAuthToken)
 	if err != nil {
 		return "", err
 	}
 
 	if data.Type != zebedee.PageTypeDatasetLandingPage {
+		log.Error(ctx, data.Type, appErrors.ErrSourceIDInvalid)
 		return "", appErrors.ErrSourceIDInvalid
 	}
 
@@ -78,14 +79,13 @@ func (v *StaticDatasetValidator) ValidateTargetID(targetID string) error {
 
 // ValidateTargetIDWithExternal validates that the target dataset
 // ID does not already exist
-func (v *StaticDatasetValidator) ValidateTargetIDWithExternal(ctx context.Context, targetID string, appClients *clients.ClientList) error {
-	return checkDatasetIDDoesNotExist(ctx, appClients.DatasetAPI, targetID)
+func (v *StaticDatasetValidator) ValidateTargetIDWithExternal(ctx context.Context, targetID string, appClients *clients.ClientList, userAuthToken string) error {
+	return checkDatasetIDDoesNotExist(ctx, appClients.DatasetAPI, targetID, userAuthToken)
 }
 
-func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, uri string) (zebedee.PageData, error) {
+func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, uri, userAuthToken string) (zebedee.PageData, error) {
 	var e zebedee.ErrInvalidZebedeeResponse
-
-	zebedeeData, err := client.GetPageData(ctx, "", "", "en", uri)
+	zebedeeData, err := client.GetPageData(ctx, userAuthToken, "", "en", uri)
 	if err != nil {
 		if errors.As(err, &e) {
 			if e.ActualCode == http.StatusNotFound {
@@ -98,8 +98,8 @@ func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, ur
 	return zebedeeData, nil
 }
 
-func checkDatasetIDDoesNotExist(ctx context.Context, client datasetSDK.Clienter, id string) error {
-	_, err := client.GetDataset(ctx, datasetSDK.Headers{}, id)
+func checkDatasetIDDoesNotExist(ctx context.Context, client datasetSDK.Clienter, id, userAuthToken string) error {
+	_, err := client.GetDataset(ctx, datasetSDK.Headers{AccessToken: userAuthToken}, id)
 	if err != nil {
 		if err.Error() == datasetErrors.ErrDatasetNotFound.Error() {
 			return nil
