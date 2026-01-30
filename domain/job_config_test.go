@@ -12,6 +12,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+const testUserAuthToken = "test-user-auth-token"
+
 func TestValidateJobConfigInternal(t *testing.T) {
 	Convey("Given a valid job config with a mock validator that returns ok", t, func() {
 		mockValidator := &mock.JobValidatorMock{
@@ -157,7 +159,7 @@ func TestValidateJobConfigExternal(t *testing.T) {
 
 	Convey("Given a valid job config with a mock validator that returns ok and a title", t, func() {
 		mockValidator := &mock.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 				return testTitle, nil
 			},
 			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
@@ -176,7 +178,7 @@ func TestValidateJobConfigExternal(t *testing.T) {
 		mockClients := clients.ClientList{}
 
 		Convey("When the config is validated", func() {
-			title, err := jobConfig.ValidateExternal(ctx, mockClients)
+			title, err := jobConfig.ValidateExternal(ctx, mockClients, testUserAuthToken)
 
 			Convey("Then no errors should be returned", func() {
 				So(err, ShouldBeNil)
@@ -197,7 +199,7 @@ func TestValidateJobConfigExternal(t *testing.T) {
 		testErrorSourceID := errors.New("this is a test error for source id")
 
 		mockValidator := &mock.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 				return "", testErrorSourceID
 			},
 			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
@@ -216,7 +218,7 @@ func TestValidateJobConfigExternal(t *testing.T) {
 		mockClients := clients.ClientList{}
 
 		Convey("When the config is validated", func() {
-			title, err := jobConfig.ValidateExternal(ctx, mockClients)
+			title, err := jobConfig.ValidateExternal(ctx, mockClients, testUserAuthToken)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldEqual, testErrorSourceID)
@@ -230,7 +232,7 @@ func TestValidateJobConfigExternal(t *testing.T) {
 
 	Convey("Given a valid job config with a mock validator that returns an empty title", t, func() {
 		mockValidator := &mock.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 				return "", appErrors.ErrSourceTitleNotFound
 			},
 			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
@@ -249,7 +251,7 @@ func TestValidateJobConfigExternal(t *testing.T) {
 		mockClients := clients.ClientList{}
 
 		Convey("When the config is validated", func() {
-			title, err := jobConfig.ValidateExternal(ctx, mockClients)
+			title, err := jobConfig.ValidateExternal(ctx, mockClients, testUserAuthToken)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldEqual, appErrors.ErrSourceTitleNotFound)
@@ -265,7 +267,7 @@ func TestValidateJobConfigExternal(t *testing.T) {
 		testErrorTargetID := errors.New("this is a test error for target id")
 
 		mockValidator := &mock.JobValidatorMock{
-			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
+			ValidateSourceIDWithExternalFunc: func(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 				return testTitle, nil
 			},
 			ValidateTargetIDWithExternalFunc: func(ctx context.Context, targetID string, appClients *clients.ClientList) error {
@@ -284,7 +286,7 @@ func TestValidateJobConfigExternal(t *testing.T) {
 		mockClients := clients.ClientList{}
 
 		Convey("When the config is validated", func() {
-			title, err := jobConfig.ValidateExternal(ctx, mockClients)
+			title, err := jobConfig.ValidateExternal(ctx, mockClients, testUserAuthToken)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldEqual, testErrorTargetID)
@@ -307,7 +309,7 @@ func TestValidateJobConfigExternal(t *testing.T) {
 		mockClients := clients.ClientList{}
 
 		Convey("When the config is validated", func() {
-			title, err := jobConfig.ValidateExternal(ctx, mockClients)
+			title, err := jobConfig.ValidateExternal(ctx, mockClients, testUserAuthToken)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldEqual, appErrors.ErrJobTypeInvalid)

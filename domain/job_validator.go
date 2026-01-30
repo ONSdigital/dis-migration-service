@@ -22,7 +22,7 @@ import (
 //go:generate moq -out mock/job_validator.go -pkg mock . JobValidator
 type JobValidator interface {
 	ValidateSourceID(sourceID string) error
-	ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error)
+	ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error)
 	ValidateTargetID(targetID string) error
 	ValidateTargetIDWithExternal(ctx context.Context, targetID string, appClients *clients.ClientList) error
 }
@@ -52,13 +52,14 @@ func (v *StaticDatasetValidator) ValidateSourceID(sourceID string) error {
 
 // ValidateSourceIDWithExternal validates if the given source ID exists in
 // Zebedee and is of the correct type
-func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList) (string, error) {
-	data, err := checkZebedeeURIExists(ctx, appClients.Zebedee, sourceID)
+func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
+	data, err := checkZebedeeURIExists(ctx, appClients.Zebedee, sourceID, userAuthToken)
 	if err != nil {
 		return "", err
 	}
 
 	if data.Type != zebedee.PageTypeDatasetLandingPage {
+		log.Error(ctx, data.Type, appErrors.ErrSourceIDInvalid)
 		return "", appErrors.ErrSourceIDInvalid
 	}
 
@@ -82,10 +83,9 @@ func (v *StaticDatasetValidator) ValidateTargetIDWithExternal(ctx context.Contex
 	return checkDatasetIDDoesNotExist(ctx, appClients.DatasetAPI, targetID)
 }
 
-func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, uri string) (zebedee.PageData, error) {
+func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, uri, userAuthToken string) (zebedee.PageData, error) {
 	var e zebedee.ErrInvalidZebedeeResponse
-
-	zebedeeData, err := client.GetPageData(ctx, "", "", "en", uri)
+	zebedeeData, err := client.GetPageData(ctx, userAuthToken, "", "en", uri)
 	if err != nil {
 		if errors.As(err, &e) {
 			if e.ActualCode == http.StatusNotFound {
