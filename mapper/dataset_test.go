@@ -262,8 +262,9 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 				So(dataset, ShouldNotBeNil)
 			})
 
-			Convey("And the dataset has an empty topics list", func() {
-				So(len(dataset.Topics), ShouldEqual, 0)
+			Convey("And the dataset has the mock topic ID in its topics list", func() {
+				So(len(dataset.Topics), ShouldEqual, 1)
+				So(dataset.Topics[0], ShouldEqual, "0000")
 			})
 		})
 	})

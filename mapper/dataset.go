@@ -30,12 +30,21 @@ func MapDatasetLandingPageToDatasetAPI(ctx context.Context, datasetID string, pa
 		existingTopicIDs = append(existingTopicIDs, pageData.Description.CanonicalTopic)
 	}
 
-	topicIDs := cache.ExtractTopicIDsFromURI(ctx, pageData.URI, existingTopicIDs, topicCache)
-
 	// Only validate topics if not using mock cache
 	// When mock cache is enabled, we skip topic validation as the cache is non-functional
-	if !topicCache.IsMockCache(ctx) && len(topicIDs) == 0 {
-		return nil, errors.New("no topics found for dataset - datasets must have at least one topic")
+	var topicIDs []string
+	if !topicCache.IsMockCache(ctx) {
+		topicIDs = cache.ExtractTopicIDsFromURI(ctx, pageData.URI, existingTopicIDs, topicCache)
+		if len(topicIDs) == 0 {
+			return nil, errors.New("no topics found for dataset - datasets must have at least one topic")
+		}
+	} else {
+		// When mock cache is disabled, add the mock-topic topic ID
+		topic, err := topicCache.GetTopic(ctx, "mock-topic")
+		if err != nil {
+			return nil, errors.New("mock topic not found in topic cache - if topic cache is disabled, mock topic should exist")
+		}
+		topicIDs = []string{topic.ID}
 	}
 
 	// If NextRelease has no value, set to "To be announced".
