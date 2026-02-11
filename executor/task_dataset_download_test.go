@@ -397,4 +397,53 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given a dataset download task executor and a dataset client that returns a 409 Conflict then succeeds", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
+		}
+		putVersionCalls := 0
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: &datasetSDKMock.ClienterMock{
+				GetVersionWithHeadersFunc: func(ctx context.Context, headers sdk.Headers, datasetID, edition, version string) (datasetModels.Version, sdk.ResponseHeaders, error) {
+					return datasetModels.Version{
+						Distributions: &[]datasetModels.Distribution{},
+					}, sdk.ResponseHeaders{ETag: "etag-1"}, nil
+				},
+				PutVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version datasetModels.Version) (datasetModels.Version, error) {
+					putVersionCalls++
+					if putVersionCalls == 1 {
+						return datasetModels.Version{}, errors.New("Etag conflict, received status 409")
+					}
+					return datasetModels.Version{}, nil
+				},
+			},
+			UploadService: &uploadSDKMock.ClienterMock{
+				UploadFunc: func(ctx context.Context, fileContent io.ReadCloser, metadata api.Metadata, headers uploadSDK.Headers) error {
+					return nil
+				},
+			},
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
+					return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
+				},
+				GetFileSizeFunc: func(ctx context.Context, userAccessToken, collectionID, lang, uri string) (zebedee.FileSize, error) {
+					return zebedee.FileSize{Size: len(testFileData)}, nil
+				},
+			},
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetDownloadTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+		Convey("When migrate is called for a task", func() {
+			err := executor.Migrate(ctx, testDownloadTask)
+			Convey("Then it retries and eventually succeeds", func() {
+				So(err, ShouldBeNil)
+				So(putVersionCalls, ShouldEqual, 2)
+			})
+		})
+	})
 }

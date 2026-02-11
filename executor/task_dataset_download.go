@@ -2,6 +2,13 @@ package executor
 
 import (
 	"context"
+	"crypto/rand"
+	"fmt"
+	"math/big"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
@@ -13,6 +20,11 @@ import (
 	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk"
 	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
+)
+
+const (
+	maxRetries = 5
+	baseDelay  = 50 * time.Millisecond
 )
 
 // DatasetDownloadTaskExecutor executes migration tasks for dataset downloads.
@@ -131,10 +143,6 @@ func (e *DatasetDownloadTaskExecutor) updateDownloadMetadata(ctx context.Context
 		return appErrors.ErrInvalidTask
 	}
 
-	headers := datasetSDK.Headers{
-		AccessToken: e.serviceAuthToken,
-	}
-
 	logData := log.Data{
 		"task_id":    task.ID,
 		"dataset_id": task.Target.DatasetID,
@@ -143,12 +151,71 @@ func (e *DatasetDownloadTaskExecutor) updateDownloadMetadata(ctx context.Context
 		"title":      distribution.Title,
 	}
 
-	//TODO: use the eTag here to prevent collisions. SDK needs to support it first.
-	currentVersion, _, err := e.clientList.DatasetAPI.GetVersionWithHeaders(ctx, headers, task.Target.DatasetID, task.Target.EditionID, task.Target.VersionID)
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if attempt > 0 {
+			var randomDelay int64
+			maxDelay := big.NewInt(int64(baseDelay))
+			n, err := rand.Int(rand.Reader, maxDelay)
+			if err != nil {
+				randomDelay = int64(baseDelay)
+			} else {
+				randomDelay = n.Int64()
+			}
+			delay := baseDelay + time.Duration(randomDelay)
+
+			log.Info(ctx, "ETag conflict, retrying after delay", log.Data{
+				"task_id": task.ID,
+				"attempt": attempt,
+				"delay":   delay.String(),
+			})
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(delay):
+			}
+		}
+
+		err := e.tryUpdateDownloadMetadata(ctx, task, distribution, logData)
+		if err == nil {
+			return nil
+		}
+
+		if !isConflictError(err) {
+			return err
+		}
+	}
+
+	return fmt.Errorf("failed to update download metadata after %d attempts", maxRetries)
+}
+
+// tryUpdateDownloadMetadata attempts a single update
+// of the dataset version with the distribution.
+func (e *DatasetDownloadTaskExecutor) tryUpdateDownloadMetadata(ctx context.Context, task *domain.Task, distribution datasetModels.Distribution, logData log.Data) error {
+	headers := datasetSDK.Headers{
+		AccessToken: e.serviceAuthToken,
+	}
+
+	currentVersion, respHeaders, err := e.clientList.DatasetAPI.GetVersionWithHeaders(ctx, headers, task.Target.DatasetID, task.Target.EditionID, task.Target.VersionID)
 	if err != nil {
 		return err
 	}
 
+	e.applyDistributionUpdate(ctx, &currentVersion, distribution, logData)
+
+	// Update version with eTag
+	eTag := respHeaders.ETag
+	log.Info(ctx, "updating dataset version with new distribution", log.Data{"task_id": task.ID, "e_tag": eTag})
+
+	headers.IfMatch = eTag
+
+	_, err = e.clientList.DatasetAPI.PutVersion(ctx, headers, task.Target.DatasetID, task.Target.EditionID, task.Target.VersionID, currentVersion)
+	return err
+}
+
+// applyDistributionUpdate modifies the version's distributions
+// with the new distribution.
+func (e *DatasetDownloadTaskExecutor) applyDistributionUpdate(ctx context.Context, currentVersion *datasetModels.Version, distribution datasetModels.Distribution, logData log.Data) {
 	// Initialize distributions slice if nil
 	if currentVersion.Distributions == nil {
 		distributions := []datasetModels.Distribution{distribution}
@@ -169,7 +236,7 @@ func (e *DatasetDownloadTaskExecutor) updateDownloadMetadata(ctx context.Context
 				ctx,
 				"enriching existing distribution with download metadata",
 				log.Data{
-					"task_id":      task.ID,
+					"task_id":      logData["task_id"],
 					"title":        distribution.Title,
 					"download_url": distribution.DownloadURL,
 					"byte_size":    distribution.ByteSize,
@@ -191,13 +258,14 @@ func (e *DatasetDownloadTaskExecutor) updateDownloadMetadata(ctx context.Context
 			)
 		}
 	}
+}
 
-	_, err = e.clientList.DatasetAPI.PutVersion(ctx, headers, task.Target.DatasetID, task.Target.EditionID, task.Target.VersionID, currentVersion)
-	if err != nil {
-		return err
+// isConflictError checks if the error is an HTTP 409 Conflict.
+func isConflictError(err error) bool {
+	if err == nil {
+		return false
 	}
-
-	return nil
+	return strings.Contains(err.Error(), strconv.Itoa(http.StatusConflict))
 }
 
 // findDistributionIndexByTitle finds the index of a distribution in the slice
