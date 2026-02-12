@@ -153,15 +153,7 @@ func (e *DatasetDownloadTaskExecutor) updateDownloadMetadata(ctx context.Context
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		if attempt > 0 {
-			var randomDelay int64
-			maxDelay := big.NewInt(int64(baseDelay))
-			n, err := rand.Int(rand.Reader, maxDelay)
-			if err != nil {
-				randomDelay = int64(baseDelay)
-			} else {
-				randomDelay = n.Int64()
-			}
-			delay := baseDelay + time.Duration(randomDelay)
+			delay := getRandomDelay(baseDelay)
 
 			log.Info(ctx, "ETag conflict, retrying after delay", log.Data{
 				"task_id": task.ID,
@@ -187,6 +179,16 @@ func (e *DatasetDownloadTaskExecutor) updateDownloadMetadata(ctx context.Context
 	}
 
 	return fmt.Errorf("failed to update download metadata after %d attempts", maxRetries)
+}
+
+// getRandomDelay returns a random duration between 0 and baseDelay
+func getRandomDelay(baseDelay time.Duration) time.Duration {
+	maxDelay := big.NewInt(int64(baseDelay))
+	n, err := rand.Int(rand.Reader, maxDelay)
+	if err != nil {
+		return baseDelay
+	}
+	return time.Duration(n.Int64())
 }
 
 // tryUpdateDownloadMetadata attempts a single update
@@ -232,17 +234,11 @@ func (e *DatasetDownloadTaskExecutor) applyDistributionUpdate(ctx context.Contex
 			// Distribution exists - enrich it with full metadata
 			// Version task created this with Title + Format only
 			// Now enriching with DownloadURL, ByteSize, and MediaType
-			log.Info(
-				ctx,
-				"enriching existing distribution with download metadata",
-				log.Data{
-					"task_id":      logData["task_id"],
-					"title":        distribution.Title,
-					"download_url": distribution.DownloadURL,
-					"byte_size":    distribution.ByteSize,
-					"index":        index,
-				},
-			)
+			logData["title"] = distribution.Title
+			logData["download_url"] = distribution.DownloadURL
+			logData["byte_size"] = distribution.ByteSize
+			logData["index"] = index
+			log.Info(ctx, "enriching existing distribution with download metadata", logData)
 			(*currentVersion.Distributions)[index] = distribution
 		} else {
 			// Distribution not found - append as new
