@@ -9,10 +9,11 @@ import (
 
 // JobConfig represents the configuration for a migration job
 type JobConfig struct {
-	SourceID  string       `json:"source_id" bson:"source_id"`
-	TargetID  string       `json:"target_id" bson:"target_id"`
-	Type      JobType      `json:"type" bson:"type"`
-	Validator JobValidator `json:"-" bson:"-"`
+	CollectionID string       `json:"collection_id,omitempty" bson:"collection_id,omitempty"`
+	SourceID     string       `json:"source_id" bson:"source_id"`
+	TargetID     string       `json:"target_id" bson:"target_id"`
+	Type         JobType      `json:"type" bson:"type"`
+	Validator    JobValidator `json:"-" bson:"-"`
 }
 
 // ValidateInternal performs internal validation of the JobConfig fields

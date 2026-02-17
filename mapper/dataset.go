@@ -3,6 +3,7 @@ package mapper
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/ONSdigital/dis-migration-service/cache"
@@ -89,4 +90,12 @@ func getQMILink(methodologyLinks []zebedee.Link) *datasetModels.GeneralDetails {
 		}
 	}
 	return &datasetModels.GeneralDetails{}
+}
+
+// CreateDatasetLink creates a link to the dataset in the new location,
+// which is added to the migration link field in the source dataset
+// landing page.
+func CreateDatasetLink(dataset *datasetModels.Dataset) string {
+	//TODO: add topics in here
+	return fmt.Sprintf("/datasets/%s", dataset.ID)
 }

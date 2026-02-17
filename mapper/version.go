@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
@@ -94,4 +95,12 @@ func getCorrectionNotice(editionData zebedee.Dataset, version int) string {
 		return editionData.Versions[version-1].Notice
 	}
 	return ""
+}
+
+// CreateDatasetVersionLink creates a link to the dataset version in
+// the new location, which is added to the migration link field in the
+// source dataset landing page.
+func CreateDatasetVersionLink(version *datasetModels.Version) string {
+	//TODO: add topics in here
+	return fmt.Sprintf("/datasets/%s/editions/%s/versions/%d", version.DatasetID, version.Edition, version.Version)
 }

@@ -118,6 +118,7 @@ func Get() (*Config, error) {
 		},
 		AuthConfig:               authorisation.NewDefaultConfig(),
 		SlackConfig:              &slack.Config{},
+		ServiceAuthToken:         "migrationservicetestauthtoken",
 		RedirectAPIURL:           "http://localhost:29900",
 		TopicAPIURL:              "http://localhost:25300",
 		TopicCacheUpdateInterval: 10 * time.Minute,

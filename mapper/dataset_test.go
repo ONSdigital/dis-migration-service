@@ -6,6 +6,7 @@ import (
 
 	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -284,6 +285,22 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 
 			Convey("And NextRelease is set to the default 'To be announced'", func() {
 				So(dataset.NextRelease, ShouldEqual, "To be announced")
+			})
+		})
+	})
+}
+
+func TestCreateDatasetLink(t *testing.T) {
+	Convey("Given a dataset with an ID", t, func() {
+		dataset := &datasetModels.Dataset{
+			ID: "test-dataset-id",
+		}
+
+		Convey("When CreateDatasetLink is called", func() {
+			link := CreateDatasetLink(dataset)
+
+			Convey("Then the link is created in the expected format", func() {
+				So(link, ShouldEqual, "/datasets/test-dataset-id")
 			})
 		})
 	})

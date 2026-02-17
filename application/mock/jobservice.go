@@ -57,6 +57,9 @@ var _ application.JobService = &JobServiceMock{}
 //			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 //				panic("mock out the GetNextJobNumber method")
 //			},
+//			UpdateJobCollectionIDFunc: func(ctx context.Context, jobNumber int, collectionID string) error {
+//				panic("mock out the UpdateJobCollectionID method")
+//			},
 //			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State, userID string) error {
 //				panic("mock out the UpdateJobState method")
 //			},
@@ -108,6 +111,9 @@ type JobServiceMock struct {
 
 	// GetNextJobNumberFunc mocks the GetNextJobNumber method.
 	GetNextJobNumberFunc func(ctx context.Context) (*domain.Counter, error)
+
+	// UpdateJobCollectionIDFunc mocks the UpdateJobCollectionID method.
+	UpdateJobCollectionIDFunc func(ctx context.Context, jobNumber int, collectionID string) error
 
 	// UpdateJobStateFunc mocks the UpdateJobState method.
 	UpdateJobStateFunc func(ctx context.Context, jobNumber int, newState domain.State, userID string) error
@@ -224,6 +230,15 @@ type JobServiceMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
+		// UpdateJobCollectionID holds details about calls to the UpdateJobCollectionID method.
+		UpdateJobCollectionID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// JobNumber is the jobNumber argument value.
+			JobNumber int
+			// CollectionID is the collectionID argument value.
+			CollectionID string
+		}
 		// UpdateJobState holds details about calls to the UpdateJobState method.
 		UpdateJobState []struct {
 			// Ctx is the ctx argument value.
@@ -264,6 +279,7 @@ type JobServiceMock struct {
 	lockGetJobTasks            sync.RWMutex
 	lockGetJobs                sync.RWMutex
 	lockGetNextJobNumber       sync.RWMutex
+	lockUpdateJobCollectionID  sync.RWMutex
 	lockUpdateJobState         sync.RWMutex
 	lockUpdateTask             sync.RWMutex
 	lockUpdateTaskState        sync.RWMutex
@@ -738,6 +754,46 @@ func (mock *JobServiceMock) GetNextJobNumberCalls() []struct {
 	mock.lockGetNextJobNumber.RLock()
 	calls = mock.calls.GetNextJobNumber
 	mock.lockGetNextJobNumber.RUnlock()
+	return calls
+}
+
+// UpdateJobCollectionID calls UpdateJobCollectionIDFunc.
+func (mock *JobServiceMock) UpdateJobCollectionID(ctx context.Context, jobNumber int, collectionID string) error {
+	if mock.UpdateJobCollectionIDFunc == nil {
+		panic("JobServiceMock.UpdateJobCollectionIDFunc: method is nil but JobService.UpdateJobCollectionID was just called")
+	}
+	callInfo := struct {
+		Ctx          context.Context
+		JobNumber    int
+		CollectionID string
+	}{
+		Ctx:          ctx,
+		JobNumber:    jobNumber,
+		CollectionID: collectionID,
+	}
+	mock.lockUpdateJobCollectionID.Lock()
+	mock.calls.UpdateJobCollectionID = append(mock.calls.UpdateJobCollectionID, callInfo)
+	mock.lockUpdateJobCollectionID.Unlock()
+	return mock.UpdateJobCollectionIDFunc(ctx, jobNumber, collectionID)
+}
+
+// UpdateJobCollectionIDCalls gets all the calls that were made to UpdateJobCollectionID.
+// Check the length with:
+//
+//	len(mockedJobService.UpdateJobCollectionIDCalls())
+func (mock *JobServiceMock) UpdateJobCollectionIDCalls() []struct {
+	Ctx          context.Context
+	JobNumber    int
+	CollectionID string
+} {
+	var calls []struct {
+		Ctx          context.Context
+		JobNumber    int
+		CollectionID string
+	}
+	mock.lockUpdateJobCollectionID.RLock()
+	calls = mock.calls.UpdateJobCollectionID
+	mock.lockUpdateJobCollectionID.RUnlock()
 	return calls
 }
 

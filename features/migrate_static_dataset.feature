@@ -48,6 +48,7 @@ Feature: Migrate a static dataset job
         "state": "in_review",
         "last_updated": "{{DYNAMIC_TIMESTAMP}}",
         "config": {
+          "collection_id": "migration-job-test-collection",
           "source_id": "/test-static-dataset-job",
           "target_id": "test-target-id",
           "type": "static_dataset"
@@ -97,6 +98,7 @@ Feature: Migrate a static dataset job
         "state": "failed_migration",
         "last_updated": "{{DYNAMIC_TIMESTAMP}}",
         "config": {
+          "collection_id": "migration-job-test-collection",
           "source_id": "/test-static-dataset-job-failed",
           "target_id": "test-target-id",
           "type": "static_dataset"

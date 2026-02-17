@@ -67,6 +67,25 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 		return err
 	}
 
+	job, err := e.jobService.GetJob(ctx, task.JobNumber)
+	if err != nil {
+		log.Error(ctx, "failed to get job for dataset series task", err, logData)
+		return err
+	}
+
+	sourceData.Description.MigrationLink = mapper.CreateDatasetLink(targetData)
+	err = e.clientList.Zebedee.SaveContentToCollection(
+		ctx,
+		e.serviceAuthToken,
+		job.Config.CollectionID,
+		task.Source.ID,
+		sourceData,
+	)
+	if err != nil {
+		log.Error(ctx, "failed to save updated dataset landing page with migration link to zebedee collection", err, logData)
+		return err
+	}
+
 	for _, edition := range sourceData.Datasets {
 		editionTask := domain.NewTask(task.JobNumber)
 

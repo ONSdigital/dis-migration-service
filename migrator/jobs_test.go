@@ -48,7 +48,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 			},
 		}
 
-		getJobExecutors = func(_ application.JobService, _ *clients.ClientList) map[domain.JobType]executor.JobExecutor {
+		getJobExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.JobType]executor.JobExecutor {
 			return map[domain.JobType]executor.JobExecutor{
 				fakeJobType: mockJobExecutor,
 			}
@@ -111,7 +111,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 	})
 
 	Convey("Given a migrator with no executor for a job type", t, func() {
-		getJobExecutors = func(_ application.JobService, _ *clients.ClientList) map[domain.JobType]executor.JobExecutor {
+		getJobExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.JobType]executor.JobExecutor {
 			return map[domain.JobType]executor.JobExecutor{}
 		}
 
@@ -162,7 +162,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 			},
 		}
 
-		getJobExecutors = func(_ application.JobService, _ *clients.ClientList) map[domain.JobType]executor.JobExecutor {
+		getJobExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.JobType]executor.JobExecutor {
 			return map[domain.JobType]executor.JobExecutor{
 				fakeJobType: mockJobExecutor,
 			}
@@ -398,7 +398,7 @@ func TestGetJobExecutor(t *testing.T) {
 
 		mockJobExecutor := &executorMocks.JobExecutorMock{}
 
-		getJobExecutors = func(_ application.JobService, _ *clients.ClientList) map[domain.JobType]executor.JobExecutor {
+		getJobExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.JobType]executor.JobExecutor {
 			return map[domain.JobType]executor.JobExecutor{
 				fakeJobType: mockJobExecutor,
 			}
@@ -519,7 +519,7 @@ func TestMonitorJobs(t *testing.T) {
 			},
 		}
 
-		getJobExecutors = func(_ application.JobService, _ *clients.ClientList) map[domain.JobType]executor.JobExecutor {
+		getJobExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.JobType]executor.JobExecutor {
 			return map[domain.JobType]executor.JobExecutor{
 				fakeJobType: mockJobExecutor,
 			}

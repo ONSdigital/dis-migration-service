@@ -6,25 +6,45 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 
 	datasetError "github.com/ONSdigital/dp-dataset-api/apierrors"
 	"github.com/maxcnunes/httpfake"
 )
 
+const (
+	testCollectionID = "migration-job-test-collection"
+)
+
 // FakeAPI contains all the information for a fake component API
 type FakeAPI struct {
-	fakeHTTP             *httpfake.HTTPFake
-	datasetCreateHandler *httpfake.Request
+	fakeHTTP                *httpfake.HTTPFake
+	datasetCreateHandler    *httpfake.Request
+	collectionCreateHandler *httpfake.Request
+	collectionUpdateHandler *httpfake.Request
 }
 
 // NewFakeAPI creates a new fake component API
 func NewFakeAPI() *FakeAPI {
 	fakeAPI := httpfake.New()
 
+	// This is setting success criteria for collection interactions with zebedee.
+	// To control this from component tests you will need to implement steps to update
+	// these responses.
+	collectionCreateHandler := fakeAPI.NewHandler().Post("/collection")
+	collectionCreateHandler.Reply(200).BodyStruct(zebedee.Collection{
+		ID: testCollectionID,
+	})
+
+	collectionUpdateHandler := fakeAPI.NewHandler().Post(fmt.Sprintf("/content/%s", testCollectionID))
+	collectionUpdateHandler.Reply(200)
+
 	return &FakeAPI{
-		fakeHTTP:             fakeAPI,
-		datasetCreateHandler: fakeAPI.NewHandler().Post("/datasets"),
+		fakeHTTP:                fakeAPI,
+		datasetCreateHandler:    fakeAPI.NewHandler().Post("/datasets"),
+		collectionCreateHandler: collectionCreateHandler,
+		collectionUpdateHandler: collectionUpdateHandler,
 	}
 }
 

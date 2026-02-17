@@ -37,7 +37,7 @@ func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, a
 		return nil, fmt.Errorf("topicCache is required but was nil - cannot initialize migrator without topic cache")
 	}
 
-	jobExecutors := getJobExecutors(jobService, appClients)
+	jobExecutors := getJobExecutors(jobService, appClients, cfg)
 	taskExecutors := getTaskExecutors(jobService, appClients, cfg, topicCache)
 
 	mig := &migrator{

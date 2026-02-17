@@ -47,6 +47,13 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
@@ -54,25 +61,29 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				return models.DatasetUpdate{}, nil
 			},
 		}
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
+				return zebedee.DatasetLandingPage{
+					Type: zebedee.PageTypeDatasetLandingPage,
+					URI:  "/economy/datasets/test-dataset",
+					Datasets: []zebedee.Link{
+						{
+							URI: getEditionURI(testDatasetSeriesURI, "2021"),
+						},
+						{
+							URI: getEditionURI(testDatasetSeriesURI, "2022"),
+						},
+					},
+				}, nil
+			},
+			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+				return nil
+			},
+		}
 
 		mockClientList := &clients.ClientList{
 			DatasetAPI: mockDatasetClient,
-			Zebedee: &clientMocks.ZebedeeClientMock{
-				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
-					return zebedee.DatasetLandingPage{
-						Type: zebedee.PageTypeDatasetLandingPage,
-						URI:  "/economy/datasets/test-dataset",
-						Datasets: []zebedee.Link{
-							{
-								URI: getEditionURI(testDatasetSeriesURI, "2021"),
-							},
-							{
-								URI: getEditionURI(testDatasetSeriesURI, "2022"),
-							},
-						},
-					}, nil
-				},
-			},
+			Zebedee:    mockZebedeeClient,
 		}
 
 		ctx := context.Background()
@@ -90,6 +101,12 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 					So(len(mockDatasetClient.CreateDatasetCalls()), ShouldEqual, 1)
 					So(mockDatasetClient.CreateDatasetCalls()[0].Dataset.ID, ShouldEqual, testDatasetSeriesID)
 					So(mockDatasetClient.CreateDatasetCalls()[0].Headers.AccessToken, ShouldEqual, testServiceAuthToken)
+
+					Convey("And the collection is updated with the migrationLink", func() {
+						So(len(mockZebedeeClient.SaveContentToCollectionCalls()), ShouldEqual, 1)
+						So(mockZebedeeClient.SaveContentToCollectionCalls()[0].CollectionID, ShouldEqual, testCollectionID)
+						So(mockZebedeeClient.SaveContentToCollectionCalls()[0].Path, ShouldEqual, testSeriesTask.Source.ID)
+					})
 
 					Convey("And an edition task is created for each dataset", func() {
 						So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 2)
@@ -176,6 +193,60 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 					Convey("And no edition tasks are created", func() {
 						So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
 					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a dataset series task executor and a zebedee API client that fails to update a collection", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
+		}
+
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
+				return zebedee.DatasetLandingPage{
+					Type: "dataset_landing_page",
+					Datasets: []zebedee.Link{
+						{
+							URI: "/datasets/test-dataset/editions/2021/versions/1",
+						},
+					},
+				}, nil
+			},
+			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+				return errors.New("failed to update collection")
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: &datasetSDKMock.ClienterMock{
+				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+					return models.DatasetUpdate{}, nil
+				},
+			},
+			Zebedee: mockZebedeeClient,
+		}
+
+		ctx := context.Background()
+
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
+
+		Convey("When migrate is called for a task", func() {
+			err := executor.Migrate(ctx, testSeriesTask)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldNotBeNil)
+
+				Convey("And no edition tasks are created for the dataset", func() {
+					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
 				})
 			})
 		})
@@ -269,6 +340,13 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return nil, errors.New("failed to create task")
 			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 		mockClientList := &clients.ClientList{
@@ -291,6 +369,9 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 							},
 						},
 					}, nil
+				},
+				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+					return nil
 				},
 			},
 		}
@@ -324,6 +405,13 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
@@ -334,21 +422,26 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			},
 		}
 
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
+				return zebedee.DatasetLandingPage{
+					Type: zebedee.PageTypeDatasetLandingPage,
+					URI:  "/economy/inflationandpriceindices/datasets/cpih01",
+					Datasets: []zebedee.Link{
+						{
+							URI: getEditionURI(testDatasetSeriesURI, "2021"),
+						},
+					},
+				}, nil
+			},
+			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+				return nil
+			},
+		}
+
 		mockClientList := &clients.ClientList{
 			DatasetAPI: mockDatasetClient,
-			Zebedee: &clientMocks.ZebedeeClientMock{
-				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
-					return zebedee.DatasetLandingPage{
-						Type: zebedee.PageTypeDatasetLandingPage,
-						URI:  "/economy/inflationandpriceindices/datasets/cpih01",
-						Datasets: []zebedee.Link{
-							{
-								URI: getEditionURI(testDatasetSeriesURI, "2021"),
-							},
-						},
-					}, nil
-				},
-			},
+			Zebedee:    mockZebedeeClient,
 		}
 
 		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
@@ -383,6 +476,13 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 		mockJobService := &applicationMocks.JobServiceMock{
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
+			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
 			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}

@@ -110,6 +110,24 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 	})
 }
 
+func TestCreateDatasetVersionLink(t *testing.T) {
+	Convey("Given a dataset version with an edition and version number", t, func() {
+		version := &datasetModels.Version{
+			DatasetID: "test-dataset-id",
+			Edition:   "test-edition-id",
+			Version:   3,
+		}
+
+		Convey("When a dataset version link is created", func() {
+			link := CreateDatasetVersionLink(version)
+
+			Convey("Then the link is in the expected format", func() {
+				So(link, ShouldEqual, "/datasets/test-dataset-id/editions/test-edition-id/versions/3")
+			})
+		})
+	})
+}
+
 func getTestDatasetVersionPage() zebedee.Dataset {
 	return zebedee.Dataset{
 		Type: zebedee.PageTypeDataset,

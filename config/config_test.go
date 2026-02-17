@@ -26,6 +26,7 @@ func TestConfig(t *testing.T) {
 				configuration, err = Get() // This Get() is only called once, when inside this function
 				So(err, ShouldBeNil)
 				So(configuration, ShouldResemble, &Config{
+					AuthConfig:                      authorisation.NewDefaultConfig(),
 					BindAddr:                        "localhost:30100",
 					DatasetAPIURL:                   "http://localhost:22000",
 					DefaultLimit:                    10,
@@ -33,6 +34,7 @@ func TestConfig(t *testing.T) {
 					DefaultMaxLimit:                 100,
 					EnableEventLogging:              false,
 					EnableMockClients:               false,
+					EnableTopicCache:                false,
 					FilesAPIURL:                     "http://localhost:26900",
 					GracefulShutdownTimeout:         5 * time.Second,
 					HealthCheckInterval:             30 * time.Second,
@@ -60,12 +62,11 @@ func TestConfig(t *testing.T) {
 							},
 						},
 					},
-					AuthConfig:               authorisation.NewDefaultConfig(),
-					SlackConfig:              &slack.Config{},
 					RedirectAPIURL:           "http://localhost:29900",
+					ServiceAuthToken:         "migrationservicetestauthtoken",
+					SlackConfig:              &slack.Config{},
 					TopicAPIURL:              "http://localhost:25300",
 					TopicCacheUpdateInterval: 10 * time.Minute,
-					EnableTopicCache:         false,
 					UploadServiceURL:         "http://localhost:25100",
 					ZebedeeURL:               "http://localhost:8082",
 				})

@@ -476,6 +476,9 @@ definitions:
   MigrationJobConfig:
     type: object
     properties:
+      collection_id:
+        type: string
+        example: "migration-collection-20"
       source_id:
         type: string
         example: "/economy/inflationandpriceindices"

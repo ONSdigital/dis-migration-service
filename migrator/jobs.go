@@ -8,6 +8,7 @@ import (
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
+	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/executor"
 	"github.com/ONSdigital/dis-migration-service/slack"
@@ -28,9 +29,9 @@ const (
 	EventUpdateTaskStateFailed = "Failed to update task state"
 )
 
-var getJobExecutors = func(jobService application.JobService, appClients *clients.ClientList) map[domain.JobType]executor.JobExecutor {
+var getJobExecutors = func(jobService application.JobService, appClients *clients.ClientList, cfg *config.Config) map[domain.JobType]executor.JobExecutor {
 	jobExecutors := make(map[domain.JobType]executor.JobExecutor)
-	jobExecutors[domain.JobTypeStaticDataset] = executor.NewStaticDatasetJobExecutor(jobService, appClients)
+	jobExecutors[domain.JobTypeStaticDataset] = executor.NewStaticDatasetJobExecutor(jobService, appClients, cfg.ServiceAuthToken)
 	return jobExecutors
 }
 

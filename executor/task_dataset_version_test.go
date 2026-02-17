@@ -43,6 +43,13 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 			UpdateTaskFunc:      func(ctx context.Context, task *domain.Task) error { return nil },
 		}
@@ -68,6 +75,9 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 						return zebedee.DatasetLandingPage{
 							Type: zebedee.PageTypeDatasetLandingPage,
 						}, nil
+					},
+					SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+						return nil
 					},
 				},
 			}
@@ -124,6 +134,9 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 						return zebedee.DatasetLandingPage{
 							Type: zebedee.PageTypeDatasetLandingPage,
 						}, nil
+					},
+					SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+						return nil
 					},
 				},
 			}
@@ -242,8 +255,76 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 		})
 	})
 
+	Convey("Given a dataset version task executor and a zebedee API client that fails to update a collection", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
+			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+				return nil
+			},
+		}
+
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
+				return zebedee.DatasetLandingPage{
+					Type: "dataset_landing_page",
+					Datasets: []zebedee.Link{
+						{
+							URI: "/datasets/test-dataset/editions/2021/versions/1",
+						},
+					},
+				}, nil
+			},
+			GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
+				return zebedee.Dataset{
+					Type: zebedee.PageTypeDataset,
+				}, nil
+			},
+			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+				return errors.New("failed to update collection")
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: &datasetSDKMock.ClienterMock{
+				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+					return models.DatasetUpdate{}, nil
+				},
+			},
+			Zebedee: mockZebedeeClient,
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+		Convey("When migrate is called for a task", func() {
+			err := executor.Migrate(ctx, testVersionTask)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldNotBeNil)
+
+				Convey("And no download tasks are created for the dataset", func() {
+					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
+				})
+			})
+		})
+	})
+
 	Convey("Given a dataset version task executor and a dataset API client that fails to create a version", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
 			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
 				return nil
 			},
@@ -269,6 +350,9 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 					return zebedee.Dataset{
 						Type: zebedee.PageTypeDataset,
 					}, nil
+				},
+				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+					return nil
 				},
 			},
 		}
@@ -302,6 +386,13 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return &domain.Task{}, nil
 			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
 			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error { return nil },
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
 				return errors.New("failed to update task")
@@ -329,6 +420,9 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 						Type: zebedee.PageTypeDataset,
 					}, nil
 				},
+				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+					return nil
+				},
 			},
 		}
 
@@ -351,6 +445,13 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 		mockJobService := &applicationMocks.JobServiceMock{
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
 				return nil, errors.New("failed to create task")
+			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
 			},
 			UpdateTaskFunc:      func(ctx context.Context, task *domain.Task) error { return nil },
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
@@ -376,6 +477,9 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 							},
 						},
 					}, nil
+				},
+				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+					return nil
 				},
 			},
 		}

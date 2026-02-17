@@ -23,6 +23,7 @@ type JobService interface {
 	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	ClaimJob(ctx context.Context) (*domain.Job, error)
 	UpdateJobState(ctx context.Context, jobNumber int, newState domain.State, userID string) error
+	UpdateJobCollectionID(ctx context.Context, jobNumber int, collectionID string) error
 	GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
 	GetJobTasks(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error)
 	CreateTask(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error)
@@ -110,6 +111,27 @@ func (js *jobService) GetNextJobNumber(ctx context.Context) (*domain.Counter, er
 // GetJob retrieves a migration job by its job number.
 func (js *jobService) GetJob(ctx context.Context, jobNumber int) (*domain.Job, error) {
 	return js.store.GetJob(ctx, jobNumber)
+}
+
+// UpdateJobCollectionID updates the collection ID of a migration job.
+func (js *jobService) UpdateJobCollectionID(ctx context.Context, jobNumber int, collectionID string) error {
+	job, err := js.store.GetJob(ctx, jobNumber)
+	if err != nil {
+		return err
+	}
+
+	job.Config.CollectionID = collectionID
+
+	now := time.Now().UTC()
+
+	job.LastUpdated = now
+
+	err = js.store.UpdateJob(ctx, job)
+	if err != nil {
+		return fmt.Errorf("failed to update job collection ID: %w", err)
+	}
+
+	return nil
 }
 
 // UpdateJobState updates the state of a migration job and logs

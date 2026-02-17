@@ -21,6 +21,12 @@ var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 //
 //		// make and configure a mocked clients.ZebedeeClient
 //		mockedZebedeeClient := &ZebedeeClientMock{
+//			ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
+//				panic("mock out the ApproveCollection method")
+//			},
+//			CreateCollectionFunc: func(ctx context.Context, userAuthToken string, collection zebedee.Collection) (zebedee.Collection, error) {
+//				panic("mock out the CreateCollection method")
+//			},
 //			GetDatasetFunc: func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.Dataset, error) {
 //				panic("mock out the GetDataset method")
 //			},
@@ -36,6 +42,9 @@ var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 //			GetResourceStreamFunc: func(ctx context.Context, userAuthToken string, collectionID string, lang string, path string) (io.ReadCloser, error) {
 //				panic("mock out the GetResourceStream method")
 //			},
+//			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string, path string, content interface{}) error {
+//				panic("mock out the SaveContentToCollection method")
+//			},
 //		}
 //
 //		// use mockedZebedeeClient in code that requires clients.ZebedeeClient
@@ -43,6 +52,12 @@ var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 //
 //	}
 type ZebedeeClientMock struct {
+	// ApproveCollectionFunc mocks the ApproveCollection method.
+	ApproveCollectionFunc func(ctx context.Context, userAuthToken string, collectionID string) error
+
+	// CreateCollectionFunc mocks the CreateCollection method.
+	CreateCollectionFunc func(ctx context.Context, userAuthToken string, collection zebedee.Collection) (zebedee.Collection, error)
+
 	// GetDatasetFunc mocks the GetDataset method.
 	GetDatasetFunc func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.Dataset, error)
 
@@ -58,8 +73,29 @@ type ZebedeeClientMock struct {
 	// GetResourceStreamFunc mocks the GetResourceStream method.
 	GetResourceStreamFunc func(ctx context.Context, userAuthToken string, collectionID string, lang string, path string) (io.ReadCloser, error)
 
+	// SaveContentToCollectionFunc mocks the SaveContentToCollection method.
+	SaveContentToCollectionFunc func(ctx context.Context, userAuthToken string, collectionID string, path string, content interface{}) error
+
 	// calls tracks calls to the methods.
 	calls struct {
+		// ApproveCollection holds details about calls to the ApproveCollection method.
+		ApproveCollection []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserAuthToken is the userAuthToken argument value.
+			UserAuthToken string
+			// CollectionID is the collectionID argument value.
+			CollectionID string
+		}
+		// CreateCollection holds details about calls to the CreateCollection method.
+		CreateCollection []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserAuthToken is the userAuthToken argument value.
+			UserAuthToken string
+			// Collection is the collection argument value.
+			Collection zebedee.Collection
+		}
 		// GetDataset holds details about calls to the GetDataset method.
 		GetDataset []struct {
 			// Ctx is the ctx argument value.
@@ -125,12 +161,108 @@ type ZebedeeClientMock struct {
 			// Path is the path argument value.
 			Path string
 		}
+		// SaveContentToCollection holds details about calls to the SaveContentToCollection method.
+		SaveContentToCollection []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserAuthToken is the userAuthToken argument value.
+			UserAuthToken string
+			// CollectionID is the collectionID argument value.
+			CollectionID string
+			// Path is the path argument value.
+			Path string
+			// Content is the content argument value.
+			Content interface{}
+		}
 	}
-	lockGetDataset            sync.RWMutex
-	lockGetDatasetLandingPage sync.RWMutex
-	lockGetFileSize           sync.RWMutex
-	lockGetPageData           sync.RWMutex
-	lockGetResourceStream     sync.RWMutex
+	lockApproveCollection       sync.RWMutex
+	lockCreateCollection        sync.RWMutex
+	lockGetDataset              sync.RWMutex
+	lockGetDatasetLandingPage   sync.RWMutex
+	lockGetFileSize             sync.RWMutex
+	lockGetPageData             sync.RWMutex
+	lockGetResourceStream       sync.RWMutex
+	lockSaveContentToCollection sync.RWMutex
+}
+
+// ApproveCollection calls ApproveCollectionFunc.
+func (mock *ZebedeeClientMock) ApproveCollection(ctx context.Context, userAuthToken string, collectionID string) error {
+	if mock.ApproveCollectionFunc == nil {
+		panic("ZebedeeClientMock.ApproveCollectionFunc: method is nil but ZebedeeClient.ApproveCollection was just called")
+	}
+	callInfo := struct {
+		Ctx           context.Context
+		UserAuthToken string
+		CollectionID  string
+	}{
+		Ctx:           ctx,
+		UserAuthToken: userAuthToken,
+		CollectionID:  collectionID,
+	}
+	mock.lockApproveCollection.Lock()
+	mock.calls.ApproveCollection = append(mock.calls.ApproveCollection, callInfo)
+	mock.lockApproveCollection.Unlock()
+	return mock.ApproveCollectionFunc(ctx, userAuthToken, collectionID)
+}
+
+// ApproveCollectionCalls gets all the calls that were made to ApproveCollection.
+// Check the length with:
+//
+//	len(mockedZebedeeClient.ApproveCollectionCalls())
+func (mock *ZebedeeClientMock) ApproveCollectionCalls() []struct {
+	Ctx           context.Context
+	UserAuthToken string
+	CollectionID  string
+} {
+	var calls []struct {
+		Ctx           context.Context
+		UserAuthToken string
+		CollectionID  string
+	}
+	mock.lockApproveCollection.RLock()
+	calls = mock.calls.ApproveCollection
+	mock.lockApproveCollection.RUnlock()
+	return calls
+}
+
+// CreateCollection calls CreateCollectionFunc.
+func (mock *ZebedeeClientMock) CreateCollection(ctx context.Context, userAuthToken string, collection zebedee.Collection) (zebedee.Collection, error) {
+	if mock.CreateCollectionFunc == nil {
+		panic("ZebedeeClientMock.CreateCollectionFunc: method is nil but ZebedeeClient.CreateCollection was just called")
+	}
+	callInfo := struct {
+		Ctx           context.Context
+		UserAuthToken string
+		Collection    zebedee.Collection
+	}{
+		Ctx:           ctx,
+		UserAuthToken: userAuthToken,
+		Collection:    collection,
+	}
+	mock.lockCreateCollection.Lock()
+	mock.calls.CreateCollection = append(mock.calls.CreateCollection, callInfo)
+	mock.lockCreateCollection.Unlock()
+	return mock.CreateCollectionFunc(ctx, userAuthToken, collection)
+}
+
+// CreateCollectionCalls gets all the calls that were made to CreateCollection.
+// Check the length with:
+//
+//	len(mockedZebedeeClient.CreateCollectionCalls())
+func (mock *ZebedeeClientMock) CreateCollectionCalls() []struct {
+	Ctx           context.Context
+	UserAuthToken string
+	Collection    zebedee.Collection
+} {
+	var calls []struct {
+		Ctx           context.Context
+		UserAuthToken string
+		Collection    zebedee.Collection
+	}
+	mock.lockCreateCollection.RLock()
+	calls = mock.calls.CreateCollection
+	mock.lockCreateCollection.RUnlock()
+	return calls
 }
 
 // GetDataset calls GetDatasetFunc.
@@ -370,5 +502,53 @@ func (mock *ZebedeeClientMock) GetResourceStreamCalls() []struct {
 	mock.lockGetResourceStream.RLock()
 	calls = mock.calls.GetResourceStream
 	mock.lockGetResourceStream.RUnlock()
+	return calls
+}
+
+// SaveContentToCollection calls SaveContentToCollectionFunc.
+func (mock *ZebedeeClientMock) SaveContentToCollection(ctx context.Context, userAuthToken string, collectionID string, path string, content interface{}) error {
+	if mock.SaveContentToCollectionFunc == nil {
+		panic("ZebedeeClientMock.SaveContentToCollectionFunc: method is nil but ZebedeeClient.SaveContentToCollection was just called")
+	}
+	callInfo := struct {
+		Ctx           context.Context
+		UserAuthToken string
+		CollectionID  string
+		Path          string
+		Content       interface{}
+	}{
+		Ctx:           ctx,
+		UserAuthToken: userAuthToken,
+		CollectionID:  collectionID,
+		Path:          path,
+		Content:       content,
+	}
+	mock.lockSaveContentToCollection.Lock()
+	mock.calls.SaveContentToCollection = append(mock.calls.SaveContentToCollection, callInfo)
+	mock.lockSaveContentToCollection.Unlock()
+	return mock.SaveContentToCollectionFunc(ctx, userAuthToken, collectionID, path, content)
+}
+
+// SaveContentToCollectionCalls gets all the calls that were made to SaveContentToCollection.
+// Check the length with:
+//
+//	len(mockedZebedeeClient.SaveContentToCollectionCalls())
+func (mock *ZebedeeClientMock) SaveContentToCollectionCalls() []struct {
+	Ctx           context.Context
+	UserAuthToken string
+	CollectionID  string
+	Path          string
+	Content       interface{}
+} {
+	var calls []struct {
+		Ctx           context.Context
+		UserAuthToken string
+		CollectionID  string
+		Path          string
+		Content       interface{}
+	}
+	mock.lockSaveContentToCollection.RLock()
+	calls = mock.calls.SaveContentToCollection
+	mock.lockSaveContentToCollection.RUnlock()
 	return calls
 }

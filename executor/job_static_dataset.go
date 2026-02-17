@@ -11,21 +11,23 @@ import (
 
 // StaticDatasetJobExecutor executes migration jobs for static datasets.
 type StaticDatasetJobExecutor struct {
-	clientList *clients.ClientList
-	jobService application.JobService
+	clientList       *clients.ClientList
+	jobService       application.JobService
+	serviceAuthToken string
 }
 
 // NewStaticDatasetJobExecutor creates a new StaticDatasetJobExecutor
-func NewStaticDatasetJobExecutor(jobService application.JobService, clientList *clients.ClientList) *StaticDatasetJobExecutor {
+func NewStaticDatasetJobExecutor(jobService application.JobService, clientList *clients.ClientList, serviceAuthToken string) *StaticDatasetJobExecutor {
 	return &StaticDatasetJobExecutor{
-		jobService: jobService,
-		clientList: clientList,
+		jobService:       jobService,
+		clientList:       clientList,
+		serviceAuthToken: serviceAuthToken,
 	}
 }
 
 // Migrate handles the migration operations for a static dataset job.
 func (e *StaticDatasetJobExecutor) Migrate(ctx context.Context, job *domain.Job) error {
-	logData := log.Data{"job_id": job.ID}
+	logData := log.Data{"job_number": job.JobNumber}
 	log.Info(ctx, "starting migration for job", logData)
 
 	datasetSeriesTask := domain.NewTask(job.JobNumber)
@@ -39,7 +41,27 @@ func (e *StaticDatasetJobExecutor) Migrate(ctx context.Context, job *domain.Job)
 		ID: job.Config.TargetID,
 	}
 
-	_, err := e.jobService.CreateTask(ctx, job.JobNumber, &datasetSeriesTask)
+	collection := domain.NewMigrationCollection(job.JobNumber)
+
+	logData["collection_name"] = collection.Name
+	log.Info(ctx, "creating collection for migration job", logData)
+
+	createdCollection, err := e.clientList.Zebedee.CreateCollection(ctx, e.serviceAuthToken, collection)
+	if err != nil {
+		log.Error(ctx, "failed to create collection for migration job", err, logData)
+		return err
+	}
+
+	logData["collection_id"] = createdCollection.ID
+	log.Info(ctx, "updating job with collection id", logData)
+
+	err = e.jobService.UpdateJobCollectionID(ctx, job.JobNumber, createdCollection.ID)
+	if err != nil {
+		log.Error(ctx, "failed to update job collection ID", err, logData)
+		return err
+	}
+
+	_, err = e.jobService.CreateTask(ctx, job.JobNumber, &datasetSeriesTask)
 	if err != nil {
 		logData["task_source_id"] = datasetSeriesTask.Source.ID
 		log.Error(ctx, "failed to create migration task", err, logData)

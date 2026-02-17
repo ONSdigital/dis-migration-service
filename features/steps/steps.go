@@ -17,6 +17,7 @@ func (c *MigrationComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^mongodb stops running$`, c.mongodbStopsRunning)
 	ctx.Step(`^a get page data request to zebedee for "([^"]*)" returns with status (\d+) and payload:$`, c.getPageDataRequestToZebedeeForReturnsWithPayload)
 	ctx.Step(`^a get dataset request to the dataset API for "([^"]*)" returns with status (\d+)$`, c.getDatasetRequestToDatasetAPIForReturnsWithStatus)
+	ctx.Step(`^collection updates to zebedee are successful$`, c.collectionUpdatesToZebedeeAreSuccessful)
 	ctx.Step(`^the Dataset API responds successfully to create dataset requests$`, c.datasetAPIrespondsSuccessfullyToCreateDatasetRequests)
 
 	// Slack notification assertions
@@ -125,5 +126,9 @@ func (c *MigrationComponent) noSlackNotificationsShouldHaveBeenSent() error {
 
 func (c *MigrationComponent) slackNotificationHistoryIsCleared() error {
 	c.ResetMockSlackClient()
+	return nil
+}
+
+func (c *MigrationComponent) collectionUpdatesToZebedeeAreSuccessful() error {
 	return nil
 }
