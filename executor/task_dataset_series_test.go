@@ -218,10 +218,11 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 							URI: "/datasets/test-dataset/editions/2021/versions/1",
 						},
 					},
+					URI: "/economy/datasets/test-dataset",
 				}, nil
 			},
 			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
-				return errors.New("failed to update collection")
+				return errTest
 			},
 		}
 
@@ -243,7 +244,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			err := executor.Migrate(ctx, testSeriesTask)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, errTest)
 
 				Convey("And no edition tasks are created for the dataset", func() {
 					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
@@ -257,7 +258,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
 				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
-					return models.DatasetUpdate{}, errors.New("failed to create dataset")
+					return models.DatasetUpdate{}, errTest
 				},
 			},
 			Zebedee: &clientMocks.ZebedeeClientMock{
@@ -269,6 +270,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 								URI: "/datasets/test-dataset/editions/2021/versions/1",
 							},
 						},
+						URI: "/economy/datasets/test-dataset",
 					}, nil
 				},
 			},
@@ -283,7 +285,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			err := executor.Migrate(ctx, testSeriesTask)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, errTest)
 
 				Convey("And no edition tasks are created for the dataset", func() {
 					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
@@ -298,7 +300,14 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				return &domain.Task{}, nil
 			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
-				return errors.New("failed to update task")
+				return errTest
+			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
 			},
 		}
 		mockClientList := &clients.ClientList{
@@ -316,7 +325,11 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 								URI: getEditionURI(testDatasetSeriesURI, "2021"),
 							},
 						},
+						URI: "/economy/datasets/test-dataset",
 					}, nil
+				},
+				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+					return nil
 				},
 			},
 		}
@@ -330,7 +343,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			err := executor.Migrate(ctx, testSeriesTask)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, errTest)
 			})
 		})
 	})
@@ -338,7 +351,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 	Convey("Given a dataset series task executor and a jobService that fails to create an edition task", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
-				return nil, errors.New("failed to create task")
+				return nil, errTest
 			},
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
@@ -385,7 +398,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			err := executor.Migrate(ctx, testSeriesTask)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, errTest)
 
 				Convey("And no further edition tasks are created for the dataset", func() {
 					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 1)

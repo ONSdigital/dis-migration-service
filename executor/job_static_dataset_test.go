@@ -18,6 +18,10 @@ const (
 	testCollectionID = "migration-collection-1"
 )
 
+var (
+	errTest = errors.New("test error")
+)
+
 func TestJobStaticDataset(t *testing.T) {
 	Convey("Given a static dataset job executor and a job service that does not error", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
@@ -74,10 +78,11 @@ func TestJobStaticDataset(t *testing.T) {
 			})
 		})
 	})
+
 	Convey("Given a static dataset job executor and a job service that errors when creating a task", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
-				return nil, errors.New("create task error")
+				return nil, errTest
 			},
 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
 				return nil
@@ -112,7 +117,7 @@ func TestJobStaticDataset(t *testing.T) {
 			err := executor.Migrate(ctx, job)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, errTest)
 			})
 		})
 	})
@@ -128,7 +133,7 @@ func TestJobStaticDataset(t *testing.T) {
 		}
 		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
 			CreateCollectionFunc: func(ctx context.Context, userAuthToken string, collection zebedee.Collection) (zebedee.Collection, error) {
-				return zebedee.Collection{}, errors.New("create collection error")
+				return zebedee.Collection{}, errTest
 			},
 		}
 		mockClientList := &clients.ClientList{
@@ -152,7 +157,7 @@ func TestJobStaticDataset(t *testing.T) {
 			err := executor.Migrate(ctx, job)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, errTest)
 				So(mockJobService.UpdateJobCollectionIDCalls(), ShouldHaveLength, 0)
 			})
 		})

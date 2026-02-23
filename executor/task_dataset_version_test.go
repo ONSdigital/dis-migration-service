@@ -2,7 +2,6 @@ package executor
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"testing"
 
@@ -186,7 +185,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 			DatasetAPI: mockDatasetClient,
 			Zebedee: &clientMocks.ZebedeeClientMock{
 				GetDatasetFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.Dataset, error) {
-					return zebedee.Dataset{}, errors.New("unknown error")
+					return zebedee.Dataset{}, errTest
 				},
 			},
 		}
@@ -201,7 +200,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 			err := executor.Migrate(ctx, task)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, errTest)
 
 				Convey("And the datasetAPI should not be called to create a dataset", func() {
 					So(len(mockDatasetClient.PostVersionCalls()), ShouldEqual, 0)
@@ -243,7 +242,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 			err := executor.Migrate(ctx, task)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "invalid page type for dataset version page")
 
 				Convey("And the datasetAPI should not be called to create a dataset", func() {
 					So(len(mockDatasetClient.PostVersionCalls()), ShouldEqual, 0)
@@ -286,7 +285,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 				}, nil
 			},
 			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
-				return errors.New("failed to update collection")
+				return errTest
 			},
 		}
 
@@ -307,7 +306,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 			err := executor.Migrate(ctx, testVersionTask)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, errTest)
 
 				Convey("And no download tasks are created for the dataset", func() {
 					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
@@ -332,7 +331,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
 				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version) (*models.Version, error) {
-					return &models.Version{}, errors.New("failed to create version")
+					return &models.Version{}, errTest
 				},
 			},
 			Zebedee: &clientMocks.ZebedeeClientMock{
@@ -371,7 +370,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 				So(mockJobService.UpdateTaskCalls()[0].Task.Target.ID, ShouldEqual, "1")
 
 				Convey("And an error is returned", func() {
-					So(err, ShouldNotBeNil)
+					So(err, ShouldEqual, errTest)
 
 					Convey("And no download tasks are created for the dataset", func() {
 						So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
@@ -395,7 +394,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 			},
 			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error { return nil },
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
-				return errors.New("failed to update task")
+				return errTest
 			},
 		}
 		mockClientList := &clients.ClientList{
@@ -436,7 +435,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 			err := executor.Migrate(ctx, task)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, errTest)
 			})
 		})
 	})
@@ -444,7 +443,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 	Convey("Given a dataset series task executor and a jobService that fails to create a download task", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
-				return nil, errors.New("failed to create task")
+				return nil, errTest
 			},
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return &domain.Job{
@@ -465,7 +464,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 			Zebedee: &clientMocks.ZebedeeClientMock{
 				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 					return zebedee.DatasetLandingPage{
-						Type: zebedee.PageTypeDatasetLandingPage,
+						Type: zebedee.PageTypeDataset,
 					}, nil
 				},
 				GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
@@ -494,7 +493,7 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 			err := executor.Migrate(ctx, task)
 
 			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, errTest)
 
 				Convey("And no further tasks are created for the version", func() {
 					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 1)
