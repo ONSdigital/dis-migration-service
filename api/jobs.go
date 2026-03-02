@@ -127,6 +127,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	userAuthToken, err := dprequest.GetAuthToken(r)
 	if err != nil {
 		handleError(ctx, w, r, appErrors.ErrUnauthorized)
+		return
 	}
 
 	// Extract user ID from JWT token
