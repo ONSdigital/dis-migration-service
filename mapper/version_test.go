@@ -9,7 +9,9 @@ import (
 )
 
 const (
-	testEditionID = "test-edition-id"
+	testEditionID         = "test-edition-id"
+	testEditionCurrent    = "Current"
+	testEditionHistorical = "Historical"
 )
 
 func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
@@ -105,6 +107,25 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 
 			Convey("Then the dataset version is nil", func() {
 				So(version, ShouldBeNil)
+			})
+		})
+	})
+
+	Convey("Given a Zebedee dataset version page where the edition title is 'Current'", t, func() {
+		pageData := getTestDatasetVersionPage()
+		seriesData := getTestDatasetLandingPage()
+		editionData := getTestDatasetEditionPage()
+		pageData.Description.Edition = testEditionCurrent
+
+		Convey("When it is mapped to a Dataset API version", func() {
+			version, err := MapDatasetVersionToDatasetAPI(testEditionID, pageData, seriesData, editionData)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And the edition title is normalised to 'Historical'", func() {
+					So(version.EditionTitle, ShouldEqual, testEditionHistorical)
+				})
 			})
 		})
 	})

@@ -49,7 +49,9 @@ func (e *DatasetEditionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	}
 
 	editionID := filepath.Base(sourceData.URI)
-	// TODO: deal with 'current' here.
+	if editionID == "current" {
+		editionID = "historical"
+	}
 	logData["edition_id"] = editionID
 
 	if task.Target != nil {

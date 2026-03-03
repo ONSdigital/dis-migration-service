@@ -21,10 +21,15 @@ func MapDatasetVersionToDatasetAPI(editionID string, pageData zebedee.Dataset, s
 		return nil, err
 	}
 
+	editionTitle := pageData.Description.Edition
+	if editionTitle == "Current" {
+		editionTitle = "Historical"
+	}
+
 	version := &datasetModels.Version{
 		Distributions: &distributions,
 		Edition:       editionID,
-		EditionTitle:  pageData.Description.Edition,
+		EditionTitle:  editionTitle,
 		Version:       getVersion(pageData.Versions),
 		ReleaseDate:   pageData.Description.ReleaseDate,
 		Type:          clients.DatasetVersionTypeStatic,

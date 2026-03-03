@@ -307,4 +307,40 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given a dataset edition task where the URI ends with 'current'", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
+				return &domain.Task{}, nil
+			},
+			UpdateTaskFunc:      func(ctx context.Context, task *domain.Task) error { return nil },
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
+		}
+
+		mockClientList := &clients.ClientList{
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				GetDatasetFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.Dataset, error) {
+					return zebedee.Dataset{
+						Type: zebedee.PageTypeDataset,
+						URI:  "/datasets/test-dataset/editions/current",
+					}, nil
+				},
+			},
+		}
+
+		executor := NewDatasetEditionTaskExecutor(mockJobService, mockClientList, "")
+		ctx := context.Background()
+
+		Convey("When migrate is called", func() {
+			err := executor.Migrate(ctx, testEditionTask)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And the editionID is set to 'historical'", func() {
+					So(mockJobService.UpdateTaskCalls()[0].Task.Target.ID, ShouldEqual, "historical")
+				})
+			})
+		})
+	})
 }
