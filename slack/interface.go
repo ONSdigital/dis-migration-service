@@ -16,5 +16,5 @@ type Clienter interface {
 	SendWarning(ctx context.Context, summary string, details SlackDetails) error
 
 	// SendInfo sends an informational notification to the info channel
-	SendInfo(ctx context.Context, summary string, details SlackDetails) error
+	SendInfo(ctx context.Context, summary string, details SlackDetails, success bool) error
 }

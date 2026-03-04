@@ -18,6 +18,6 @@ func (n *NoopClient) SendWarning(ctx context.Context, summary string, details Sl
 }
 
 // SendInfo is a no-op implementation
-func (n *NoopClient) SendInfo(ctx context.Context, summary string, details SlackDetails) error {
+func (n *NoopClient) SendInfo(ctx context.Context, summary string, details SlackDetails, success bool) error {
 	return nil
 }

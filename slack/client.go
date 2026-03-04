@@ -78,15 +78,21 @@ func (c *Client) SendWarning(ctx context.Context, summary string, details SlackD
 }
 
 // SendInfo sends an info notification to the configured Slack info channel.
-func (c *Client) SendInfo(ctx context.Context, summary string, details SlackDetails) error {
+func (c *Client) SendInfo(ctx context.Context, summary string, details SlackDetails, success bool) error {
 	if err := c.validateInput(ctx, summary); err != nil {
 		return err
+	}
+
+	colour := RedColour
+
+	if success {
+		colour = GreenColour
 	}
 
 	return c.doSendMessage(
 		ctx,
 		c.channels.InfoChannel,
-		GreenColour,
+		colour,
 		InfoEmoji,
 		summary,
 		buildAttachmentFields(nil, details),
