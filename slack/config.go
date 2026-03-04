@@ -6,7 +6,7 @@ type Config struct {
 	Enabled bool `envconfig:"SLACK_ENABLED" default:"false"`
 
 	// APIToken is the Slack bot token for authentication
-	APIToken string `envconfig:"SLACK_API_TOKEN"`
+	APIToken string `envconfig:"SLACK_API_TOKEN" json:"-"`
 
 	// Channels holds the Slack channel names for different notification levels
 	Channels Channels
