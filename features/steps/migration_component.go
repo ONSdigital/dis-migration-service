@@ -106,10 +106,11 @@ func NewMigrationComponent(mongoFeat *componenttest.MongoFeature, authFeat *comp
 
 	// Initialize mock Slack client
 	c.MockSlackClient = &slackMocks.ClienterMock{
-		SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+		SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
 			log.Info(ctx, "mock slack: info notification", log.Data{
 				"summary": summary,
 				"details": details,
+				"success": success,
 			})
 			return nil
 		},

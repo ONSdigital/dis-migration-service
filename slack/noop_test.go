@@ -37,6 +37,7 @@ func TestNoopClient_SendInfo(t *testing.T) {
 		context.Background(),
 		"test",
 		map[string]interface{}{"key": "value"},
+		false,
 	)
 	if err != nil {
 		t.Errorf("NoopClient.SendInfo() error = %v, want nil", err)
