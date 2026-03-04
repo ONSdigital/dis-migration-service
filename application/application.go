@@ -142,12 +142,16 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 		return err
 	}
 
+	if job.State == newState {
+		return appErrors.ErrStateAlreadyAtTarget
+	}
+
 	if err := statemachine.ValidateTransition(job.State, newState); err != nil {
 		return err
 	}
 
 	now := time.Now().UTC()
-	err = js.store.UpdateJobState(ctx, job.ID, newState, now)
+	err = js.store.UpdateJobState(ctx, job.ID, job.State, newState, now)
 	if err != nil {
 		return fmt.Errorf("failed to update job state: %w", err)
 	}

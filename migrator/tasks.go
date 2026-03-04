@@ -99,18 +99,12 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 			log.Error(ctx, "error executing task", err, logData)
 			failErr := mig.failTask(ctx, task, err, failureReasonExecutionFailed)
 			if failErr != nil {
+				log.Error(ctx, "failed to mark task as failed", failErr, logData)
 				return
 			}
-
-			failErr = mig.failJobByJobNumber(ctx, task.JobNumber, err, failureReasonExecutionFailed)
-			if failErr != nil {
-				log.Error(ctx, "failed to fail job after task execution error", failErr, logData)
-				return
-			}
-			return
 		}
 
-		// Success: Check if all tasks are complete and update job state if needed
+		// Check if all tasks are complete and update job state if needed
 		checkErr := mig.TriggerJobStateTransitions(ctx, task.JobNumber)
 		if checkErr != nil {
 			log.Error(ctx, "error checking job state transition", checkErr, logData)

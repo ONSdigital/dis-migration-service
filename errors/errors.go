@@ -70,6 +70,8 @@ var (
 	ErrFailedToUploadFileToUploadService = errors.New("failed to upload file to upload service")
 	ErrInvalidTask                       = errors.New("invalid task or missing source/target information")
 
+	ErrStateAlreadyAtTarget = errors.New("job is already in the target state")
+
 	StatusCodeMap = map[error]int{
 		ErrJobNotFound:                  http.StatusNotFound,
 		ErrTaskNotFound:                 http.StatusNotFound,
