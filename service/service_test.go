@@ -50,7 +50,7 @@ var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.
 // createMockSlackClient creates a default mock Slack client for testing
 func createMockSlackClient() slack.Clienter {
 	return &slackMocks.ClienterMock{
-		SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+		SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
 			return nil
 		},
 		SendWarningFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {

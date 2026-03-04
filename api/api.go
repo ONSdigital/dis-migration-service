@@ -128,6 +128,7 @@ func handleSuccess(ctx context.Context, w http.ResponseWriter, r *http.Request, 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	if body != nil {
+		//nolint:gosec // this is only ever json and not html.
 		if _, err := w.Write(body); err != nil {
 			log.Error(ctx, "failed to encode response body", err)
 			handleError(ctx, w, r, appErrors.ErrInternalServerError)

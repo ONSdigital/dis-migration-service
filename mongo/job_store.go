@@ -162,7 +162,7 @@ func (m *Mongo) UpdateJob(ctx context.Context, job *domain.Job) error {
 	return nil
 }
 
-// UpdateJobState updates the state of a job and returns whether an update was processed.
+// UpdateJobState updates the state of a job
 func (m *Mongo) UpdateJobState(ctx context.Context, jobID string, oldState, newState domain.State, lastUpdated time.Time) error {
 	collectionName := m.ActualCollectionName(config.JobsCollectionTitle)
 
