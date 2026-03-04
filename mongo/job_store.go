@@ -162,31 +162,50 @@ func (m *Mongo) UpdateJob(ctx context.Context, job *domain.Job) error {
 	return nil
 }
 
-// UpdateJobState updates the state of a job and returns the updated job.
-func (m *Mongo) UpdateJobState(ctx context.Context, jobID string, newState domain.State, lastUpdated time.Time) error {
+// UpdateJobState updates the state of a job and returns whether an update was processed.
+func (m *Mongo) UpdateJobState(ctx context.Context, jobID string, oldState, newState domain.State, lastUpdated time.Time) error {
 	collectionName := m.ActualCollectionName(config.JobsCollectionTitle)
 
 	filter := bson.M{"_id": jobID}
-	update := bson.M{
-		"$set": bson.M{
-			"state":        newState,
-			"last_updated": lastUpdated,
-		},
+	// Only update the state if it's not already in the target state.
+	update := mongo.Pipeline{
+		{{Key: "$set", Value: bson.M{
+			"state": bson.M{
+				"$cond": bson.A{
+					bson.M{"$eq": bson.A{"$state", newState}},
+					"$state",
+					newState,
+				},
+			},
+			"last_updated": bson.M{
+				"$cond": bson.A{
+					bson.M{"$eq": bson.A{"$state", newState}},
+					"$last_updated",
+					lastUpdated,
+				},
+			},
+		}}},
 	}
 
+	var preUpdateJob domain.Job
+
 	// Update the document
-	result, err := m.Connection.Collection(collectionName).UpdateOne(
+	err := m.Connection.Collection(collectionName).FindOneAndUpdate(
 		ctx,
 		filter,
 		update,
+		&preUpdateJob,
+		mongodriver.ReturnDocument(options.Before),
 	)
 	if err != nil {
+		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
+			return appErrors.ErrJobNotFound
+		}
 		return err
 	}
 
-	// Check if a document was found and updated
-	if result.MatchedCount == 0 {
-		return appErrors.ErrJobNotFound
+	if preUpdateJob.State == newState {
+		return appErrors.ErrStateAlreadyAtTarget
 	}
 
 	return nil

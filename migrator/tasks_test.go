@@ -189,9 +189,6 @@ func TestMigratorExecuteTask(t *testing.T) {
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 1, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, newState domain.State, userID string) error {
-				return nil
-			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
 				return &fakeCounter, nil
@@ -219,11 +216,6 @@ func TestMigratorExecuteTask(t *testing.T) {
 			Convey("Then the task is failed", func() {
 				So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
 				So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateFailedMigration)
-
-				Convey("And the job is failed", func() {
-					So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
-					So(mockJobService.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.StateFailedMigration)
-				})
 			})
 		})
 	})

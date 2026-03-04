@@ -18,7 +18,10 @@ import (
 func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 	Convey("Given a migrator and job service where all tasks are in target state", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
+				return nil
+			},
+			SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 				return nil
 			},
 		}
@@ -32,12 +35,18 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 				}, nil
 			},
 			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
-				// All 3 tasks in target state
-				return []*domain.Task{
-					{ID: "task-1", JobNumber: jobNumber, State: domain.StateInReview},
-					{ID: "task-2", JobNumber: jobNumber, State: domain.StateInReview},
-					{ID: "task-3", JobNumber: jobNumber, State: domain.StateInReview},
-				}, 3, nil
+				switch states[0] {
+				case domain.StateInReview:
+					return []*domain.Task{
+						{ID: "task-1", State: domain.StateInReview},
+						{ID: "task-2", State: domain.StateInReview},
+						{ID: "task-3", State: domain.StateInReview},
+					}, 3, nil
+				case domain.StateFailedMigration:
+					return nil, 0, nil
+				default:
+					return nil, 0, nil
+				}
 			},
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 3, nil
@@ -56,9 +65,9 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
-			TaskTargetState: domain.StateInReview,
-			JobTargetState:  domain.StateInReview,
-			Description:     "All tasks migrated, job moves to in_review",
+			TargetState:  domain.StateInReview,
+			FailureState: domain.StateFailedMigration,
+			Description:  "All tasks migrated, job moves to in_review",
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
@@ -85,7 +94,10 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator where all tasks complete publishing", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
+				return nil
+			},
+			SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 				return nil
 			},
 		}
@@ -99,10 +111,17 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 				}, nil
 			},
 			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
-				return []*domain.Task{
-					{ID: "task-1", JobNumber: jobNumber, State: domain.StatePublished},
-					{ID: "task-2", JobNumber: jobNumber, State: domain.StatePublished},
-				}, 2, nil
+				switch states[0] {
+				case domain.StatePublished:
+					return []*domain.Task{
+						{ID: "task-1", State: domain.StatePublished},
+						{ID: "task-2", State: domain.StatePublished},
+					}, 2, nil
+				case domain.StateFailedMigration:
+					return nil, 0, nil
+				default:
+					return nil, 0, nil
+				}
 			},
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 2, nil
@@ -121,9 +140,9 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
-			TaskTargetState: domain.StatePublished,
-			JobTargetState:  domain.StatePublished,
-			Description:     "All tasks published, job moves to published",
+			TargetState:  domain.StatePublished,
+			FailureState: domain.StateFailedPublish,
+			Description:  "All tasks published, job moves to published",
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
@@ -144,8 +163,11 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator where Slack notification fails", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
 				return errors.New("slack API error")
+			},
+			SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
+				return nil
 			},
 		}
 
@@ -159,9 +181,16 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 				}, nil
 			},
 			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
-				return []*domain.Task{
-					{ID: "task-1", State: domain.StateInReview},
-				}, 1, nil
+				switch states[0] {
+				case domain.StateInReview:
+					return []*domain.Task{
+						{ID: "task-1", State: domain.StateInReview},
+					}, 1, nil
+				case domain.StateFailedMigration:
+					return nil, 0, nil
+				default:
+					return nil, 0, nil
+				}
 			},
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 1, nil
@@ -180,9 +209,9 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
-			TaskTargetState: domain.StateInReview,
-			JobTargetState:  domain.StateInReview,
-			Description:     "All tasks migrated, job moves to in_review",
+			TargetState:  domain.StateInReview,
+			FailureState: domain.StateFailedMigration,
+			Description:  "All tasks migrated, job moves to in_review",
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
@@ -204,7 +233,10 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator where not all tasks are in target state", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
+				return nil
+			},
+			SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 				return nil
 			},
 		}
@@ -217,11 +249,17 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 				}, nil
 			},
 			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
-				// Only 2 out of 3 tasks in target state
-				return []*domain.Task{
-					{ID: "task-1", State: domain.StateInReview},
-					{ID: "task-2", State: domain.StateInReview},
-				}, 2, nil
+				switch states[0] {
+				case domain.StateInReview:
+					return []*domain.Task{
+						{ID: "task-1", State: domain.StateInReview},
+						{ID: "task-2", State: domain.StateInReview},
+					}, 2, nil
+				case domain.StateFailedMigration:
+					return nil, 0, nil
+				default:
+					return nil, 0, nil
+				}
 			},
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 3, nil // 3 total tasks
@@ -237,9 +275,9 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
-			TaskTargetState: domain.StateInReview,
-			JobTargetState:  domain.StateInReview,
-			Description:     "All tasks migrated, job moves to in_review",
+			TargetState:  domain.StateInReview,
+			FailureState: domain.StateFailedMigration,
+			Description:  "All tasks migrated, job moves to in_review",
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
@@ -261,7 +299,10 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator that fails to get the job", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
+				return nil
+			},
+			SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 				return nil
 			},
 		}
@@ -281,9 +322,9 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
-			TaskTargetState: domain.StateInReview,
-			JobTargetState:  domain.StateInReview,
-			Description:     "All tasks migrated, job moves to in_review",
+			TargetState:  domain.StateInReview,
+			FailureState: domain.StateFailedMigration,
+			Description:  "All tasks migrated, job moves to in_review",
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
@@ -306,7 +347,10 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator that fails to count tasks in target state", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
+				return nil
+			},
+			SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 				return nil
 			},
 		}
@@ -332,9 +376,9 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
-			TaskTargetState: domain.StateInReview,
-			JobTargetState:  domain.StateInReview,
-			Description:     "All tasks migrated, job moves to in_review",
+			TargetState:  domain.StateInReview,
+			FailureState: domain.StateFailedMigration,
+			Description:  "All tasks migrated, job moves to in_review",
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
@@ -353,7 +397,10 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator that fails to count total tasks", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
+				return nil
+			},
+			SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 				return nil
 			},
 		}
@@ -382,9 +429,9 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
-			TaskTargetState: domain.StateInReview,
-			JobTargetState:  domain.StateInReview,
-			Description:     "All tasks migrated, job moves to in_review",
+			TargetState:  domain.StateInReview,
+			FailureState: domain.StateFailedMigration,
+			Description:  "All tasks migrated, job moves to in_review",
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
@@ -403,7 +450,10 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 
 	Convey("Given a migrator that fails to update job state", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
+				return nil
+			},
+			SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 				return nil
 			},
 		}
@@ -416,9 +466,16 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 				}, nil
 			},
 			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
-				return []*domain.Task{
-					{ID: "task-1", State: domain.StateInReview},
-				}, 1, nil
+				switch states[0] {
+				case domain.StateInReview:
+					return []*domain.Task{
+						{ID: "task-1", State: domain.StateInReview},
+					}, 1, nil
+				case domain.StateFailedMigration:
+					return nil, 0, nil
+				default:
+					return nil, 0, nil
+				}
 			},
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 1, nil
@@ -437,9 +494,9 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
 		ctx := context.Background()
 		rule := StateTransitionRule{
-			TaskTargetState: domain.StateInReview,
-			JobTargetState:  domain.StateInReview,
-			Description:     "All tasks migrated, job moves to in_review",
+			TargetState:  domain.StateInReview,
+			FailureState: domain.StateFailedMigration,
+			Description:  "All tasks migrated, job moves to in_review",
 		}
 
 		Convey("When checking and updating job state based on tasks", func() {
@@ -464,7 +521,7 @@ func TestCheckAndUpdateJobStateBasedOnTasks(t *testing.T) {
 func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 	Convey("Given a migrator with multiple transition rules where no conditions are met", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
 				return nil
 			},
 		}
@@ -513,7 +570,7 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 
 	Convey("Given a migrator where the first rule condition is met", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
 				return nil
 			},
 		}
@@ -578,7 +635,7 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 
 	Convey("Given a migrator where a transition rule check fails", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
 				return nil
 			},
 		}
@@ -616,7 +673,7 @@ func TestTriggerJobStateTransitionIfComplete(t *testing.T) {
 
 	Convey("Given a migrator where the second rule condition is met", t, func() {
 		mockSlackClient := &slackMocks.ClienterMock{
-			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
 				return nil
 			},
 		}

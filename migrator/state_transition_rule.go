@@ -2,40 +2,39 @@ package migrator
 
 import (
 	"context"
-	"strings"
+	"errors"
+	"fmt"
 
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/log.go/v2/log"
+
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 )
 
 // StateTransitionRule defines when a job should transition based on task states
 type StateTransitionRule struct {
-	// TaskTargetState is the state all tasks must reach
-	TaskTargetState domain.State
-	// JobTargetState is the state the job should transition to
-	JobTargetState domain.State
+	// TargetState is the state all tasks must reach
+	TargetState domain.State
 	// Description explains the rule
 	Description string
+	// FailureState is the state tasks should transition to if they fail
+	FailureState domain.State
 }
 
 // GetStateTransitionRules returns all rules for job state transitions
 // based on task completion
-func (mig *migrator) GetStateTransitionRules() map[domain.State][]StateTransitionRule {
-	return map[domain.State][]StateTransitionRule{
+func (mig *migrator) GetStateTransitionRules() map[domain.State]StateTransitionRule {
+	return map[domain.State]StateTransitionRule{
 		domain.StateMigrating: {
-			{
-				TaskTargetState: domain.StateInReview,
-				JobTargetState:  domain.StateInReview,
-				Description:     "all tasks migrated, job moves to in_review",
-			},
+			TargetState:  domain.StateInReview,
+			FailureState: domain.StateFailedMigration,
+			Description:  "migration successful, move to in review",
 		},
 		domain.StatePublishing: {
-			{
-				TaskTargetState: domain.StatePublished,
-				JobTargetState:  domain.StatePublished,
-				Description:     "all tasks published, job moves to published",
-			},
+			TargetState:  domain.StatePublished,
+			FailureState: domain.StateFailedPublish,
+			Description:  "publish successful, move to published",
 		},
 	}
 }
@@ -45,8 +44,8 @@ func (mig *migrator) GetStateTransitionRules() map[domain.State][]StateTransitio
 func (mig *migrator) CheckAndUpdateJobStateBasedOnTasks(ctx context.Context, jobNumber int, rule StateTransitionRule) error {
 	logData := log.Data{
 		"job_number":        jobNumber,
-		"task_target_state": rule.TaskTargetState,
-		"job_target_state":  rule.JobTargetState,
+		"task_target_state": rule.TargetState,
+		"job_target_state":  rule.TargetState,
 	}
 
 	// Get the job
@@ -60,10 +59,21 @@ func (mig *migrator) CheckAndUpdateJobStateBasedOnTasks(ctx context.Context, job
 	tasksInTargetState, err := mig.countTasksInState(
 		ctx,
 		jobNumber,
-		rule.TaskTargetState,
+		rule.TargetState,
 	)
 	if err != nil {
 		log.Error(ctx, "failed to count tasks in target state", err, logData)
+		return err
+	}
+
+	// Count tasks in the failure state, if defined
+	tasksInFailureState, err := mig.countTasksInState(
+		ctx,
+		jobNumber,
+		rule.FailureState,
+	)
+	if err != nil {
+		log.Error(ctx, "failed to count tasks in failure state", err, logData)
 		return err
 	}
 
@@ -74,46 +84,110 @@ func (mig *migrator) CheckAndUpdateJobStateBasedOnTasks(ctx context.Context, job
 		return err
 	}
 
+	tasksCompleted := tasksInTargetState + tasksInFailureState
+
 	logData["tasks_in_target_state"] = tasksInTargetState
+	logData["tasks_in_failure_state"] = tasksInFailureState
 	logData["total_tasks"] = totalTasks
 
 	// Check if all tasks have reached the target state
-	if tasksInTargetState < totalTasks {
-		log.Info(
-			ctx,
-			"not all tasks in target state, skipping job state update",
-			logData,
-		)
+	if tasksCompleted < totalTasks {
 		return nil
 	}
 
-	log.Info(ctx, strings.ToLower(rule.Description), logData)
+	if tasksInFailureState > 0 {
+		return mig.transitionJobFailure(ctx, job, rule, fmt.Sprintf("%d tasks failed out of %d", tasksInFailureState, totalTasks))
+	}
 
-	// Update job state
-	err = mig.jobService.UpdateJobState(ctx, job.JobNumber, rule.JobTargetState, "")
+	return mig.transitionJobSuccess(ctx, job, rule)
+}
+
+func (mig *migrator) transitionJobFailure(ctx context.Context, job *domain.Job, rule StateTransitionRule, failureReason string) error {
+	log.Info(ctx, "transitioning job to failure state", log.Data{
+		"job_number":     job.JobNumber,
+		"job_state":      job.State,
+		"failure_reason": failureReason,
+	})
+
+	transitioned, err := mig.transitionJob(ctx, job, rule.FailureState)
 	if err != nil {
-		log.Error(ctx, "failed to update job state", err, logData)
+		log.Error(ctx, "failed to update job state", err)
 		return err
 	}
 
-	logData["new_state"] = rule.JobTargetState
-	log.Info(ctx, "job state updated successfully", logData)
-
-	// Send notification for completed active states
-	if isActiveStateCompletion(job.State, rule.JobTargetState) {
+	if transitioned {
+		log.Info(ctx, "job was transitioned - updating slack", log.Data{
+			"job_number":     job.JobNumber,
+			"job_state":      job.State,
+			"failure_reason": failureReason,
+		})
 		slackDetails := slack.SlackDetails{
-			"Job Number": job.JobNumber,
-			"Job Label":  job.Label,
-			"Old State":  job.State,
-			"New State":  rule.JobTargetState,
+			"Job Number":     job.JobNumber,
+			"Job Label":      job.Label,
+			"Job State":      job.State,
+			"Failure Reason": failureReason,
 		}
-		err = mig.slackClient.SendInfo(ctx, mig.getJobCompletionSummary(job.State, rule.JobTargetState), slackDetails)
+
+		err = mig.slackClient.SendInfo(ctx, mig.getJobCompletionSummary(job.State, rule.FailureState), slackDetails, false)
 		if err != nil {
-			log.Error(ctx, "failed to send slack notification", err, logData)
+			log.Error(ctx, "failed to send slack notification", err)
+			// Not a critical failure - log and continue
 		}
 	}
 
 	return nil
+}
+
+func (mig *migrator) transitionJobSuccess(ctx context.Context, job *domain.Job, rule StateTransitionRule) error {
+	transitioned, err := mig.transitionJob(ctx, job, rule.TargetState)
+	if err != nil {
+		log.Error(ctx, "failed to update job state", err)
+		return err
+	}
+
+	if transitioned {
+		slackDetails := slack.SlackDetails{
+			"Job Number": job.JobNumber,
+			"Job Label":  job.Label,
+			"Old State":  job.State,
+			"New State":  rule.TargetState,
+		}
+
+		err = mig.slackClient.SendInfo(ctx, mig.getJobCompletionSummary(job.State, rule.TargetState), slackDetails, true)
+		if err != nil {
+			log.Error(ctx, "failed to send slack notification", err)
+			// Not a critical failure - log and continue
+		}
+	}
+	return nil
+}
+
+func (mig *migrator) transitionJob(ctx context.Context, job *domain.Job, targetState domain.State) (bool, error) {
+	err := mig.jobService.UpdateJobState(ctx, job.JobNumber, targetState, "")
+
+	if errors.Is(err, appErrors.ErrStateAlreadyAtTarget) {
+		log.Info(ctx, "transitionJob: job is already in the target state, no transition needed", log.Data{
+			"job_number": job.JobNumber,
+			"state":      targetState,
+		})
+		return false, nil // Job is already in the target state, no transition needed
+	} else if err != nil {
+		log.Error(ctx, "failed to update job state", err)
+		slackDetails := slack.SlackDetails{
+			"Job Number":     job.JobNumber,
+			"Job Label":      job.Label,
+			"Old State":      job.State,
+			"New State":      targetState,
+			"Failure reason": fmt.Sprintf("failed to transition job to %s", targetState),
+		}
+		slackErr := mig.slackClient.SendAlarm(ctx, EventUpdateJobStateFailed, nil, slackDetails)
+		if slackErr != nil {
+			log.Error(ctx, "failed to send slack notification", slackErr)
+			// Not a critical failure - log and continue
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 // countTasksInState counts how many tasks are in a specific state
@@ -141,29 +215,34 @@ func (mig *migrator) TriggerJobStateTransitions(ctx context.Context, jobNumber i
 		return err
 	}
 
-	rules := mig.GetStateTransitionRules()[job.State]
-	if len(rules) == 0 {
+	rule := mig.GetStateTransitionRules()[job.State]
+	if rule == (StateTransitionRule{}) {
 		return nil // No transitions available from current state
 	}
 
-	for _, rule := range rules {
-		err := mig.CheckAndUpdateJobStateBasedOnTasks(ctx, jobNumber, rule)
-		if err != nil {
-			return err
-		}
+	err = mig.CheckAndUpdateJobStateBasedOnTasks(ctx, jobNumber, rule)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 
 // getJobCompletionSummary returns a human-readable summary for state completion
 func (mig *migrator) getJobCompletionSummary(fromState, toState domain.State) string {
-	switch fromState {
-	case domain.StateMigrating:
+	switch toState {
+	case domain.StateInReview:
 		return "Job migration completed successfully"
-	case domain.StatePublishing:
+	case domain.StatePublished:
 		return "Job publishing completed successfully"
-	case domain.StatePostPublishing:
+	case domain.StateCompleted:
 		return "Job post-publishing completed successfully"
+	case domain.StateFailedMigration:
+		return "Job migration failed"
+	case domain.StateFailedPublish:
+		return "Job publishing failed"
+	case domain.StateFailedPostPublish:
+		return "Job post-publishing failed"
 	default:
 		return "Job state updated"
 	}

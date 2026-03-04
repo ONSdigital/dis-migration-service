@@ -27,7 +27,7 @@ type dataMongoDB interface {
 	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error)
 	GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error)
 	UpdateJob(ctx context.Context, job *domain.Job) error
-	UpdateJobState(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error
+	UpdateJobState(ctx context.Context, id string, oldState domain.State, newState domain.State, lastUpdated time.Time) error
 
 	// Tasks
 	CreateTask(ctx context.Context, task *domain.Task) error
@@ -67,8 +67,8 @@ func (ds *Datastore) CreateJob(ctx context.Context, job *domain.Job) error {
 }
 
 // UpdateJobState updates the state of a migration job.
-func (ds *Datastore) UpdateJobState(ctx context.Context, jobID string, newState domain.State, lastUpdated time.Time) error {
-	return ds.Backend.UpdateJobState(ctx, jobID, newState, lastUpdated)
+func (ds *Datastore) UpdateJobState(ctx context.Context, jobID string, oldState, newState domain.State, lastUpdated time.Time) error {
+	return ds.Backend.UpdateJobState(ctx, jobID, oldState, newState, lastUpdated)
 }
 
 // GetJob retrieves a job by its job number.
