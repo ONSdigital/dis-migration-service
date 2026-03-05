@@ -509,7 +509,7 @@ func TestUpdateJobState(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return fakeJob, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error {
+			UpdateJobStateFunc: func(ctx context.Context, id string, oldState, newState domain.State, lastUpdated time.Time) error {
 				return nil
 			},
 		}
@@ -556,7 +556,7 @@ func TestUpdateJobState(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return fakeJob, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error {
+			UpdateJobStateFunc: func(ctx context.Context, id string, oldState, newState domain.State, lastUpdated time.Time) error {
 				return nil
 			},
 			CreateEventFunc: func(ctx context.Context, event *domain.Event) error {
@@ -608,7 +608,7 @@ func TestUpdateJobState(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return fakeJob, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error {
+			UpdateJobStateFunc: func(ctx context.Context, id string, oldState, newState domain.State, lastUpdated time.Time) error {
 				return nil
 			},
 			CreateEventFunc: func(ctx context.Context, event *domain.Event) error {
@@ -660,7 +660,7 @@ func TestUpdateJobState(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return fakeJob, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error {
+			UpdateJobStateFunc: func(ctx context.Context, id string, oldState, newState domain.State, lastUpdated time.Time) error {
 				return nil
 			},
 		}
@@ -706,7 +706,7 @@ func TestUpdateJobState(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return fakeJob, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error {
+			UpdateJobStateFunc: func(ctx context.Context, id string, oldState, newState domain.State, lastUpdated time.Time) error {
 				return nil
 			},
 		}
@@ -751,7 +751,7 @@ func TestUpdateJobState(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
 				return fakeJob, nil
 			},
-			UpdateJobStateFunc: func(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error {
+			UpdateJobStateFunc: func(ctx context.Context, id string, oldState, newState domain.State, lastUpdated time.Time) error {
 				return fmt.Errorf("fake error for testing")
 			},
 		}
@@ -807,6 +807,76 @@ func TestUpdateJobState(t *testing.T) {
 				So(len(mockMongo.GetJobCalls()), ShouldEqual, 1)
 				So(len(mockMongo.UpdateJobStateCalls()), ShouldEqual, 0)
 				So(err, ShouldNotBeNil)
+			})
+		})
+	})
+
+	Convey("Give a job service where the state to transition to is the same as the current state", t, func() {
+		fakeJob := &domain.Job{
+			JobNumber: testJobNumber,
+			State:     domain.StateSubmitted,
+		}
+
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return fakeJob, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
+
+		ctx := context.Background()
+		sameState := domain.StateSubmitted
+
+		Convey("When attempting to transition to the same state", func() {
+			err := jobService.UpdateJobState(ctx, fakeJob.JobNumber, sameState, "")
+
+			Convey("Then an error should be returned and the store should not be called to update the job state", func() {
+				So(len(mockMongo.GetJobCalls()), ShouldEqual, 1)
+				So(len(mockMongo.UpdateJobStateCalls()), ShouldEqual, 0)
+				So(err, ShouldEqual, appErrors.ErrStateAlreadyAtTarget)
+			})
+		})
+	})
+
+	Convey("Given a job service and a store that returns that a job state was not updated", t, func() {
+		fakeJob := &domain.Job{
+			JobNumber: testJobNumber,
+			State:     domain.StateSubmitted,
+		}
+
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return fakeJob, nil
+			},
+			UpdateJobStateFunc: func(ctx context.Context, id string, oldState, newState domain.State, lastUpdated time.Time) error {
+				return appErrors.ErrStateAlreadyAtTarget
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
+
+		ctx := context.Background()
+		newState := domain.StateMigrating
+
+		Convey("When a job state is updated", func() {
+			err := jobService.UpdateJobState(ctx, testJobNumber, newState, "")
+
+			Convey("Then an error should be returned indicating the state was not updated", func() {
+				So(len(mockMongo.UpdateJobStateCalls()), ShouldEqual, 1)
+				So(err.Error(), ShouldContainSubstring, appErrors.ErrStateAlreadyAtTarget.Error())
 			})
 		})
 	})

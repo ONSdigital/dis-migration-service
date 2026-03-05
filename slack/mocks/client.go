@@ -22,7 +22,7 @@ var _ slack.Clienter = &ClienterMock{}
 //			SendAlarmFunc: func(ctx context.Context, summary string, err error, details slack.SlackDetails) error {
 //				panic("mock out the SendAlarm method")
 //			},
-//			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+//			SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
 //				panic("mock out the SendInfo method")
 //			},
 //			SendWarningFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
@@ -39,7 +39,7 @@ type ClienterMock struct {
 	SendAlarmFunc func(ctx context.Context, summary string, err error, details slack.SlackDetails) error
 
 	// SendInfoFunc mocks the SendInfo method.
-	SendInfoFunc func(ctx context.Context, summary string, details slack.SlackDetails) error
+	SendInfoFunc func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error
 
 	// SendWarningFunc mocks the SendWarning method.
 	SendWarningFunc func(ctx context.Context, summary string, details slack.SlackDetails) error
@@ -65,6 +65,8 @@ type ClienterMock struct {
 			Summary string
 			// Details is the details argument value.
 			Details slack.SlackDetails
+			// Success is the success argument value.
+			Success bool
 		}
 		// SendWarning holds details about calls to the SendWarning method.
 		SendWarning []struct {
@@ -126,7 +128,7 @@ func (mock *ClienterMock) SendAlarmCalls() []struct {
 }
 
 // SendInfo calls SendInfoFunc.
-func (mock *ClienterMock) SendInfo(ctx context.Context, summary string, details slack.SlackDetails) error {
+func (mock *ClienterMock) SendInfo(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
 	if mock.SendInfoFunc == nil {
 		panic("ClienterMock.SendInfoFunc: method is nil but Clienter.SendInfo was just called")
 	}
@@ -134,15 +136,17 @@ func (mock *ClienterMock) SendInfo(ctx context.Context, summary string, details 
 		Ctx     context.Context
 		Summary string
 		Details slack.SlackDetails
+		Success bool
 	}{
 		Ctx:     ctx,
 		Summary: summary,
 		Details: details,
+		Success: success,
 	}
 	mock.lockSendInfo.Lock()
 	mock.calls.SendInfo = append(mock.calls.SendInfo, callInfo)
 	mock.lockSendInfo.Unlock()
-	return mock.SendInfoFunc(ctx, summary, details)
+	return mock.SendInfoFunc(ctx, summary, details, success)
 }
 
 // SendInfoCalls gets all the calls that were made to SendInfo.
@@ -153,11 +157,13 @@ func (mock *ClienterMock) SendInfoCalls() []struct {
 	Ctx     context.Context
 	Summary string
 	Details slack.SlackDetails
+	Success bool
 } {
 	var calls []struct {
 		Ctx     context.Context
 		Summary string
 		Details slack.SlackDetails
+		Success bool
 	}
 	mock.lockSendInfo.RLock()
 	calls = mock.calls.SendInfo

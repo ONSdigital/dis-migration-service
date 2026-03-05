@@ -3,6 +3,7 @@ package slack
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/slack-go/slack"
 )
@@ -77,15 +78,21 @@ func (c *Client) SendWarning(ctx context.Context, summary string, details SlackD
 }
 
 // SendInfo sends an info notification to the configured Slack info channel.
-func (c *Client) SendInfo(ctx context.Context, summary string, details SlackDetails) error {
+func (c *Client) SendInfo(ctx context.Context, summary string, details SlackDetails, success bool) error {
 	if err := c.validateInput(ctx, summary); err != nil {
 		return err
+	}
+
+	colour := RedColour
+
+	if success {
+		colour = GreenColour
 	}
 
 	return c.doSendMessage(
 		ctx,
 		c.channels.InfoChannel,
-		GreenColour,
+		colour,
 		InfoEmoji,
 		summary,
 		buildAttachmentFields(nil, details),
@@ -149,10 +156,17 @@ func buildAttachmentFields(err error, details SlackDetails) []slack.AttachmentFi
 		})
 	}
 
-	for key, value := range details {
+	// Sort details keys for consistent field ordering
+	keys := make([]string, 0, len(details))
+	for key := range details {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
 		fields = append(fields, slack.AttachmentField{
 			Title: key,
-			Value: fmt.Sprintf("%v", value),
+			Value: fmt.Sprintf("%v", details[key]),
 			Short: true,
 		})
 	}

@@ -88,7 +88,6 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 	}
 
 	logData["collection_id"] = job.Config.CollectionID
-	log.Info(ctx, "Sa", logData)
 
 	sourceData.Description.MigrationLink = mapper.CreateDatasetVersionLink(datasetVersion)
 	err = e.clientList.Zebedee.SaveContentToCollection(

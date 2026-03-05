@@ -74,7 +74,7 @@ var _ store.MongoDB = &MongoDBMock{}
 //			UpdateJobFunc: func(ctx context.Context, job *domain.Job) error {
 //				panic("mock out the UpdateJob method")
 //			},
-//			UpdateJobStateFunc: func(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error {
+//			UpdateJobStateFunc: func(ctx context.Context, id string, oldState domain.State, newState domain.State, lastUpdated time.Time) error {
 //				panic("mock out the UpdateJobState method")
 //			},
 //			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
@@ -142,7 +142,7 @@ type MongoDBMock struct {
 	UpdateJobFunc func(ctx context.Context, job *domain.Job) error
 
 	// UpdateJobStateFunc mocks the UpdateJobState method.
-	UpdateJobStateFunc func(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error
+	UpdateJobStateFunc func(ctx context.Context, id string, oldState domain.State, newState domain.State, lastUpdated time.Time) error
 
 	// UpdateTaskFunc mocks the UpdateTask method.
 	UpdateTaskFunc func(ctx context.Context, task *domain.Task) error
@@ -301,6 +301,8 @@ type MongoDBMock struct {
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+			// OldState is the oldState argument value.
+			OldState domain.State
 			// NewState is the newState argument value.
 			NewState domain.State
 			// LastUpdated is the lastUpdated argument value.
@@ -1008,25 +1010,27 @@ func (mock *MongoDBMock) UpdateJobCalls() []struct {
 }
 
 // UpdateJobState calls UpdateJobStateFunc.
-func (mock *MongoDBMock) UpdateJobState(ctx context.Context, id string, newState domain.State, lastUpdated time.Time) error {
+func (mock *MongoDBMock) UpdateJobState(ctx context.Context, id string, oldState domain.State, newState domain.State, lastUpdated time.Time) error {
 	if mock.UpdateJobStateFunc == nil {
 		panic("MongoDBMock.UpdateJobStateFunc: method is nil but MongoDB.UpdateJobState was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
 		ID          string
+		OldState    domain.State
 		NewState    domain.State
 		LastUpdated time.Time
 	}{
 		Ctx:         ctx,
 		ID:          id,
+		OldState:    oldState,
 		NewState:    newState,
 		LastUpdated: lastUpdated,
 	}
 	mock.lockUpdateJobState.Lock()
 	mock.calls.UpdateJobState = append(mock.calls.UpdateJobState, callInfo)
 	mock.lockUpdateJobState.Unlock()
-	return mock.UpdateJobStateFunc(ctx, id, newState, lastUpdated)
+	return mock.UpdateJobStateFunc(ctx, id, oldState, newState, lastUpdated)
 }
 
 // UpdateJobStateCalls gets all the calls that were made to UpdateJobState.
@@ -1036,12 +1040,14 @@ func (mock *MongoDBMock) UpdateJobState(ctx context.Context, id string, newState
 func (mock *MongoDBMock) UpdateJobStateCalls() []struct {
 	Ctx         context.Context
 	ID          string
+	OldState    domain.State
 	NewState    domain.State
 	LastUpdated time.Time
 } {
 	var calls []struct {
 		Ctx         context.Context
 		ID          string
+		OldState    domain.State
 		NewState    domain.State
 		LastUpdated time.Time
 	}

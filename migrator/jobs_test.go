@@ -28,7 +28,7 @@ const (
 // createMockSlackClient creates a default mock Slack client for testing
 func createMockSlackClient() slack.Clienter {
 	return &slackMocks.ClienterMock{
-		SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
+		SendInfoFunc: func(ctx context.Context, summary string, details slack.SlackDetails, success bool) error {
 			return nil
 		},
 		SendWarningFunc: func(ctx context.Context, summary string, details slack.SlackDetails) error {
@@ -288,105 +288,6 @@ func TestMigratorFailJob(t *testing.T) {
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldNotBeNil)
-			})
-		})
-	})
-}
-
-func TestMigratorFailJobByJobNumber(t *testing.T) {
-	Convey("Given a migrator with a mock job service that returns a job in an active state", t, func() {
-		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
-				return &domain.Job{
-					JobNumber: jobNumber,
-					State:     domain.StateMigrating,
-				}, nil
-			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
-				return nil
-			},
-			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
-				fakeCounter := domain.Counter{}
-				return &fakeCounter, nil
-			},
-		}
-
-		mockClients := &clients.ClientList{}
-		mockSlackClient := createMockSlackClient()
-		cfg := &config.Config{}
-
-		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
-		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
-		ctx := context.Background()
-		Convey("When failJobByID is called", func() {
-			err := mig.failJobByJobNumber(ctx, 25, errors.New("test error"), failureReasonExecutionFailed)
-
-			Convey("Then the job service is called to update the job state to failed", func() {
-				So(err, ShouldBeNil)
-				So(len(mockJobService.GetJobCalls()), ShouldEqual, 1)
-				So(mockJobService.GetJobCalls()[0].JobNumber, ShouldEqual, 25)
-				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
-				So(mockJobService.UpdateJobStateCalls()[0].JobNumber, ShouldEqual, 25)
-				So(mockJobService.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.StateFailedMigration)
-			})
-		})
-	})
-	Convey("Given a migrator with a mock job service that returns a job in a failed state", t, func() {
-		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
-				return &domain.Job{
-					JobNumber: jobNumber,
-					State:     domain.StateFailedMigration,
-				}, nil
-			},
-			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
-				fakeCounter := domain.Counter{}
-				return &fakeCounter, nil
-			},
-		}
-
-		mockClients := &clients.ClientList{}
-		mockSlackClient := createMockSlackClient()
-		cfg := &config.Config{}
-
-		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
-		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
-		ctx := context.Background()
-		Convey("When failJobByID is called", func() {
-			err := mig.failJobByJobNumber(ctx, 25, errors.New("test error"), failureReasonExecutionFailed)
-
-			Convey("Then the job service is not called to update the job", func() {
-				So(err, ShouldBeNil)
-				So(len(mockJobService.GetJobCalls()), ShouldEqual, 1)
-				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 0)
-			})
-		})
-	})
-	Convey("Given a migrator with a mock job service that errors when getting a job", t, func() {
-		mockJobService := &applicationMocks.JobServiceMock{
-			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
-				return nil, errors.New("test error")
-			},
-			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
-				fakeCounter := domain.Counter{}
-				return &fakeCounter, nil
-			},
-		}
-
-		mockClients := &clients.ClientList{}
-		mockSlackClient := createMockSlackClient()
-		cfg := &config.Config{}
-
-		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
-		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
-		ctx := context.Background()
-		Convey("When failJobByJobNumber is called", func() {
-			err := mig.failJobByJobNumber(ctx, 26, errors.New("test error"), failureReasonExecutionFailed)
-
-			Convey("Then an error is returned", func() {
-				So(err.Error(), ShouldEqual, "test error")
-				So(len(mockJobService.GetJobCalls()), ShouldEqual, 1)
-				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 0)
 			})
 		})
 	})
