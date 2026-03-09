@@ -1,7 +1,5 @@
 package domain
 
-import "fmt"
-
 // State represents the various states a migration job can be in.
 type State string
 
@@ -70,24 +68,4 @@ func IsFailedState(state State) bool {
 	default:
 		return false
 	}
-}
-
-var (
-	// jobFailureStateMap maps active task states to their corresponding
-	// failure states
-	jobFailureStateMap = map[State]State{
-		StateMigrating:      StateFailedMigration,
-		StatePublishing:     StateFailedPublish,
-		StatePostPublishing: StateFailedPostPublish,
-	}
-)
-
-// GetFailureStateForJobState returns the corresponding failure state
-// for a given active job state.
-func GetFailureStateForJobState(state State) (State, error) {
-	failureState, exists := jobFailureStateMap[state]
-	if !exists {
-		return "", fmt.Errorf("no failure state defined for job state: %s", state)
-	}
-	return failureState, nil
 }

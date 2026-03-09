@@ -122,15 +122,16 @@ func (mig *migrator) failTask(ctx context.Context, task *domain.Task, originalEr
 		"Failure Reason": failureReason,
 	}
 
-	failureState, err := domain.GetFailureStateForJobState(task.State)
-	if err != nil {
+	failureState := mig.GetStateTransitionRules()[task.State].FailureState
+	if failureState == "" {
+		err := fmt.Errorf("failed to get failure state for task state: %s", task.State)
 		log.Error(ctx, "failed to get failure state for task state", err, logData)
 		return err
 	}
 
 	logData["failure_state"] = failureState
 
-	err = mig.jobService.UpdateTaskState(ctx, task.ID, failureState)
+	err := mig.jobService.UpdateTaskState(ctx, task.ID, failureState)
 	if err != nil {
 		log.Error(ctx, "failed to update task state to failed", err, logData)
 
