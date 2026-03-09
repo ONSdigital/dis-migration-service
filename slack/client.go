@@ -3,7 +3,8 @@ package slack
 import (
 	"context"
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 
 	"github.com/slack-go/slack"
 )
@@ -157,11 +158,7 @@ func buildAttachmentFields(err error, details SlackDetails) []slack.AttachmentFi
 	}
 
 	// Sort details keys for consistent field ordering
-	keys := make([]string, 0, len(details))
-	for key := range details {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
+	keys := slices.Sorted(maps.Keys(details))
 
 	for _, key := range keys {
 		fields = append(fields, slack.AttachmentField{
