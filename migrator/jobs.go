@@ -112,8 +112,8 @@ func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 }
 
 func (mig *migrator) failJob(ctx context.Context, job *domain.Job, originalErr error, failureReason string) error {
-	stateTransitionRule := mig.GetStateTransitionRules()[job.State]
-	if stateTransitionRule == (StateTransitionRule{}) {
+	stateTransitionRule, ok := mig.GetStateTransitionRules()[job.State]
+	if !ok {
 		log.Error(ctx, "no state transition rule found for job state", fmt.Errorf("job state: %s", job.State))
 		return originalErr
 	}

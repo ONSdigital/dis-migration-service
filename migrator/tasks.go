@@ -122,7 +122,14 @@ func (mig *migrator) failTask(ctx context.Context, task *domain.Task, originalEr
 		"Failure Reason": failureReason,
 	}
 
-	failureState := mig.GetStateTransitionRules()[task.State].FailureState
+	stateTransitionRule, ok := mig.GetStateTransitionRules()[task.State]
+	if !ok {
+		err := fmt.Errorf("failed to get state transition rule for task state: %s", task.State)
+		log.Error(ctx, "failed to get state transition rule for task state", err, logData)
+		return err
+	}
+
+	failureState := stateTransitionRule.FailureState
 	if failureState == "" {
 		err := fmt.Errorf("failed to get failure state for task state: %s", task.State)
 		log.Error(ctx, "failed to get failure state for task state", err, logData)

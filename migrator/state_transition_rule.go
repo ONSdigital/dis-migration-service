@@ -215,8 +215,8 @@ func (mig *migrator) TriggerJobStateTransitions(ctx context.Context, jobNumber i
 		return err
 	}
 
-	rule := mig.GetStateTransitionRules()[job.State]
-	if rule == (StateTransitionRule{}) {
+	rule, ok := mig.GetStateTransitionRules()[job.State]
+	if !ok {
 		return nil // No transitions available from current state
 	}
 
