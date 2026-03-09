@@ -16,16 +16,6 @@ env:
   GOLANGCI_LINT_VERSION: 'v2.10.0'
 
 jobs:
-  dis-migration-service-setup:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
   dis-migration-service-audit:
     runs-on: ubuntu-latest
     steps:
@@ -41,38 +31,54 @@ jobs:
         run: make audit
 
   dis-migration-service-build:
-    needs: dis-migration-service-setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Run Go build test
         run: make build
 
   dis-migration-service-unit:
-    needs: dis-migration-service-setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Run Go unit tests
         run: make test
 
   dis-migration-service-component:
-    needs: dis-migration-service-setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Run Go component tests
         run: make test-component
 
   dis-migration-service-lint:
-    needs: dis-migration-service-setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Run Go lint checks
         uses: golangci/golangci-lint-action@v8
         with:
