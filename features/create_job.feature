@@ -144,7 +144,7 @@ Feature: Create a Job
           "errors": [
             {
               "code": 400,
-              "description": "target ID is invalid"
+              "description": "target ID already exists"
             }
           ]
         }
@@ -175,7 +175,7 @@ Feature: Create a Job
           "errors": [
             {
               "code": 400,
-              "description": "source ID is invalid"
+              "description": "source data has incorrect type"
             }
           ]
         }
@@ -207,7 +207,7 @@ Feature: Create a Job
           "errors": [
             {
               "code": 400,
-              "description": "target ID is invalid"
+              "description": "target ID already exists"
             }
           ]
         }

@@ -59,8 +59,8 @@ func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Contex
 	}
 
 	if data.Type != zebedee.PageTypeDatasetLandingPage {
-		log.Error(ctx, data.Type, appErrors.ErrSourceIDInvalid)
-		return "", appErrors.ErrSourceIDInvalid
+		log.Error(ctx, data.Type, appErrors.ErrSourceDataTypeInvalid)
+		return "", appErrors.ErrSourceDataTypeInvalid
 	}
 
 	// Extract and validate title
@@ -89,7 +89,7 @@ func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, ur
 	if err != nil {
 		if errors.As(err, &e) {
 			if e.ActualCode == http.StatusNotFound {
-				return zebedee.PageData{}, appErrors.ErrSourceIDInvalid
+				return zebedee.PageData{}, appErrors.ErrSourceDoesNotExist
 			}
 		}
 		log.Error(ctx, "failed to validate source ID with zebedee", err)
@@ -108,7 +108,7 @@ func checkDatasetIDDoesNotExist(ctx context.Context, client datasetSDK.Clienter,
 		return appErrors.ErrTargetIDValidation
 	}
 
-	return appErrors.ErrTargetIDInvalid
+	return appErrors.ErrTargetAlreadyExists
 }
 
 // ValidateZebedeeURI validates if the given path is a valid URI

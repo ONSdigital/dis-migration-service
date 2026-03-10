@@ -42,8 +42,8 @@ var (
 	ErrTargetIDNotProvided          = errors.New("target ID not provided")
 	ErrJobTypeNotProvided           = errors.New("job type not provided")
 	ErrSourceTitleNotFound          = errors.New("source title not found or empty")
-	ErrSourceIDInvalid              = errors.New("source ID is invalid")
-	ErrTargetIDInvalid              = errors.New("target ID is invalid")
+	ErrSourceDoesNotExist           = errors.New("source ID does not exist")
+	ErrTargetAlreadyExists          = errors.New("target ID already exists")
 	ErrJobTypeInvalid               = errors.New("job type is invalid")
 	ErrInternalServerError          = errors.New("an unexpected error occurred")
 	ErrSourceIDValidation           = errors.New("source ID failed to validate")
@@ -88,8 +88,9 @@ var (
 		ErrTargetIDValidation:           http.StatusInternalServerError,
 		ErrJobNumberCounterNotFound:     http.StatusInternalServerError,
 		ErrJobAlreadyRunning:            http.StatusConflict,
-		ErrSourceIDInvalid:              http.StatusBadRequest,
-		ErrTargetIDInvalid:              http.StatusBadRequest,
+		ErrSourceDoesNotExist:           http.StatusBadRequest,
+		ErrTargetAlreadyExists:          http.StatusBadRequest,
+		ErrSourceDataTypeInvalid:        http.StatusBadRequest,
 		ErrJobTypeInvalid:               http.StatusBadRequest,
 		ErrSourceIDZebedeeURIInvalid:    http.StatusBadRequest,
 		ErrTargetIDDatasetIDInvalid:     http.StatusBadRequest,
@@ -99,8 +100,6 @@ var (
 		ErrLimitInvalid:                 http.StatusBadRequest,
 		ErrLimitExceeded:                http.StatusBadRequest,
 		ErrJobStateTransitionNotAllowed: http.StatusConflict,
-		ErrSourceIDInvalid:              http.StatusBadRequest,
-		ErrTargetIDInvalid:              http.StatusBadRequest,
 		ErrJobTypeInvalid:               http.StatusBadRequest,
 		ErrJobStateNotAllowed:           http.StatusBadRequest,
 		ErrSortFieldInvalid:             http.StatusBadRequest,

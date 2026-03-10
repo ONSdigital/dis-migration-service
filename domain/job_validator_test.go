@@ -33,12 +33,16 @@ const (
 	datasetValidID    = "found"
 )
 
+var (
+	errTest = errors.New("unexpected error")
+)
+
 func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 	zebedeeMock := &clientMocks.ZebedeeClientMock{
 		GetPageDataFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (zebedee.PageData, error) {
 			switch path {
 			case zebedeeErrorPath:
-				return zebedee.PageData{}, errors.New("unexpected error")
+				return zebedee.PageData{}, errTest
 			case zebedeeValidPath:
 				return zebedee.PageData{
 					Type: zebedee.PageTypeDatasetLandingPage,
@@ -71,7 +75,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 		GetDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID string) (datasetModels.Dataset, error) {
 			switch datasetID {
 			case datasetErrorID:
-				return datasetModels.Dataset{}, errors.New("unexpected error")
+				return datasetModels.Dataset{}, errTest
 			case datasetValidID:
 				return datasetModels.Dataset{}, nil
 			case datasetNotFoundID:
@@ -129,6 +133,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrSourceIDValidation)
 
 				Convey("And the title should be empty", func() {
 					So(title, ShouldEqual, "")
@@ -137,7 +142,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 		})
 	})
 
-	Convey("Given a zebedee source ID that returns not found error", t, func() {
+	Convey("Given a zebedee source ID that returns a not found error", t, func() {
 		validator := domain.StaticDatasetValidator{}
 
 		Convey("When the source is validated", func() {
@@ -145,6 +150,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrSourceDoesNotExist)
 
 				Convey("And the title should be empty", func() {
 					So(title, ShouldEqual, "")
@@ -161,6 +167,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrSourceDataTypeInvalid)
 
 				Convey("And the title should be empty", func() {
 					So(title, ShouldEqual, "")
@@ -189,6 +196,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrTargetAlreadyExists)
 			})
 		})
 	})
@@ -201,6 +209,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrTargetIDValidation)
 			})
 		})
 	})
