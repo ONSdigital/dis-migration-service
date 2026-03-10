@@ -3,21 +3,21 @@ module github.com/ONSdigital/dis-migration-service
 go 1.26.0
 
 require (
-	github.com/ONSdigital/dis-redirect-api v0.3.8
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.274.0
-	github.com/ONSdigital/dp-authorisation/v2 v2.33.1
+	github.com/ONSdigital/dis-redirect-api v0.38.0
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.274.2
+	github.com/ONSdigital/dp-authorisation/v2 v2.34.0
 	github.com/ONSdigital/dp-cache v0.6.1
-	github.com/ONSdigital/dp-component-test v1.2.4-alpha
-	github.com/ONSdigital/dp-dataset-api v1.99.0
-	github.com/ONSdigital/dp-files-api v1.16.0
+	github.com/ONSdigital/dp-component-test v1.3.0-alpha
+	github.com/ONSdigital/dp-dataset-api v1.101.1
+	github.com/ONSdigital/dp-files-api v1.19.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
-	github.com/ONSdigital/dp-mongodb/v3 v3.11.0
+	github.com/ONSdigital/dp-mongodb/v3 v3.13.0
 	github.com/ONSdigital/dp-net/v3 v3.10.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
 	github.com/ONSdigital/dp-permissions-api v1.10.1
 	github.com/ONSdigital/dp-topic-api v1.3.1
-	github.com/ONSdigital/dp-upload-service v1.13.0
-	github.com/ONSdigital/log.go/v2 v2.5.1
+	github.com/ONSdigital/dp-upload-service v1.15.0
+	github.com/ONSdigital/log.go/v2 v2.5.2
 	github.com/cucumber/godog v0.15.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
@@ -25,9 +25,9 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/pkg/errors v0.9.1
-	github.com/slack-go/slack v0.17.3
+	github.com/slack-go/slack v0.19.0
 	github.com/smartystreets/goconvey v1.8.1
-	go.mongodb.org/mongo-driver v1.17.6
+	go.mongodb.org/mongo-driver v1.17.9
 	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.64.0
 )
 
@@ -36,6 +36,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ONSdigital/dp-kafka/v3 v3.11.0 // indirect
+	github.com/ONSdigital/dp-kafka/v4 v4.3.0 // indirect
 	github.com/ONSdigital/dp-net/v2 v2.22.0 // indirect
 	github.com/ONSdigital/dp-s3/v3 v3.3.0 // indirect
 	github.com/Shopify/sarama v1.38.1 // indirect
@@ -53,7 +54,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.17 // indirect
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.30.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.13 // indirect
@@ -139,13 +140,14 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect
 	github.com/redis/go-redis/v9 v9.17.2 // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
-	github.com/shirou/gopsutil/v4 v4.25.12 // indirect
+	github.com/shirou/gopsutil/v4 v4.26.1 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/smarty/assertions v1.16.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/square/mongo-lock v0.0.0-20230808145049-cfcf499f6bf0 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/testcontainers/testcontainers-go v0.40.0 // indirect
+	github.com/testcontainers/testcontainers-go/modules/kafka v0.40.0 // indirect
 	github.com/testcontainers/testcontainers-go/modules/mongodb v0.40.0 // indirect
 	github.com/testcontainers/testcontainers-go/modules/redis v0.40.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
@@ -156,7 +158,8 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.64.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/github.com/Shopify/sarama/otelsarama v0.43.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.65.0 // indirect
 	go.opentelemetry.io/contrib/propagators/autoprop v0.64.0 // indirect
 	go.opentelemetry.io/contrib/propagators/aws v1.39.0 // indirect
 	go.opentelemetry.io/contrib/propagators/b3 v1.39.0 // indirect
@@ -171,12 +174,13 @@ require (
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.47.0 // indirect
+	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260114163908-3f89685c29c3 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260114163908-3f89685c29c3 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260202165425-ce8ad4cf556b // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260202165425-ce8ad4cf556b // indirect
 	google.golang.org/grpc v1.78.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
