@@ -164,7 +164,6 @@ func (mig *migrator) transitionJobSuccess(ctx context.Context, job *domain.Job, 
 
 func (mig *migrator) transitionJob(ctx context.Context, job *domain.Job, targetState domain.State) (bool, error) {
 	err := mig.jobService.UpdateJobState(ctx, job.JobNumber, targetState, "")
-
 	if errors.Is(err, appErrors.ErrStateAlreadyAtTarget) {
 		log.Info(ctx, "transitionJob: job is already in the target state, no transition needed", log.Data{
 			"job_number": job.JobNumber,

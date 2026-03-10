@@ -71,6 +71,7 @@ var (
 	ErrInvalidTask                       = errors.New("invalid task or missing source/target information")
 
 	ErrStateAlreadyAtTarget = errors.New("job is already in the target state")
+	ErrStateUnexpected      = errors.New("job is in an unexpected state")
 
 	StatusCodeMap = map[error]int{
 		ErrJobNotFound:                  http.StatusNotFound,

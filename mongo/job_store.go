@@ -166,46 +166,49 @@ func (m *Mongo) UpdateJob(ctx context.Context, job *domain.Job) error {
 func (m *Mongo) UpdateJobState(ctx context.Context, jobID string, oldState, newState domain.State, lastUpdated time.Time) error {
 	collectionName := m.ActualCollectionName(config.JobsCollectionTitle)
 
-	filter := bson.M{"_id": jobID}
-	// Only update the state if it's not already in the target state.
-	update := mongo.Pipeline{
-		{{Key: "$set", Value: bson.M{
-			"state": bson.M{
-				"$cond": bson.A{
-					bson.M{"$eq": bson.A{"$state", newState}},
-					"$state",
-					newState,
-				},
-			},
-			"last_updated": bson.M{
-				"$cond": bson.A{
-					bson.M{"$eq": bson.A{"$state", newState}},
-					"$last_updated",
-					lastUpdated,
-				},
-			},
-		}}},
+	// Only update the state if it's in the state we expect.
+	filter := bson.M{"_id": jobID, "state": oldState}
+	update := bson.M{
+		"$set": bson.M{
+			"state":        newState,
+			"last_updated": time.Now(),
+		},
 	}
 
-	var preUpdateJob domain.Job
-
 	// Update the document
-	err := m.Connection.Collection(collectionName).FindOneAndUpdate(
+	result, err := m.Connection.Collection(collectionName).UpdateOne(
 		ctx,
 		filter,
 		update,
-		&preUpdateJob,
-		mongodriver.ReturnDocument(options.Before),
 	)
+
+	// UpdateOne doesn't return an error if no documents are matched.
 	if err != nil {
-		if errors.Is(err, mongodriver.ErrNoDocumentFound) || errors.Is(err, mongo.ErrNoDocuments) {
-			return appErrors.ErrJobNotFound
-		}
-		return err
+		return appErrors.ErrInternalServerError
 	}
 
-	if preUpdateJob.State == newState {
-		return appErrors.ErrStateAlreadyAtTarget
+	// Check if we matched a document to update.
+	if result.MatchedCount == 0 {
+		var preExistingJob domain.Job
+
+		// Check if the job exists and if it's already in the target state
+		filter := bson.M{"_id": jobID}
+		err := m.Connection.Collection(collectionName).FindOne(ctx, filter, &preExistingJob)
+		if err != nil {
+			// Job doesn't exist so return not found error
+			if errors.Is(err, mongodriver.ErrNoDocumentFound) {
+				return appErrors.ErrJobNotFound
+			}
+			return err
+		}
+
+		if preExistingJob.State == newState {
+			return appErrors.ErrStateAlreadyAtTarget
+		}
+
+		// In this case the job is not in the expected target or old state,
+		// so we return an error indicating an unexpected state.
+		return appErrors.ErrStateUnexpected
 	}
 
 	return nil
