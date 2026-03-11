@@ -42,7 +42,7 @@ func TestNew(t *testing.T) {
 				Enabled:  true,
 				APIToken: "xoxb-test-token",
 				Channels: Channels{
-					InfoChannel:    "#info",
+					PublishChannel: "#publish",
 					WarningChannel: "#warning",
 					AlarmChannel:   "#alarm",
 				},

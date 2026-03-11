@@ -52,7 +52,7 @@ npm install -g @redocly/cli
 | DEFAULT_LIMIT                             | 10                    | Default limit parameter for paginated endpoints                                                                    |
 | DEFAULT_MAX_LIMIT                         | 100                   | Default max limit for paginated endpoints                                                                          |
 | DEFAULT_OFFSET                            | 0                     | Default offset parameter for paginated endpoints                                                                   |
-| ENABLE_EVENT_LOGGING                      | false                 | Feature flag to enable event logging for migrations                                                                
+| ENABLE_EVENT_LOGGING                      | false                 | Feature flag to enable event logging for migrations                                                                |
 | ENABLE_MOCK_CLIENTS                       | false                 | Boolean to inject mock clients to allow for faster development                                                     |
 | FILES_API_URL                             | localhost:26900       | Address for File API                                                                                               |
 | GRACEFUL_SHUTDOWN_TIMEOUT                 | 5s                    | The graceful shutdown timeout in seconds (`time.Duration` format)                                                  |
@@ -67,7 +67,7 @@ npm install -g @redocly/cli
 | REDIRECT_API_URL                          | localhost:29900       | Address for the Redirect API                                                                                       |
 | SLACK_ENABLED                             | false                 | Feature flag to enable Slack notifications                                                                         |
 | SLACK_API_TOKEN                           |                       | Slack bot token for authentication                                                                                 |
-| SLACK_INFO_CHANNEL                        |                       | Slack channel for informational notifications                                                                      |
+| SLACK_PUBLISH_CHANNEL                     |                       | Slack channel for informational notifications                                                                      |
 | SLACK_WARNING_CHANNEL                     |                       | Slack channel for warning notifications                                                                            |
 | SLACK_ALARM_CHANNEL                       |                       | Slack channel for alarm/error notifications                                                                        |
 | SERVICE_AUTH_TOKEN                        |                       | Service authentication token for API requests                                                                      |

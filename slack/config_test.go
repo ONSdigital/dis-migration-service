@@ -30,7 +30,7 @@ func TestConfig_Validate(t *testing.T) {
 				Enabled:  true,
 				APIToken: "xoxb-test-token",
 				Channels: Channels{
-					InfoChannel:    "#info",
+					PublishChannel: "#publish",
 					WarningChannel: "#warning",
 					AlarmChannel:   "#alarm",
 				},
@@ -42,7 +42,7 @@ func TestConfig_Validate(t *testing.T) {
 			config: &Config{
 				Enabled: true,
 				Channels: Channels{
-					InfoChannel:    "#info",
+					PublishChannel: "#publish",
 					WarningChannel: "#warning",
 					AlarmChannel:   "#alarm",
 				},
@@ -58,7 +58,7 @@ func TestConfig_Validate(t *testing.T) {
 				Channels: Channels{},
 			},
 			wantErr: true,
-			errMsg:  "info channel",
+			errMsg:  "publish channel",
 		},
 		{
 			name: "enabled with missing alarm channel only",
@@ -66,7 +66,7 @@ func TestConfig_Validate(t *testing.T) {
 				Enabled:  true,
 				APIToken: "xoxb-test-token",
 				Channels: Channels{
-					InfoChannel:    "#info",
+					PublishChannel: "#publish",
 					WarningChannel: "#warning",
 				},
 			},

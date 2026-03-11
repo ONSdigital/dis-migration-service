@@ -14,7 +14,7 @@ type Config struct {
 
 // Channels holds the Slack channel names for different notification levels
 type Channels struct {
-	InfoChannel    string `envconfig:"SLACK_INFO_CHANNEL"`
+	PublishChannel string `envconfig:"SLACK_PUBLISH_CHANNEL"`
 	WarningChannel string `envconfig:"SLACK_WARNING_CHANNEL"`
 	AlarmChannel   string `envconfig:"SLACK_ALARM_CHANNEL"`
 }
@@ -35,8 +35,8 @@ func (c *Config) Validate() error {
 	if c.APIToken == "" {
 		return errMissingAPIToken
 	}
-	if c.Channels.InfoChannel == "" {
-		return errMissingInfoChannel
+	if c.Channels.PublishChannel == "" {
+		return errMissingPublishChannel
 	}
 	if c.Channels.WarningChannel == "" {
 		return errMissingWarningChannel

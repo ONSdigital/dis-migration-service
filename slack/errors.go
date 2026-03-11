@@ -6,7 +6,7 @@ import "errors"
 var (
 	errNilSlackConfig        = errors.New("slack configuration is nil")
 	errMissingAPIToken       = errors.New("slack API token is missing")
-	errMissingInfoChannel    = errors.New("slack info channel is missing")
+	errMissingPublishChannel = errors.New("slack publish channel is missing")
 	errMissingWarningChannel = errors.New("slack warning channel is missing")
 	errMissingAlarmChannel   = errors.New("slack alarm channel is missing")
 )

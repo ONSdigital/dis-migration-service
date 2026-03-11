@@ -157,7 +157,7 @@ func (e *Init) DoGetSlackClient(ctx context.Context, cfg *config.Config) (slack.
 		Enabled:  cfg.SlackConfig.Enabled,
 		APIToken: cfg.SlackConfig.APIToken,
 		Channels: slack.Channels{
-			InfoChannel:    cfg.SlackConfig.Channels.InfoChannel,
+			PublishChannel: cfg.SlackConfig.Channels.PublishChannel,
 			WarningChannel: cfg.SlackConfig.Channels.WarningChannel,
 			AlarmChannel:   cfg.SlackConfig.Channels.AlarmChannel,
 		},

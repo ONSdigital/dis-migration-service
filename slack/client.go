@@ -92,7 +92,7 @@ func (c *Client) SendInfo(ctx context.Context, summary string, details SlackDeta
 
 	return c.doSendMessage(
 		ctx,
-		c.channels.InfoChannel,
+		c.channels.PublishChannel,
 		colour,
 		InfoEmoji,
 		summary,
