@@ -20,15 +20,19 @@ We use `reflex` to do rebuilds, which you will [need to install](https://github.
 
 We use `dis-vulncheck` to do auditing, which you will [need to install](https://github.com/ONSdigital/dis-vulncheck).
 
+### Component testing
+
+To run the component tests, we use testcontainers via our dp-component-test library.
+
+To get setup, follow our guidance on using testcontainers
+
+If you're already setup, you will just need to ensure a docker daemon is running, for example via colima start.
+
 #### Linting
 
 We use v2 of golangci-lint, which you will [need to install](https://golangci-lint.run/docs/welcome/install).
 
-## Dependencies
-
-* No further dependencies other than those defined in `go.mod`
-
-## Validating Specification
+#### Validating Specification
 
 To validate the swagger specification you can do this via:
 
@@ -36,12 +40,16 @@ To validate the swagger specification you can do this via:
 make validate-specification
 ```
 
-To run this, you will need to run Node > v22 and have [redocly CLI v2](https://github.com/Redocly/redocly-cli)
+To run this, you will need to run Node >= v22 and have [redocly CLI v2](https://github.com/Redocly/redocly-cli)
 installed:
 
 ```sh
 npm install -g @redocly/cli
 ```
+
+## Dependencies
+
+* No further dependencies other than those defined in `go.mod`
 
 ## Configuration
 
