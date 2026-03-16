@@ -27,6 +27,7 @@ paths:
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
         - $ref: "#/parameters/state"
+        - $ref: "#/parameters/sort"
       responses:
         200:
           description: "Successful response"
@@ -298,6 +299,21 @@ parameters:
       - failed_migration
       - cancelled
     required: false
+  sort:
+    in: query
+    name: sort
+    description: >
+      Sort jobs by `job_number` or `label` in ascending (`asc`) or descending (`desc`) order.
+      
+      Format: `$field:$direction`
+    type: string
+    enum:
+      - job_number:asc
+      - job_number:desc
+      - label:asc
+      - label:desc
+    required: false
+    default: job_number:desc
   MigrationJobPostBody:
     in: body
     name: body
