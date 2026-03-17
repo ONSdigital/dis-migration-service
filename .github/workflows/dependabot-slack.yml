@@ -21,5 +21,5 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_CODE_REVIEW }}
           webhook-type: incoming-webhook
           payload: |
-            text: "format('<{0}|{0}> - Dependabot opened a PR: {1}', github.event.pull_request.html_url, github.event.pull_request.title) }}"
+            text: "${{ format('<{0}|{0}> - Dependabot opened a PR: {1}', github.event.pull_request.html_url, github.event.pull_request.title) }}"
 
