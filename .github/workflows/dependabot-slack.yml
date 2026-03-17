@@ -13,12 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Post to Slack
-        uses: slackapi/slack-github-action@v1.25.0
+        uses: slackapi/slack-github-action@v3.0.1
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_CODE_REVIEW }}
+          webhook-type: incoming-webhook
           payload: |
-            {
-              "text": "format('<{0}|{0}> - Dependabot opened a PR: {1}', github.event.pull_request.html_url, github.event.pull_request.title) }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CODE_REVIEW }}
+            text: "format('<{0}|{0}> - Dependabot opened a PR: {1}', github.event.pull_request.html_url, github.event.pull_request.title) }}"
 
