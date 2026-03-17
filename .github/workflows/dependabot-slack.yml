@@ -6,13 +6,14 @@ permissions:
 on:
   # This uses pull_request_target which runs in the context
   # of the base branch and allows access to secrets, but only for the specified events.
-  # This workflow should not be modified to checkout code or run untrusted code from the PR,
+  # This workflow should not be modified to checkout code or run untrusted code from the PR.
   pull_request_target:
     types: [opened, reopened]
+  workflow_dispatch:
 
 jobs:
   notify:
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    if: ${{ github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
       - name: Post to Slack
