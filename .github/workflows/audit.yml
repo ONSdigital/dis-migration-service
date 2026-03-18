@@ -33,10 +33,7 @@ jobs:
         if: failure() && env.BRANCH_NAME == 'main'
         uses: slackapi/slack-github-action@v3.0.1
         with:
-          channel-id: ci-failures
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
-            {
-              "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|audit test ${{ github.run_id }}> failed for <${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}> branch `${{ env.BRANCH_NAME }}`"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+            text: "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|audit test ${{ github.run_id }}> failed for <${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}> branch `${{ env.BRANCH_NAME }}`"
