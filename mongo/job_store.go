@@ -76,19 +76,21 @@ func (m *Mongo) GetJobs(ctx context.Context, field sort.SortParameterField, dire
 	return results, totalCount, err
 }
 
-// GetJobsByConfigAndState retrieves jobs based on the provided job
-// configuration and states.
-func (m *Mongo) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, stateFilter []domain.State, limit, offset int) ([]*domain.Job, error) {
+// GetJobsBySourceOrTargetAndState retrieves jobs based on the provided
+// source ID or target ID and states.
+func (m *Mongo) GetJobsBySourceOrTargetAndState(ctx context.Context, jc *domain.JobConfig, stateFilter []domain.State, limit, offset int) ([]*domain.Job, error) {
 	var results []*domain.Job
 
 	_, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		Find(
 			ctx,
 			bson.M{
-				"config.source_id": jc.SourceID,
-				"config.target_id": jc.TargetID,
-				"config.type":      jc.Type,
-				"state":            bson.M{"$in": stateFilter},
+				"$or": []bson.M{
+					{"config.source_id": jc.SourceID},
+					{"config.target_id": jc.TargetID},
+				},
+				"config.type": jc.Type,
+				"state":       bson.M{"$in": stateFilter},
 			},
 			&results,
 			mongodriver.Limit(limit), mongodriver.Offset(offset),
@@ -139,9 +141,10 @@ func (m *Mongo) ClaimJob(ctx context.Context, pendingState, activeState domain.S
 	return &job, nil
 }
 
-// GetJobsByConfig retrieves jobs based on the provided job configuration.
-func (m *Mongo) GetJobsByConfig(ctx context.Context, jc *domain.JobConfig, limit, offset int) ([]*domain.Job, error) {
-	return m.GetJobsByConfigAndState(ctx, jc, []domain.State{}, limit, offset)
+// GetJobsBySourceOrTargetID retrieves jobs based
+// on the provided source OR target ID.
+func (m *Mongo) GetJobsBySourceOrTargetID(ctx context.Context, jc *domain.JobConfig, limit, offset int) ([]*domain.Job, error) {
+	return m.GetJobsBySourceOrTargetAndState(ctx, jc, []domain.State{}, limit, offset)
 }
 
 // UpdateJob updates an existing migration job.

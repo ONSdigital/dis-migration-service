@@ -62,8 +62,8 @@ var _ store.Storer = &StorerMock{}
 //			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit int, offset int) ([]*domain.Job, int, error) {
 //				panic("mock out the GetJobs method")
 //			},
-//			GetJobsByConfigAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit int, offset int) ([]*domain.Job, error) {
-//				panic("mock out the GetJobsByConfigAndState method")
+//			GetJobsBySourceOrTargetAndStateFunc: func(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit int, offset int) ([]*domain.Job, error) {
+//				panic("mock out the GetJobsBySourceOrTargetAndState method")
 //			},
 //			GetNextJobNumberCounterFunc: func(ctx context.Context) (*domain.Counter, error) {
 //				panic("mock out the GetNextJobNumberCounter method")
@@ -129,8 +129,8 @@ type StorerMock struct {
 	// GetJobsFunc mocks the GetJobs method.
 	GetJobsFunc func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit int, offset int) ([]*domain.Job, int, error)
 
-	// GetJobsByConfigAndStateFunc mocks the GetJobsByConfigAndState method.
-	GetJobsByConfigAndStateFunc func(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit int, offset int) ([]*domain.Job, error)
+	// GetJobsBySourceOrTargetAndStateFunc mocks the GetJobsBySourceOrTargetAndState method.
+	GetJobsBySourceOrTargetAndStateFunc func(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit int, offset int) ([]*domain.Job, error)
 
 	// GetNextJobNumberCounterFunc mocks the GetNextJobNumberCounter method.
 	GetNextJobNumberCounterFunc func(ctx context.Context) (*domain.Counter, error)
@@ -263,8 +263,8 @@ type StorerMock struct {
 			// Offset is the offset argument value.
 			Offset int
 		}
-		// GetJobsByConfigAndState holds details about calls to the GetJobsByConfigAndState method.
-		GetJobsByConfigAndState []struct {
+		// GetJobsBySourceOrTargetAndState holds details about calls to the GetJobsBySourceOrTargetAndState method.
+		GetJobsBySourceOrTargetAndState []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Jc is the jc argument value.
@@ -327,26 +327,26 @@ type StorerMock struct {
 			LastUpdated time.Time
 		}
 	}
-	lockChecker                 sync.RWMutex
-	lockClaimJob                sync.RWMutex
-	lockClaimTask               sync.RWMutex
-	lockClose                   sync.RWMutex
-	lockCountEventsByJobNumber  sync.RWMutex
-	lockCountTasksByJobNumber   sync.RWMutex
-	lockCreateEvent             sync.RWMutex
-	lockCreateJob               sync.RWMutex
-	lockCreateTask              sync.RWMutex
-	lockGetJob                  sync.RWMutex
-	lockGetJobEvents            sync.RWMutex
-	lockGetJobTasks             sync.RWMutex
-	lockGetJobs                 sync.RWMutex
-	lockGetJobsByConfigAndState sync.RWMutex
-	lockGetNextJobNumberCounter sync.RWMutex
-	lockGetTask                 sync.RWMutex
-	lockUpdateJob               sync.RWMutex
-	lockUpdateJobState          sync.RWMutex
-	lockUpdateTask              sync.RWMutex
-	lockUpdateTaskState         sync.RWMutex
+	lockChecker                         sync.RWMutex
+	lockClaimJob                        sync.RWMutex
+	lockClaimTask                       sync.RWMutex
+	lockClose                           sync.RWMutex
+	lockCountEventsByJobNumber          sync.RWMutex
+	lockCountTasksByJobNumber           sync.RWMutex
+	lockCreateEvent                     sync.RWMutex
+	lockCreateJob                       sync.RWMutex
+	lockCreateTask                      sync.RWMutex
+	lockGetJob                          sync.RWMutex
+	lockGetJobEvents                    sync.RWMutex
+	lockGetJobTasks                     sync.RWMutex
+	lockGetJobs                         sync.RWMutex
+	lockGetJobsBySourceOrTargetAndState sync.RWMutex
+	lockGetNextJobNumberCounter         sync.RWMutex
+	lockGetTask                         sync.RWMutex
+	lockUpdateJob                       sync.RWMutex
+	lockUpdateJobState                  sync.RWMutex
+	lockUpdateTask                      sync.RWMutex
+	lockUpdateTaskState                 sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -857,10 +857,10 @@ func (mock *StorerMock) GetJobsCalls() []struct {
 	return calls
 }
 
-// GetJobsByConfigAndState calls GetJobsByConfigAndStateFunc.
-func (mock *StorerMock) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit int, offset int) ([]*domain.Job, error) {
-	if mock.GetJobsByConfigAndStateFunc == nil {
-		panic("StorerMock.GetJobsByConfigAndStateFunc: method is nil but Storer.GetJobsByConfigAndState was just called")
+// GetJobsBySourceOrTargetAndState calls GetJobsBySourceOrTargetAndStateFunc.
+func (mock *StorerMock) GetJobsBySourceOrTargetAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit int, offset int) ([]*domain.Job, error) {
+	if mock.GetJobsBySourceOrTargetAndStateFunc == nil {
+		panic("StorerMock.GetJobsBySourceOrTargetAndStateFunc: method is nil but Storer.GetJobsBySourceOrTargetAndState was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -875,17 +875,17 @@ func (mock *StorerMock) GetJobsByConfigAndState(ctx context.Context, jc *domain.
 		Limit:  limit,
 		Offset: offset,
 	}
-	mock.lockGetJobsByConfigAndState.Lock()
-	mock.calls.GetJobsByConfigAndState = append(mock.calls.GetJobsByConfigAndState, callInfo)
-	mock.lockGetJobsByConfigAndState.Unlock()
-	return mock.GetJobsByConfigAndStateFunc(ctx, jc, states, limit, offset)
+	mock.lockGetJobsBySourceOrTargetAndState.Lock()
+	mock.calls.GetJobsBySourceOrTargetAndState = append(mock.calls.GetJobsBySourceOrTargetAndState, callInfo)
+	mock.lockGetJobsBySourceOrTargetAndState.Unlock()
+	return mock.GetJobsBySourceOrTargetAndStateFunc(ctx, jc, states, limit, offset)
 }
 
-// GetJobsByConfigAndStateCalls gets all the calls that were made to GetJobsByConfigAndState.
+// GetJobsBySourceOrTargetAndStateCalls gets all the calls that were made to GetJobsBySourceOrTargetAndState.
 // Check the length with:
 //
-//	len(mockedStorer.GetJobsByConfigAndStateCalls())
-func (mock *StorerMock) GetJobsByConfigAndStateCalls() []struct {
+//	len(mockedStorer.GetJobsBySourceOrTargetAndStateCalls())
+func (mock *StorerMock) GetJobsBySourceOrTargetAndStateCalls() []struct {
 	Ctx    context.Context
 	Jc     *domain.JobConfig
 	States []domain.State
@@ -899,9 +899,9 @@ func (mock *StorerMock) GetJobsByConfigAndStateCalls() []struct {
 		Limit  int
 		Offset int
 	}
-	mock.lockGetJobsByConfigAndState.RLock()
-	calls = mock.calls.GetJobsByConfigAndState
-	mock.lockGetJobsByConfigAndState.RUnlock()
+	mock.lockGetJobsBySourceOrTargetAndState.RLock()
+	calls = mock.calls.GetJobsBySourceOrTargetAndState
+	mock.lockGetJobsBySourceOrTargetAndState.RUnlock()
 	return calls
 }
 

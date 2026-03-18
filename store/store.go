@@ -24,7 +24,7 @@ type dataMongoDB interface {
 	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
 	ClaimJob(ctx context.Context, pendingState domain.State, activeState domain.State) (*domain.Job, error)
-	GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error)
+	GetJobsBySourceOrTargetAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error)
 	GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error)
 	UpdateJob(ctx context.Context, job *domain.Job) error
 	UpdateJobState(ctx context.Context, id string, oldState domain.State, newState domain.State, lastUpdated time.Time) error
@@ -91,10 +91,10 @@ func (ds *Datastore) GetJobs(ctx context.Context, field sort.SortParameterField,
 	return ds.Backend.GetJobs(ctx, field, direction, states, limit, offset)
 }
 
-// GetJobsByConfigAndState retrieves jobs based on the provided job.
-// configuration and states.
-func (ds *Datastore) GetJobsByConfigAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error) {
-	return ds.Backend.GetJobsByConfigAndState(ctx, jc, states, limit, offset)
+// GetJobsBySourceOrTargetAndState retrieves jobs based on the provided
+// source ID or target ID and states.
+func (ds *Datastore) GetJobsBySourceOrTargetAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error) {
+	return ds.Backend.GetJobsBySourceOrTargetAndState(ctx, jc, states, limit, offset)
 }
 
 // CreateTask creates a new migration task.

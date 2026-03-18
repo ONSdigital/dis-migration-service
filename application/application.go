@@ -71,13 +71,13 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 	// Create job with label
 	job := domain.NewJob(jobConfig, jobNumberCounter.CounterValue, label)
 
-	foundJobs, err := js.store.GetJobsByConfigAndState(ctx, job.Config, domain.GetNonCancelledStates(), 1, 0)
+	foundJobs, err := js.store.GetJobsBySourceOrTargetAndState(ctx, job.Config, domain.GetNonCancelledStates(), 1, 0)
 	if err != nil {
 		log.Error(ctx, "failed to validate job creation", err)
 		return &domain.Job{}, appErrors.ErrInternalServerError
 	}
 	if len(foundJobs) > 0 {
-		log.Error(ctx, "found running jobs with this config", err, log.Data{
+		log.Info(ctx, "found running jobs with this config", log.Data{
 			"job_config": job.Config,
 		})
 		return &domain.Job{}, appErrors.ErrJobAlreadyRunning
