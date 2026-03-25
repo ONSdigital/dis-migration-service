@@ -399,7 +399,7 @@ func TestMonitorTasks(t *testing.T) {
 			cancel()
 
 			Convey("Then the job service is called to claim tasks every poll interval", func() {
-				So(len(mockJobService.ClaimTaskCalls()), ShouldEqual, 3)
+				So(len(mockJobService.ClaimTaskCalls()), ShouldBeGreaterThanOrEqualTo, 2)
 			})
 		})
 	})

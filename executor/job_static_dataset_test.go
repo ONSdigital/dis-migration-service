@@ -10,6 +10,11 @@ import (
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
+	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk"
+	datasetSDKMocks "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
+	filesSDK "github.com/ONSdigital/dp-files-api/sdk"
+	filesSDKMocks "github.com/ONSdigital/dp-files-api/sdk/mocks"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -159,6 +164,120 @@ func TestJobStaticDataset(t *testing.T) {
 			Convey("Then an error is returned", func() {
 				So(err, ShouldEqual, errTest)
 				So(mockJobService.UpdateJobCollectionIDCalls(), ShouldHaveLength, 0)
+			})
+		})
+	})
+
+	Convey("Given a static dataset job executor with download tasks for reversion", t, func() {
+		originalDeleteDatasetFromAPI := deleteDatasetFromAPI
+		defer func() { deleteDatasetFromAPI = originalDeleteDatasetFromAPI }()
+
+		deletedDatasetID := ""
+		deleteDatasetFromAPI = func(ctx context.Context, datasetAPIURL, datasetID, serviceAuthToken string) error {
+			deletedDatasetID = datasetID
+			return nil
+		}
+
+		mockJobService := &applicationMocks.JobServiceMock{
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 1, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
+				return []*domain.Task{
+					{
+						ID:   "download-task-1",
+						Type: domain.TaskTypeDatasetDownload,
+						Source: &domain.TaskMetadata{
+							ID: "/source/file.csv",
+						},
+						Target: &domain.TaskMetadata{
+							DatasetID: "target-dataset-id",
+							EditionID: "historical",
+							VersionID: "1",
+						},
+					},
+				}, 1, nil
+			},
+		}
+
+		mockDatasetClient := &datasetSDKMocks.ClienterMock{
+			URLFunc: func() string {
+				return "http://localhost:22000"
+			},
+			GetVersionWithHeadersFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, edition, version string) (datasetModels.Version, datasetSDK.ResponseHeaders, error) {
+				return datasetModels.Version{
+					Distributions: &[]datasetModels.Distribution{
+						{Title: "file.csv", DownloadURL: "/uploads/file.csv"},
+					},
+				}, datasetSDK.ResponseHeaders{ETag: "test-etag"}, nil
+			},
+			PutVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string, version datasetModels.Version) (datasetModels.Version, error) {
+				return datasetModels.Version{}, nil
+			},
+		}
+
+		mockFilesClient := &filesSDKMocks.ClienterMock{
+			DeleteFileFunc: func(ctx context.Context, filePath string, headers filesSDK.Headers) error {
+				return nil
+			},
+		}
+
+		executor := NewStaticDatasetJobExecutor(
+			mockJobService,
+			&clients.ClientList{DatasetAPI: mockDatasetClient, FilesAPI: mockFilesClient},
+			"faketoken",
+		)
+
+		Convey("When revert is called for a job", func() {
+			err := executor.Revert(context.Background(), &domain.Job{
+				JobNumber: testJobNumber,
+				Config: &domain.JobConfig{
+					TargetID: "target-dataset-id",
+				},
+			})
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+				So(len(mockDatasetClient.GetVersionWithHeadersCalls()), ShouldEqual, 1)
+				So(len(mockDatasetClient.PutVersionCalls()), ShouldEqual, 1)
+				So(len(mockFilesClient.DeleteFileCalls()), ShouldEqual, 1)
+				So(deletedDatasetID, ShouldEqual, "target-dataset-id")
+			})
+		})
+	})
+
+	Convey("Given a static dataset job executor and dataset deletion failure during revert", t, func() {
+		originalDeleteDatasetFromAPI := deleteDatasetFromAPI
+		defer func() { deleteDatasetFromAPI = originalDeleteDatasetFromAPI }()
+
+		deleteDatasetFromAPI = func(ctx context.Context, datasetAPIURL, datasetID, serviceAuthToken string) error {
+			return errTest
+		}
+
+		mockJobService := &applicationMocks.JobServiceMock{
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 0, nil
+			},
+		}
+
+		executor := NewStaticDatasetJobExecutor(
+			mockJobService,
+			&clients.ClientList{DatasetAPI: &datasetSDKMocks.ClienterMock{URLFunc: func() string {
+				return "http://localhost:22000"
+			}}},
+			"faketoken",
+		)
+
+		Convey("When revert is called for a job", func() {
+			err := executor.Revert(context.Background(), &domain.Job{
+				JobNumber: testJobNumber,
+				Config: &domain.JobConfig{
+					TargetID: "target-dataset-id",
+				},
+			})
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
 			})
 		})
 	})

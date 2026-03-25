@@ -58,7 +58,7 @@ func NewDefaultMigrator(cfg *config.Config, jobService application.JobService, a
 // Start begins monitoring for jobs and tasks to process
 func (mig *migrator) Start(ctx context.Context) {
 	log.Info(ctx, "starting migrator")
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background()) //nolint:gosec // Context is cancelled on shutdown
 	mig.stopJobsFunc = cancel
 	mig.wg.Add(2)
 	go func() {
