@@ -111,6 +111,11 @@ func (mig *migrator) executeJob(job *domain.Job) {
 			err = jobExecutor.Migrate(ctx, job)
 		case domain.StatePublishing:
 			err = jobExecutor.Publish(ctx, job)
+		case domain.StateReverting:
+			err = jobExecutor.Revert(ctx, job)
+			if err == nil {
+				err = mig.jobService.UpdateJobState(ctx, job.JobNumber, domain.StateRejected, "")
+			}
 		default:
 			err = fmt.Errorf("unsupported job state: %s", job.State)
 			log.Error(ctx, "unsupported job state for execution", err, logData)
