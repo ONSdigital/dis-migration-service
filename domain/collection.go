@@ -17,6 +17,6 @@ const (
 func NewMigrationCollection(jobNumber int) zebedee.Collection {
 	return zebedee.Collection{
 		Name: CollectionNamePrefix + " " + strconv.Itoa(jobNumber),
-		Type: zebedee.CollectionTypeManual,
+		Type: zebedee.CollectionTypeAutomated,
 	}
 }

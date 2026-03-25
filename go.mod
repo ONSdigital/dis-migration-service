@@ -4,17 +4,17 @@ go 1.26.0
 
 require (
 	github.com/ONSdigital/dis-redirect-api v0.38.0
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.274.2
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.278.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.34.0
 	github.com/ONSdigital/dp-cache v0.6.1
-	github.com/ONSdigital/dp-component-test v1.3.0-alpha
-	github.com/ONSdigital/dp-dataset-api v1.101.1
+	github.com/ONSdigital/dp-component-test v1.4.2-alpha
+	github.com/ONSdigital/dp-dataset-api v1.102.0
 	github.com/ONSdigital/dp-files-api v1.19.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-mongodb/v3 v3.13.0
 	github.com/ONSdigital/dp-net/v3 v3.10.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
-	github.com/ONSdigital/dp-permissions-api v1.10.1
+	github.com/ONSdigital/dp-permissions-api v1.11.0
 	github.com/ONSdigital/dp-topic-api v1.3.1
 	github.com/ONSdigital/dp-upload-service v1.15.0
 	github.com/ONSdigital/log.go/v2 v2.5.2
@@ -25,7 +25,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/pkg/errors v0.9.1
-	github.com/slack-go/slack v0.19.0
+	github.com/slack-go/slack v0.20.0
 	github.com/smartystreets/goconvey v1.8.1
 	go.mongodb.org/mongo-driver v1.17.9
 	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.64.0

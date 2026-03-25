@@ -16,7 +16,7 @@ func TestNewMigrationCollection(t *testing.T) {
 
 			Convey("Then it returns a collection with the expected name and type", func() {
 				So(collection.Name, ShouldEqual, CollectionNamePrefix+" 123")
-				So(collection.Type, ShouldEqual, zebedee.CollectionTypeManual)
+				So(collection.Type, ShouldEqual, zebedee.CollectionTypeAutomated)
 			})
 		})
 	})

@@ -64,7 +64,7 @@ func TestJobStaticDataset(t *testing.T) {
 				Convey("And a collection is created for the migration job", func() {
 					So(len(mockZebedeeClient.CreateCollectionCalls()), ShouldEqual, 1)
 					So(mockZebedeeClient.CreateCollectionCalls()[0].Collection.Name, ShouldEqual, "Migration Collection for Job 1")
-					So(mockZebedeeClient.CreateCollectionCalls()[0].Collection.Type, ShouldEqual, "manual")
+					So(mockZebedeeClient.CreateCollectionCalls()[0].Collection.Type, ShouldEqual, zebedee.CollectionTypeAutomated)
 					So(mockJobService.UpdateJobCollectionIDCalls()[0].CollectionID, ShouldEqual, testCollectionID)
 
 					Convey("And a dataset series migration task is created for the dataset", func() {
