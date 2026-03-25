@@ -12,6 +12,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/executor"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -44,7 +45,7 @@ var getJobExecutors = func(jobService application.JobService, appClients *client
 func (mig *migrator) getJobExecutor(job *domain.Job) (executor.JobExecutor, error) {
 	jobExecutor := mig.jobExecutors[job.Config.Type]
 	if jobExecutor == nil {
-		return nil, fmt.Errorf("no executor found for task type: %s", job.Config.Type)
+		return nil, fmt.Errorf("no executor found for job type: %s", job.Config.Type)
 	}
 	return jobExecutor, nil
 }
@@ -75,16 +76,16 @@ func (mig *migrator) monitorJobs(ctx context.Context) {
 			}
 
 			log.Info(ctx, "claimed job", log.Data{"job_id": job.ID, "job_state": job.State})
-			mig.executeJob(job)
+			mig.executeJob(ctx, job)
 		}
 	}
 }
 
 // executeJob executes the provided job in a separate goroutine based on
 // it's state
-func (mig *migrator) executeJob(job *domain.Job) {
+func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 	requestID := dpRequest.NewRequestID(RequestIDLength)
-	ctx := dpRequest.WithRequestId(context.Background(), requestID)
+	ctx = dpRequest.WithRequestId(ctx, requestID)
 	log.Info(ctx, "executing job", log.Data{"job_id": job.ID, "job_state": job.State})
 	mig.wg.Add(1)
 	go func() {
@@ -111,6 +112,37 @@ func (mig *migrator) executeJob(job *domain.Job) {
 			err = jobExecutor.Migrate(ctx, job)
 		case domain.StatePublishing:
 			err = jobExecutor.Publish(ctx, job)
+		case domain.StateReverting:
+			if _, alreadyActive := mig.activeRevertJobs.LoadOrStore(job.JobNumber, struct{}{}); alreadyActive {
+				return
+			}
+			defer mig.activeRevertJobs.Delete(job.JobNumber)
+
+			shouldWaitForTasks, revertFailureReason, checkErr := mig.checkRevertState(ctx, job.JobNumber)
+			if checkErr != nil {
+				err = checkErr
+				break
+			}
+
+			if shouldWaitForTasks {
+				return
+			}
+
+			if revertFailureReason != "" {
+				err = mig.transitionJobFailure(ctx, job, mig.GetStateTransitionRules()[domain.StateReverting], revertFailureReason)
+				break
+			}
+
+			err = jobExecutor.Revert(ctx, job)
+			if err == nil {
+				err = mig.jobService.UpdateJobState(ctx, job.JobNumber, domain.StateRejected, "")
+				if errors.Is(err, appErrors.ErrStateAlreadyAtTarget) {
+					err = nil
+				} else if errors.Is(err, appErrors.ErrJobStateTransitionNotAllowed) {
+					log.Info(ctx, "job revert completion deferred while tasks are still transitioning", logData)
+					return
+				}
+			}
 		default:
 			err = fmt.Errorf("unsupported job state: %s", job.State)
 			log.Error(ctx, "unsupported job state for execution", err, logData)
@@ -123,7 +155,48 @@ func (mig *migrator) executeJob(job *domain.Job) {
 	}()
 }
 
+func (mig *migrator) checkRevertState(ctx context.Context, jobNumber int) (shouldWaitForTasks bool, revertFailureReason string, err error) {
+	totalTasks, err := mig.jobService.CountTasksByJobNumber(ctx, jobNumber)
+	if err != nil {
+		return false, "", err
+	}
+
+	tasksInRejected, err := mig.countTasksInState(ctx, jobNumber, domain.StateRejected)
+	if err != nil {
+		return false, "", err
+	}
+
+	tasksInFailedMigration, err := mig.countTasksInState(ctx, jobNumber, domain.StateFailedMigration)
+	if err != nil {
+		return false, "", err
+	}
+
+	tasksCompleted := tasksInRejected + tasksInFailedMigration
+	if tasksCompleted < totalTasks {
+		return true, "", nil
+	}
+
+	if tasksInFailedMigration > 0 {
+		return false, fmt.Sprintf("%d tasks failed out of %d", tasksInFailedMigration, totalTasks), nil
+	}
+
+	return false, "", nil
+}
+
 func (mig *migrator) failJob(ctx context.Context, job *domain.Job, originalErr error, failureReason string) error {
+	if job.State == domain.StateReverting {
+		latestJob, err := mig.jobService.GetJob(ctx, job.JobNumber)
+		if err == nil && latestJob != nil {
+			job = latestJob
+		}
+	}
+
+	switch job.State {
+	case domain.StateFailedMigration, domain.StateRejected, domain.StateCancelled,
+		domain.StateCompleted, domain.StateFailedPostPublish, domain.StateFailedPublish:
+		return originalErr
+	}
+
 	stateTransitionRule, ok := mig.GetStateTransitionRules()[job.State]
 	if !ok {
 		log.Error(ctx, "no state transition rule found for job state", fmt.Errorf("job state: %s", job.State))

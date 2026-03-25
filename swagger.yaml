@@ -297,7 +297,7 @@ parameters:
       - failed_post_publish
       - failed_publish
       - failed_migration
-      - cancelled
+      - rejected
     required: false
   sort:
     in: query
@@ -339,7 +339,7 @@ parameters:
           type: string
           enum:
             - approved
-            - cancelled
+            - rejected
 
 responses:
   Unauthenticated:

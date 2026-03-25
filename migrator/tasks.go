@@ -13,6 +13,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/executor"
 	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -61,15 +62,15 @@ func (mig *migrator) monitorTasks(ctx context.Context) {
 				}
 			}
 			log.Info(ctx, "claimed task", log.Data{"task_id": task.ID, "task_state": task.State})
-			mig.executeTask(task)
+			mig.executeTask(ctx, task)
 		}
 	}
 }
 
 // executeTask executes a task based on its state
-func (mig *migrator) executeTask(task *domain.Task) {
+func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 	requestID := dpRequest.NewRequestID(RequestIDLength)
-	ctx := dpRequest.WithRequestId(context.Background(), requestID)
+	ctx = dpRequest.WithRequestId(ctx, requestID)
 	log.Info(ctx, "executing task", log.Data{"task_id": task.ID, "task_state": task.State})
 	mig.wg.Add(1)
 	go func() {
@@ -97,6 +98,14 @@ func (mig *migrator) executeTask(task *domain.Task) {
 			err = taskExecutor.Migrate(ctx, task)
 		case domain.StatePublishing:
 			err = taskExecutor.Publish(ctx, task)
+		case domain.StateReverting:
+			err = taskExecutor.Revert(ctx, task)
+			if err == nil {
+				err = mig.jobService.UpdateTaskState(ctx, task.ID, domain.StateRejected)
+				if errors.Is(err, appErrors.ErrStateAlreadyAtTarget) {
+					err = nil
+				}
+			}
 		default:
 			err = fmt.Errorf("unsupported task state: %s", task.State)
 			log.Error(ctx, "unsupported task state for execution", err, logData)

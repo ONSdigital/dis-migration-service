@@ -17,17 +17,18 @@ import (
 )
 
 type migrator struct {
-	jobService    application.JobService
-	jobExecutors  map[domain.JobType]executor.JobExecutor
-	taskExecutors map[domain.TaskType]executor.TaskExecutor
-	slackClient   slack.Clienter
-	wg            sync.WaitGroup
-	semaphore     chan struct{}
-	pollInterval  time.Duration
-	stopJobsFunc  context.CancelFunc
-	topicCache    *cache.TopicCache
-	cfg           *config.Config
-	appClients    *clients.ClientList
+	jobService       application.JobService
+	jobExecutors     map[domain.JobType]executor.JobExecutor
+	taskExecutors    map[domain.TaskType]executor.TaskExecutor
+	slackClient      slack.Clienter
+	wg               sync.WaitGroup
+	semaphore        chan struct{}
+	pollInterval     time.Duration
+	stopJobsFunc     context.CancelFunc
+	topicCache       *cache.TopicCache
+	cfg              *config.Config
+	appClients       *clients.ClientList
+	activeRevertJobs sync.Map
 }
 
 // NewDefaultMigrator creates a new default migrator with the

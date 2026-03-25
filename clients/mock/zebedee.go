@@ -5,10 +5,11 @@ package mock
 
 import (
 	"context"
-	"github.com/ONSdigital/dis-migration-service/clients"
-	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"io"
 	"sync"
+
+	"github.com/ONSdigital/dis-migration-service/clients"
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 )
 
 // Ensure, that ZebedeeClientMock does implement clients.ZebedeeClient.
@@ -35,6 +36,13 @@ var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 //			},
 //			GetCollectionFunc: func(ctx context.Context, authToken string, collectionID string) (zebedee.Collection, error) {
 //				panic("mock out the GetCollection method")
+//			},
+//			GetDatasetFunc: func(ctx context.Context, authToken string, collectionID string, lang string, path string) (zebedee.Dataset, error) {
+//			DeleteCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
+//				panic("mock out the DeleteCollection method")
+//			},
+//			DeleteCollectionContentFunc: func(ctx context.Context, userAuthToken string, collectionID string, path string) error {
+//				panic("mock out the DeleteCollectionContent method")
 //			},
 //			GetDatasetFunc: func(ctx context.Context, authToken string, collectionID string, lang string, path string) (zebedee.Dataset, error) {
 //				panic("mock out the GetDataset method")

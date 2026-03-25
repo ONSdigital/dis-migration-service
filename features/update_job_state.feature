@@ -24,6 +24,23 @@ Feature: Update Job State
         """
       Then the HTTP status code should be "204"
 
+    Scenario: Update a job state to rejected successfully
+      Given the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "1",
+          "job_number": 1,
+          "state": "in_review"
+        }
+        """
+      When I PUT "/v1/migration-jobs/1/state"
+        """
+        {
+          "state": "rejected"
+        }
+        """
+      Then the HTTP status code should be "204"
+
     @InvalidInput
     Scenario: Update job state with an empty body
       When I PUT "/v1/migration-jobs/1/state"

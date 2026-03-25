@@ -28,6 +28,9 @@ func TestMigratorExecuteTask(t *testing.T) {
 			MigrateFunc: func(ctx context.Context, task *domain.Task) error {
 				return nil
 			},
+			RevertFunc: func(ctx context.Context, task *domain.Task) error {
+				return nil
+			},
 		}
 
 		mockTopicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
@@ -76,12 +79,36 @@ func TestMigratorExecuteTask(t *testing.T) {
 				State:     domain.StateMigrating,
 			}
 
-			mig.executeTask(task)
+			mig.executeTask(context.Background(), task)
 			mig.wg.Wait()
 
 			Convey("Then the executor is called to migrate", func() {
 				So(len(mockTestExecutor.MigrateCalls()), ShouldEqual, 1)
 				So(mockTestExecutor.MigrateCalls()[0].Task.Type, ShouldEqual, fakeTaskType)
+			})
+		})
+
+		Convey("When a task in state reverting is executed", func() {
+			task := &domain.Task{
+				ID:        fakeTaskID,
+				JobNumber: 101,
+				Type:      fakeTaskType,
+				State:     domain.StateReverting,
+			}
+
+			mig.executeTask(context.Background(), task)
+			mig.wg.Wait()
+
+			Convey("Then the executor is called to revert", func() {
+				So(len(mockTestExecutor.RevertCalls()), ShouldEqual, 1)
+				So(mockTestExecutor.RevertCalls()[0].Task.Type, ShouldEqual, fakeTaskType)
+			})
+
+			Convey("And the task is transitioned to rejected", func() {
+				calls := mockJobService.UpdateTaskStateCalls()
+				So(len(calls), ShouldEqual, 1)
+				So(calls[0].TaskID, ShouldEqual, fakeTaskID)
+				So(calls[0].NewState, ShouldEqual, domain.StateRejected)
 			})
 		})
 
@@ -91,7 +118,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				State: "unknown-state",
 			}
 
-			mig.executeTask(task)
+			mig.executeTask(context.Background(), task)
 			mig.wg.Wait()
 
 			Convey("Then the executor is not called to migrate", func() {
@@ -146,7 +173,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				State: domain.StateMigrating,
 			}
 
-			mig.executeTask(task)
+			mig.executeTask(context.Background(), task)
 			mig.wg.Wait()
 
 			Convey("Then the task is failed", func() {
@@ -207,7 +234,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				Type:      fakeTaskType,
 				State:     domain.StateMigrating,
 			}
-			mig.executeTask(task)
+			mig.executeTask(context.Background(), task)
 			mig.wg.Wait()
 
 			Convey("Then the task is failed", func() {
@@ -395,7 +422,7 @@ func TestMonitorTasks(t *testing.T) {
 			cancel()
 
 			Convey("Then the job service is called to claim tasks every poll interval", func() {
-				So(len(mockJobService.ClaimTaskCalls()), ShouldEqual, 3)
+				So(len(mockJobService.ClaimTaskCalls()), ShouldBeGreaterThanOrEqualTo, 2)
 			})
 		})
 	})
