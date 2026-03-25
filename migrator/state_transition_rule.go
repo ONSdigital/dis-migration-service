@@ -36,6 +36,11 @@ func (mig *migrator) GetStateTransitionRules() map[domain.State]StateTransitionR
 			FailureState: domain.StateFailedPublish,
 			Description:  "publish successful, move to published",
 		},
+		domain.StateReverting: {
+			TargetState:  domain.StateRejected,
+			FailureState: domain.StateFailedMigration,
+			Description:  "revert successful, move to rejected",
+		},
 	}
 }
 
