@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/ONSdigital/dis-redirect-api v0.38.0
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.274.2
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.278.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.34.0
 	github.com/ONSdigital/dp-cache v0.6.1
 	github.com/ONSdigital/dp-component-test v1.3.0-alpha

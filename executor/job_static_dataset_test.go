@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	testJobNumber    = 1
-	testCollectionID = "migration-collection-1"
+	testJobNumber     = 1
+	testCollectionID  = "migration-collection-1"
+	testDatasetAPIURL = "http://localhost:22000"
 )
 
 var (
@@ -202,7 +203,7 @@ func TestJobStaticDataset(t *testing.T) {
 
 		mockDatasetClient := &datasetSDKMocks.ClienterMock{
 			URLFunc: func() string {
-				return "http://localhost:22000"
+				return testDatasetAPIURL
 			},
 			GetVersionWithHeadersFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, edition, version string) (datasetModels.Version, datasetSDK.ResponseHeaders, error) {
 				return datasetModels.Version{
@@ -263,7 +264,7 @@ func TestJobStaticDataset(t *testing.T) {
 		executor := NewStaticDatasetJobExecutor(
 			mockJobService,
 			&clients.ClientList{DatasetAPI: &datasetSDKMocks.ClienterMock{URLFunc: func() string {
-				return "http://localhost:22000"
+				return testDatasetAPIURL
 			}}},
 			"faketoken",
 		)
@@ -278,6 +279,80 @@ func TestJobStaticDataset(t *testing.T) {
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldEqual, errTest)
+			})
+		})
+	})
+
+	Convey("Given a static dataset job executor with zebedee collection cleanup during revert", t, func() {
+		originalDeleteDatasetFromAPI := deleteDatasetFromAPI
+		defer func() { deleteDatasetFromAPI = originalDeleteDatasetFromAPI }()
+
+		deleteDatasetFromAPI = func(ctx context.Context, datasetAPIURL, datasetID, serviceAuthToken string) error {
+			return nil
+		}
+
+		mockJobService := &applicationMocks.JobServiceMock{
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 2, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
+				return []*domain.Task{
+					{
+						ID:   "series-task",
+						Type: domain.TaskTypeDatasetSeries,
+						Source: &domain.TaskMetadata{
+							ID: "/datasets/my-dataset",
+						},
+					},
+					{
+						ID:   "version-task",
+						Type: domain.TaskTypeDatasetVersion,
+						Source: &domain.TaskMetadata{
+							ID: "/datasets/my-dataset/editions/time-series/versions/1",
+						},
+					},
+				}, 2, nil
+			},
+		}
+
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			DeleteCollectionContentFunc: func(ctx context.Context, userAuthToken, collectionID, path string) error {
+				return errors.New("404 not found")
+			},
+			DeleteCollectionFunc: func(ctx context.Context, userAuthToken, collectionID string) error {
+				return nil
+			},
+		}
+
+		executor := NewStaticDatasetJobExecutor(
+			mockJobService,
+			&clients.ClientList{
+				DatasetAPI: &datasetSDKMocks.ClienterMock{URLFunc: func() string {
+					return testDatasetAPIURL
+				}},
+				Zebedee: mockZebedeeClient,
+			},
+			"faketoken",
+		)
+
+		Convey("When revert is called for a job with a collection ID", func() {
+			err := executor.Revert(context.Background(), &domain.Job{
+				JobNumber: testJobNumber,
+				Config: &domain.JobConfig{
+					TargetID:     "target-dataset-id",
+					CollectionID: testCollectionID,
+				},
+			})
+
+			Convey("Then no error is returned and zebedee cleanup methods are called", func() {
+				So(err, ShouldBeNil)
+				So(len(mockZebedeeClient.DeleteCollectionContentCalls()), ShouldEqual, 2)
+				So(mockZebedeeClient.DeleteCollectionContentCalls()[0].CollectionID, ShouldEqual, testCollectionID)
+				So(mockZebedeeClient.DeleteCollectionContentCalls()[0].Path, ShouldEqual, "/datasets/my-dataset")
+				So(mockZebedeeClient.DeleteCollectionContentCalls()[1].CollectionID, ShouldEqual, testCollectionID)
+				So(mockZebedeeClient.DeleteCollectionContentCalls()[1].Path, ShouldEqual, "/datasets/my-dataset/editions/time-series/versions/1")
+				So(len(mockZebedeeClient.DeleteCollectionCalls()), ShouldEqual, 1)
+				So(mockZebedeeClient.DeleteCollectionCalls()[0].CollectionID, ShouldEqual, testCollectionID)
 			})
 		})
 	})
