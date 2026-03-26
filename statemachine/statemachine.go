@@ -30,7 +30,7 @@ var allowedTransitions = map[domain.State][]domain.State{
 
 	// rejection and revert paths
 	domain.StateRejected:  {domain.StateReverting},
-	domain.StateReverting: {domain.StateCancelled},
+	domain.StateReverting: {domain.StateCancelled, domain.StateRejected},
 
 	// failure recovery paths
 	domain.StateFailedMigration:   {domain.StateRejected},
@@ -74,7 +74,7 @@ func ValidateTransition(from, to domain.State) error {
 // job update endpoint
 func IsAllowedStateForJobUpdate(state domain.State) bool {
 	switch state {
-	case domain.StateApproved, domain.StateCancelled:
+	case domain.StateApproved, domain.StateRejected, domain.StateCancelled:
 		return true
 	default:
 		return false

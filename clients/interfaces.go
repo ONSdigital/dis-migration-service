@@ -24,6 +24,8 @@ type RedirectAPIClient interface {
 // (github.com/ONSdigital/zebedee) client.
 type ZebedeeClient interface {
 	CreateCollection(ctx context.Context, userAuthToken string, collection zebedee.Collection) (zebedee.Collection, error)
+	DeleteCollection(ctx context.Context, userAuthToken, collectionID string) error
+	DeleteCollectionContent(ctx context.Context, userAuthToken, collectionID, path string) error
 	GetDataset(ctx context.Context, userAccessToken, collectionID, lang, path string) (d zebedee.Dataset, err error)
 	GetDatasetLandingPage(ctx context.Context, userAccessToken, collectionID, lang, path string) (d zebedee.DatasetLandingPage, err error)
 	GetFileSize(ctx context.Context, userAccessToken, collectionID, lang, uri string) (f zebedee.FileSize, err error)
