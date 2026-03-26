@@ -5,10 +5,11 @@ package mock
 
 import (
 	"context"
-	"github.com/ONSdigital/dis-migration-service/clients"
-	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"io"
 	"sync"
+
+	"github.com/ONSdigital/dis-migration-service/clients"
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 )
 
 // Ensure, that ZebedeeClientMock does implement clients.ZebedeeClient.
@@ -29,6 +30,12 @@ var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 //			},
 //			CreateCollectionFunc: func(ctx context.Context, userAuthToken string, collection zebedee.Collection) (zebedee.Collection, error) {
 //				panic("mock out the CreateCollection method")
+//			},
+//			DeleteCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
+//				panic("mock out the DeleteCollection method")
+//			},
+//			DeleteCollectionContentFunc: func(ctx context.Context, userAuthToken string, collectionID string, path string) error {
+//				panic("mock out the DeleteCollectionContent method")
 //			},
 //			GetDatasetFunc: func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.Dataset, error) {
 //				panic("mock out the GetDataset method")
@@ -63,6 +70,12 @@ type ZebedeeClientMock struct {
 
 	// CreateCollectionFunc mocks the CreateCollection method.
 	CreateCollectionFunc func(ctx context.Context, userAuthToken string, collection zebedee.Collection) (zebedee.Collection, error)
+
+	// DeleteCollectionFunc mocks the DeleteCollection method.
+	DeleteCollectionFunc func(ctx context.Context, userAuthToken string, collectionID string) error
+
+	// DeleteCollectionContentFunc mocks the DeleteCollectionContent method.
+	DeleteCollectionContentFunc func(ctx context.Context, userAuthToken string, collectionID string, path string) error
 
 	// GetDatasetFunc mocks the GetDataset method.
 	GetDatasetFunc func(ctx context.Context, userAccessToken string, collectionID string, lang string, path string) (zebedee.Dataset, error)
@@ -110,14 +123,16 @@ type ZebedeeClientMock struct {
 			// PagePath is the pagePath argument value.
 			PagePath string
 		}
-		// CreateCollection holds details about calls to the CreateCollection method.
-		CreateCollection []struct {
+		// DeleteCollectionContent holds details about calls to the DeleteCollectionContent method.
+		DeleteCollectionContent []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// UserAuthToken is the userAuthToken argument value.
 			UserAuthToken string
-			// Collection is the collection argument value.
-			Collection zebedee.Collection
+			// CollectionID is the collectionID argument value.
+			CollectionID string
+			// Path is the path argument value.
+			Path string
 		}
 		// GetDataset holds details about calls to the GetDataset method.
 		GetDataset []struct {
@@ -342,6 +357,90 @@ func (mock *ZebedeeClientMock) CreateCollectionCalls() []struct {
 	mock.lockCreateCollection.RLock()
 	calls = mock.calls.CreateCollection
 	mock.lockCreateCollection.RUnlock()
+	return calls
+}
+
+// DeleteCollection calls DeleteCollectionFunc.
+func (mock *ZebedeeClientMock) DeleteCollection(ctx context.Context, userAuthToken string, collectionID string) error {
+	if mock.DeleteCollectionFunc == nil {
+		panic("ZebedeeClientMock.DeleteCollectionFunc: method is nil but ZebedeeClient.DeleteCollection was just called")
+	}
+	callInfo := struct {
+		Ctx           context.Context
+		UserAuthToken string
+		CollectionID  string
+	}{
+		Ctx:           ctx,
+		UserAuthToken: userAuthToken,
+		CollectionID:  collectionID,
+	}
+	mock.lockDeleteCollection.Lock()
+	mock.calls.DeleteCollection = append(mock.calls.DeleteCollection, callInfo)
+	mock.lockDeleteCollection.Unlock()
+	return mock.DeleteCollectionFunc(ctx, userAuthToken, collectionID)
+}
+
+// DeleteCollectionCalls gets all the calls that were made to DeleteCollection.
+// Check the length with:
+//
+//	len(mockedZebedeeClient.DeleteCollectionCalls())
+func (mock *ZebedeeClientMock) DeleteCollectionCalls() []struct {
+	Ctx           context.Context
+	UserAuthToken string
+	CollectionID  string
+} {
+	var calls []struct {
+		Ctx           context.Context
+		UserAuthToken string
+		CollectionID  string
+	}
+	mock.lockDeleteCollection.RLock()
+	calls = mock.calls.DeleteCollection
+	mock.lockDeleteCollection.RUnlock()
+	return calls
+}
+
+// DeleteCollectionContent calls DeleteCollectionContentFunc.
+func (mock *ZebedeeClientMock) DeleteCollectionContent(ctx context.Context, userAuthToken string, collectionID string, path string) error {
+	if mock.DeleteCollectionContentFunc == nil {
+		panic("ZebedeeClientMock.DeleteCollectionContentFunc: method is nil but ZebedeeClient.DeleteCollectionContent was just called")
+	}
+	callInfo := struct {
+		Ctx           context.Context
+		UserAuthToken string
+		CollectionID  string
+		Path          string
+	}{
+		Ctx:           ctx,
+		UserAuthToken: userAuthToken,
+		CollectionID:  collectionID,
+		Path:          path,
+	}
+	mock.lockDeleteCollectionContent.Lock()
+	mock.calls.DeleteCollectionContent = append(mock.calls.DeleteCollectionContent, callInfo)
+	mock.lockDeleteCollectionContent.Unlock()
+	return mock.DeleteCollectionContentFunc(ctx, userAuthToken, collectionID, path)
+}
+
+// DeleteCollectionContentCalls gets all the calls that were made to DeleteCollectionContent.
+// Check the length with:
+//
+//	len(mockedZebedeeClient.DeleteCollectionContentCalls())
+func (mock *ZebedeeClientMock) DeleteCollectionContentCalls() []struct {
+	Ctx           context.Context
+	UserAuthToken string
+	CollectionID  string
+	Path          string
+} {
+	var calls []struct {
+		Ctx           context.Context
+		UserAuthToken string
+		CollectionID  string
+		Path          string
+	}
+	mock.lockDeleteCollectionContent.RLock()
+	calls = mock.calls.DeleteCollectionContent
+	mock.lockDeleteCollectionContent.RUnlock()
 	return calls
 }
 

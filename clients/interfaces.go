@@ -26,6 +26,8 @@ type ZebedeeClient interface {
 	ApproveCollectionContent(ctx context.Context, authToken, collectionID, lang, pagePath string) error
 	CompleteCollectionContent(ctx context.Context, authToken, collectionID, lang, pagePath string) error
 	CreateCollection(ctx context.Context, authToken string, collection zebedee.Collection) (zebedee.Collection, error)
+	DeleteCollection(ctx context.Context, userAuthToken, collectionID string) error
+	DeleteCollectionContent(ctx context.Context, userAuthToken, collectionID, path string) error
 	GetDataset(ctx context.Context, authToken, collectionID, lang, path string) (d zebedee.Dataset, err error)
 	GetDatasetLandingPage(ctx context.Context, authToken, collectionID, lang, path string) (d zebedee.DatasetLandingPage, err error)
 	GetFileSize(ctx context.Context, authToken, collectionID, lang, uri string) (f zebedee.FileSize, err error)
