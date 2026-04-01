@@ -9,6 +9,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/mapper"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	"github.com/ONSdigital/dp-dataset-api/models"
 	"github.com/ONSdigital/dp-dataset-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -89,7 +90,13 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 
 	logData["collection_id"] = job.Config.CollectionID
 
-	sourceData.Description.MigrationLink = mapper.CreateDatasetVersionLink(datasetVersion)
+	datasetVersionLink := mapper.CreateDatasetVersionLink(datasetVersion)
+	sourceData.Description.MigrationLink = datasetVersionLink
+
+	headers := sdk.Headers{
+		AccessToken: e.serviceAuthToken,
+	}
+
 	err = e.clientList.Zebedee.SaveContentToCollection(
 		ctx,
 		e.serviceAuthToken,
@@ -102,16 +109,54 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		return err
 	}
 
-	headers := sdk.Headers{
-		AccessToken: e.serviceAuthToken,
-	}
-
 	log.Info(ctx, "creating dataset version in dataset API", logData)
 
 	_, err = e.clientList.DatasetAPI.PostVersion(ctx, headers, task.Target.DatasetID, task.Target.EditionID, task.Target.ID, *datasetVersion)
 	if err != nil {
 		log.Error(ctx, "failed to create target dataset version in dataset API", err, logData)
 		return err
+	}
+
+	// Populating latest_edition and latest_version
+
+	datasetID := task.Target.DatasetID
+	latestEdition := seriesData.Datasets[0]
+
+	// Check if the current edition is the latest
+	if editionData.URI == latestEdition.URI {
+		log.Info(ctx, "found the latest edition "+task.Target.EditionID)
+
+		versions := editionData.Versions
+		if len(versions) > 0 {
+
+			// Check if current version is the latest version
+			if datasetVersion.Version == len(versions)+1 {
+				latestVersionLink := datasetVersionLink
+
+				existingDataset, err := e.clientList.DatasetAPI.GetDataset(ctx, headers, datasetID)
+				if err != nil {
+					log.Error(ctx, "failed to get existing dataset for link update", err)
+					return err
+				}
+
+				if existingDataset.Links == nil {
+					existingDataset.Links = &models.DatasetLinks{}
+				}
+
+				existingDataset.Links.LatestVersion = &models.LinkObject{
+					HRef: latestVersionLink,
+					ID:   task.Target.ID,
+				}
+
+				err = e.clientList.DatasetAPI.PutDataset(ctx, headers, datasetID, existingDataset)
+				if err != nil {
+					log.Error(ctx, "failed to update dataset with latest version link", err)
+					return err
+				}
+
+				log.Info(ctx, "successfully updated the dataset with the new latest version link")
+			}
+		}
 	}
 
 	// Create download tasks for each download in the source data
