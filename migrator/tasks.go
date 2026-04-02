@@ -14,6 +14,8 @@ import (
 	"github.com/ONSdigital/dis-migration-service/executor"
 	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/log.go/v2/log"
+
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 )
 
 // getTaskExecutors is a package-level variable that creates task executors.
@@ -90,6 +92,14 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 		switch task.State {
 		case domain.StateMigrating:
 			err = taskExecutor.Migrate(ctx, task)
+		case domain.StateReverting:
+			err = taskExecutor.Revert(ctx, task)
+			if err == nil {
+				updateErr := mig.jobService.UpdateTaskState(ctx, task.ID, domain.StateRejected)
+				if updateErr != nil && !errors.Is(updateErr, appErrors.ErrStateAlreadyAtTarget) {
+					err = updateErr
+				}
+			}
 		default:
 			err = fmt.Errorf("unsupported task state: %s", task.State)
 			log.Error(ctx, "unsupported task state for execution", err, logData)

@@ -313,6 +313,10 @@ func (js *jobService) UpdateTaskState(ctx context.Context, taskID string, newSta
 		return err
 	}
 
+	if task.State == newState {
+		return appErrors.ErrStateAlreadyAtTarget
+	}
+
 	// Validate state transition
 	if err := statemachine.ValidateTransition(task.State, newState); err != nil {
 		return err

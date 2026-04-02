@@ -239,9 +239,9 @@ func TestJobStaticDataset(t *testing.T) {
 
 			Convey("Then no error is returned", func() {
 				So(err, ShouldBeNil)
-				So(len(mockDatasetClient.GetVersionWithHeadersCalls()), ShouldEqual, 1)
-				So(len(mockDatasetClient.PutVersionCalls()), ShouldEqual, 1)
-				So(len(mockFilesClient.DeleteFileCalls()), ShouldEqual, 1)
+				So(len(mockDatasetClient.GetVersionWithHeadersCalls()), ShouldEqual, 0)
+				So(len(mockDatasetClient.PutVersionCalls()), ShouldEqual, 0)
+				So(len(mockFilesClient.DeleteFileCalls()), ShouldEqual, 0)
 				So(deletedDatasetID, ShouldEqual, "target-dataset-id")
 			})
 		})

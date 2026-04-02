@@ -65,10 +65,14 @@ func TestMigratorExecuteJob(t *testing.T) {
 				return 2, nil
 			},
 			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit int, offset int) ([]*domain.Task, int, error) {
-				return []*domain.Task{
-					{ID: "task-1", JobNumber: jobNumber, State: domain.StateInReview},
-					{ID: "task-2", JobNumber: jobNumber, State: domain.StateRejected},
-				}, 2, nil
+				switch states[0] {
+				case domain.StateRejected:
+					return []*domain.Task{{ID: "task-1", JobNumber: jobNumber, State: domain.StateRejected}}, 1, nil
+				case domain.StateFailedMigration:
+					return nil, 0, nil
+				default:
+					return nil, 0, nil
+				}
 			},
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
 				return nil
@@ -119,15 +123,12 @@ func TestMigratorExecuteJob(t *testing.T) {
 			mig.executeJob(ctx, job)
 			mig.wg.Wait()
 
-			Convey("Then the executor is called to revert", func() {
-				So(len(mockJobExecutor.RevertCalls()), ShouldEqual, 1)
-				So(mockJobExecutor.RevertCalls()[0].Job.JobNumber, ShouldEqual, fakeJobNumber)
+			Convey("Then the executor is not called yet while tasks are still reverting", func() {
+				So(len(mockJobExecutor.RevertCalls()), ShouldEqual, 0)
 			})
 
-			Convey("And the job is transitioned to rejected", func() {
-				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
-				So(mockJobService.UpdateJobStateCalls()[0].JobNumber, ShouldEqual, fakeJobNumber)
-				So(mockJobService.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.StateRejected)
+			Convey("And the job is not transitioned yet", func() {
+				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 0)
 			})
 
 			Convey("And task transitions are delegated to job service update flow", func() {

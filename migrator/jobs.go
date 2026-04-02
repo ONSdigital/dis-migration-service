@@ -100,6 +100,34 @@ func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 		case domain.StateMigrating:
 			err = jobExecutor.Migrate(ctx, job)
 		case domain.StateReverting:
+			totalTasks, countErr := mig.jobService.CountTasksByJobNumber(ctx, job.JobNumber)
+			if countErr != nil {
+				err = countErr
+				break
+			}
+
+			tasksInRejected, countErr := mig.countTasksInState(ctx, job.JobNumber, domain.StateRejected)
+			if countErr != nil {
+				err = countErr
+				break
+			}
+
+			tasksInFailedMigration, countErr := mig.countTasksInState(ctx, job.JobNumber, domain.StateFailedMigration)
+			if countErr != nil {
+				err = countErr
+				break
+			}
+
+			tasksCompleted := tasksInRejected + tasksInFailedMigration
+			if tasksCompleted < totalTasks {
+				return
+			}
+
+			if tasksInFailedMigration > 0 {
+				err = mig.transitionJobFailure(ctx, job, mig.GetStateTransitionRules()[domain.StateReverting], fmt.Sprintf("%d tasks failed out of %d", tasksInFailedMigration, totalTasks))
+				break
+			}
+
 			err = jobExecutor.Revert(ctx, job)
 			if err == nil {
 				err = mig.jobService.UpdateJobState(ctx, job.JobNumber, domain.StateRejected, "")

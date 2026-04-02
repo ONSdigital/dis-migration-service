@@ -30,7 +30,7 @@ var allowedTransitions = map[domain.State][]domain.State{
 
 	// rejection and revert paths
 	domain.StateRejected:  {domain.StateReverting},
-	domain.StateReverting: {domain.StateCancelled, domain.StateRejected},
+	domain.StateReverting: {domain.StateCancelled, domain.StateRejected, domain.StateFailedMigration},
 
 	// failure recovery paths
 	domain.StateFailedMigration:   {domain.StateRejected},
