@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk"
+	filesSDK "github.com/ONSdigital/dp-files-api/sdk"
 	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -147,8 +149,102 @@ func (e *DatasetDownloadTaskExecutor) PostPublish(ctx context.Context, task *dom
 
 // Revert handles the revert operations for a dataset download task.
 func (e *DatasetDownloadTaskExecutor) Revert(ctx context.Context, task *domain.Task) error {
-	// Implementation of revert for dataset download
+	if task == nil || task.Target == nil || task.Target.DatasetID == "" || task.Target.EditionID == "" || task.Target.VersionID == "" {
+		err := appErrors.ErrInvalidTask
+		log.Error(ctx, "invalid task or missing target information", err)
+		return err
+	}
+
+	logData := log.Data{
+		"task_id":    task.ID,
+		"job_number": task.JobNumber,
+		"dataset_id": task.Target.DatasetID,
+		"edition_id": task.Target.EditionID,
+		"version_id": task.Target.VersionID,
+	}
+
+	log.Info(ctx, "starting revert for dataset download task", logData)
+
+	if err := e.revertDownloadTask(ctx, task); err != nil {
+		log.Error(ctx, "failed to revert download files", err, logData)
+		return err
+	}
+
+	log.Info(ctx, "completed revert for dataset download task", logData)
 	return nil
+}
+
+func (e *DatasetDownloadTaskExecutor) revertDownloadTask(ctx context.Context, task *domain.Task) error {
+	headers := datasetSDK.Headers{AccessToken: e.serviceAuthToken}
+	version, responseHeaders, err := e.clientList.DatasetAPI.GetVersionWithHeaders(
+		ctx,
+		headers,
+		task.Target.DatasetID,
+		task.Target.EditionID,
+		task.Target.VersionID,
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return nil
+		}
+		return err
+	}
+
+	title := ""
+	if task.Source != nil {
+		title = filepath.Base(task.Source.ID)
+	}
+
+	filePath, updatedDistributions, found := removeDistributionByTitle(version.Distributions, title)
+	if !found {
+		return nil
+	}
+
+	version.Distributions = &updatedDistributions
+	headers.IfMatch = responseHeaders.ETag
+	if _, err := e.clientList.DatasetAPI.PutVersion(
+		ctx,
+		headers,
+		task.Target.DatasetID,
+		task.Target.EditionID,
+		task.Target.VersionID,
+		version,
+	); err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return nil
+		}
+		return err
+	}
+
+	if filePath != "" && e.clientList.FilesAPI != nil {
+		deleteHeaders := filesSDK.Headers{Authorization: e.serviceAuthToken}
+		if err := e.clientList.FilesAPI.DeleteFile(ctx, filePath, deleteHeaders); err != nil && !strings.Contains(err.Error(), "404") {
+			log.Warn(ctx, "failed to delete upload file during revert", log.Data{"task_id": task.ID, "file_path": filePath, "error": err.Error()})
+		}
+	}
+
+	return nil
+}
+
+func removeDistributionByTitle(distributions *[]datasetModels.Distribution, title string) (string, []datasetModels.Distribution, bool) {
+	if distributions == nil {
+		return "", nil, false
+	}
+
+	updated := make([]datasetModels.Distribution, 0, len(*distributions))
+	deletedPath := ""
+	found := false
+
+	for _, distribution := range *distributions {
+		if !found && distribution.Title == title {
+			deletedPath = distribution.DownloadURL
+			found = true
+			continue
+		}
+		updated = append(updated, distribution)
+	}
+
+	return deletedPath, updated, found
 }
 
 // updateDownloadMetadata updates the dataset version with a new distribution.

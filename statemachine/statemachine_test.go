@@ -107,6 +107,12 @@ func TestCanTransition(t *testing.T) {
 			to:       domain.StateRejected,
 			expected: true,
 		},
+		{
+			name:     "reverting to failed_migration is valid",
+			from:     domain.StateReverting,
+			to:       domain.StateFailedMigration,
+			expected: true,
+		},
 
 		// Failure recovery paths
 		{

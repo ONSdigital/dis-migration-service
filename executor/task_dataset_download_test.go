@@ -15,6 +15,8 @@ import (
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	"github.com/ONSdigital/dp-dataset-api/sdk"
 	datasetSDKMock "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
+	filesSDK "github.com/ONSdigital/dp-files-api/sdk"
+	filesSDKMock "github.com/ONSdigital/dp-files-api/sdk/mocks"
 	"github.com/ONSdigital/dp-upload-service/api"
 	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
 	uploadSDKMock "github.com/ONSdigital/dp-upload-service/sdk/mocks"
@@ -46,6 +48,49 @@ var (
 )
 
 func TestDatasetDownloadTaskExecutor(t *testing.T) {
+	Convey("Given a dataset download task executor when revert is called", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{}
+
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			GetVersionWithHeadersFunc: func(ctx context.Context, headers sdk.Headers, datasetID, edition, version string) (datasetModels.Version, sdk.ResponseHeaders, error) {
+				return datasetModels.Version{
+					Distributions: &[]datasetModels.Distribution{
+						{Title: "file1.csv", DownloadURL: "/uploads/file1.csv"},
+						{Title: "file2.csv", DownloadURL: "/uploads/file2.csv"},
+					},
+				}, sdk.ResponseHeaders{ETag: "etag-1"}, nil
+			},
+			PutVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version datasetModels.Version) (datasetModels.Version, error) {
+				return datasetModels.Version{}, nil
+			},
+		}
+
+		mockFilesClient := &filesSDKMock.ClienterMock{
+			DeleteFileFunc: func(ctx context.Context, filePath string, headers filesSDK.Headers) error {
+				return nil
+			},
+		}
+
+		executor := NewDatasetDownloadTaskExecutor(
+			mockJobService,
+			&clients.ClientList{DatasetAPI: mockDatasetClient, FilesAPI: mockFilesClient},
+			testServiceAuthToken,
+		)
+
+		err := executor.Revert(context.Background(), testDownloadTask)
+
+		Convey("Then it removes the distribution and deletes the upload file", func() {
+			So(err, ShouldBeNil)
+			So(len(mockDatasetClient.PutVersionCalls()), ShouldEqual, 1)
+			So(len(mockFilesClient.DeleteFileCalls()), ShouldEqual, 1)
+			So(mockFilesClient.DeleteFileCalls()[0].FilePath, ShouldEqual, "/uploads/file1.csv")
+
+			distributions := *mockDatasetClient.PutVersionCalls()[0].Version.Distributions
+			So(len(distributions), ShouldEqual, 1)
+			So(distributions[0].Title, ShouldEqual, "file2.csv")
+		})
+	})
+
 	Convey("Given a job service and clients that don't error", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
