@@ -202,17 +202,15 @@ func (e *DatasetDownloadTaskExecutor) revertDownloadTask(ctx context.Context, ta
 
 	version.Distributions = &updatedDistributions
 	headers.IfMatch = responseHeaders.ETag
-	if _, err := e.clientList.DatasetAPI.PutVersion(
+	_, err = e.clientList.DatasetAPI.PutVersion(
 		ctx,
 		headers,
 		task.Target.DatasetID,
 		task.Target.EditionID,
 		task.Target.VersionID,
 		version,
-	); err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return nil
-		}
+	)
+	if err != nil {
 		return err
 	}
 

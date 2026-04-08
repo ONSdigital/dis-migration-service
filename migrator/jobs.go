@@ -44,7 +44,7 @@ var getJobExecutors = func(jobService application.JobService, appClients *client
 func (mig *migrator) getJobExecutor(job *domain.Job) (executor.JobExecutor, error) {
 	jobExecutor := mig.jobExecutors[job.Config.Type]
 	if jobExecutor == nil {
-		return nil, fmt.Errorf("no executor found for task type: %s", job.Config.Type)
+		return nil, fmt.Errorf("no executor found for job type: %s", job.Config.Type)
 	}
 	return jobExecutor, nil
 }
@@ -112,31 +112,18 @@ func (mig *migrator) executeJob(job *domain.Job) {
 		case domain.StatePublishing:
 			err = jobExecutor.Publish(ctx, job)
 		case domain.StateReverting:
-			totalTasks, countErr := mig.jobService.CountTasksByJobNumber(ctx, job.JobNumber)
-			if countErr != nil {
-				err = countErr
+			shouldWaitForTasks, revertFailureReason, checkErr := mig.checkRevertState(ctx, job.JobNumber)
+			if checkErr != nil {
+				err = checkErr
 				break
 			}
 
-			tasksInRejected, countErr := mig.countTasksInState(ctx, job.JobNumber, domain.StateRejected)
-			if countErr != nil {
-				err = countErr
-				break
-			}
-
-			tasksInFailedMigration, countErr := mig.countTasksInState(ctx, job.JobNumber, domain.StateFailedMigration)
-			if countErr != nil {
-				err = countErr
-				break
-			}
-
-			tasksCompleted := tasksInRejected + tasksInFailedMigration
-			if tasksCompleted < totalTasks {
+			if shouldWaitForTasks {
 				return
 			}
 
-			if tasksInFailedMigration > 0 {
-				err = mig.transitionJobFailure(ctx, job, mig.GetStateTransitionRules()[domain.StateReverting], fmt.Sprintf("%d tasks failed out of %d", tasksInFailedMigration, totalTasks))
+			if revertFailureReason != "" {
+				err = mig.transitionJobFailure(ctx, job, mig.GetStateTransitionRules()[domain.StateReverting], revertFailureReason)
 				break
 			}
 
@@ -154,6 +141,34 @@ func (mig *migrator) executeJob(job *domain.Job) {
 			_ = mig.failJob(ctx, job, err, failureReasonExecutionFailed)
 		}
 	}()
+}
+
+func (mig *migrator) checkRevertState(ctx context.Context, jobNumber int) (shouldWaitForTasks bool, revertFailureReason string, err error) {
+	totalTasks, err := mig.jobService.CountTasksByJobNumber(ctx, jobNumber)
+	if err != nil {
+		return false, "", err
+	}
+
+	tasksInRejected, err := mig.countTasksInState(ctx, jobNumber, domain.StateRejected)
+	if err != nil {
+		return false, "", err
+	}
+
+	tasksInFailedMigration, err := mig.countTasksInState(ctx, jobNumber, domain.StateFailedMigration)
+	if err != nil {
+		return false, "", err
+	}
+
+	tasksCompleted := tasksInRejected + tasksInFailedMigration
+	if tasksCompleted < totalTasks {
+		return true, "", nil
+	}
+
+	if tasksInFailedMigration > 0 {
+		return false, fmt.Sprintf("%d tasks failed out of %d", tasksInFailedMigration, totalTasks), nil
+	}
+
+	return false, "", nil
 }
 
 func (mig *migrator) failJob(ctx context.Context, job *domain.Job, originalErr error, failureReason string) error {
