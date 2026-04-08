@@ -74,7 +74,7 @@ func ValidateTransition(from, to domain.State) error {
 // job update endpoint
 func IsAllowedStateForJobUpdate(state domain.State) bool {
 	switch state {
-	case domain.StateApproved, domain.StateRejected, domain.StateCancelled:
+	case domain.StateApproved, domain.StateRejected:
 		return true
 	default:
 		return false
