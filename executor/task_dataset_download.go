@@ -69,7 +69,13 @@ func (e *DatasetDownloadTaskExecutor) Migrate(ctx context.Context, task *domain.
 	}
 
 	// Map to upload service metadata
-	uploadMetadata, err := mapper.MapResourceToUploadServiceMetadata(task.Source.ID, fileSize)
+	uploadMetadata, err := mapper.MapResourceToUploadServiceMetadata(
+		task.Source.ID,
+		task.Target.DatasetID,
+		task.Target.EditionID,
+		task.Target.VersionID,
+		fileSize,
+	)
 	if err != nil {
 		resourceStream.Close()
 		log.Error(ctx, "failed to map upload service metadata", err, logData)
@@ -80,6 +86,15 @@ func (e *DatasetDownloadTaskExecutor) Migrate(ctx context.Context, task *domain.
 	headers := uploadSDK.Headers{
 		ServiceAuthToken: e.serviceAuthToken,
 	}
+
+	log.Info(ctx, "uploading file with metadata", log.Data{
+		"title":      uploadMetadata.Title,
+		"source_id":  task.Source.ID,
+		"task_id":    task.ID,
+		"job_number": task.JobNumber,
+		"edition":    uploadMetadata.Edition,
+		"version":    uploadMetadata.Version,
+	})
 
 	err = e.clientList.UploadService.Upload(ctx, resourceStream, uploadMetadata, headers)
 	// Close stream immediately after upload attempt

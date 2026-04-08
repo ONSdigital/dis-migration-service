@@ -11,12 +11,16 @@ import (
 )
 
 func TestMapResourceToUploadServiceMetadata(t *testing.T) {
+	datasetID := "test-dataset"
+	edition := "2024"
+	version := "1"
+
 	Convey("Given a resource URI and file size", t, func() {
 		uri := "path/to/testfile.csv"
 		fileSize := zebedee.FileSize{Size: 2048}
 
 		Convey("When mapping to upload service metadata", func() {
-			metadata, err := MapResourceToUploadServiceMetadata(uri, fileSize)
+			metadata, err := MapResourceToUploadServiceMetadata(uri, datasetID, edition, version, fileSize)
 
 			Convey("Then no error is returned", func() {
 				So(err, ShouldBeNil)
@@ -26,6 +30,9 @@ func TestMapResourceToUploadServiceMetadata(t *testing.T) {
 				So(metadata.Title, ShouldEqual, "testfile.csv")
 				So(metadata.SizeInBytes, ShouldEqual, int64(2048))
 				So(metadata.Type, ShouldEqual, "text/csv")
+				So(metadata.DatasetID, ShouldEqual, datasetID)
+				So(metadata.Edition, ShouldEqual, edition)
+				So(metadata.Version, ShouldEqual, version)
 				So(metadata.IsPublishable, ShouldNotBeNil)
 				So(*metadata.IsPublishable, ShouldBeTrue)
 			})
@@ -37,7 +44,7 @@ func TestMapResourceToUploadServiceMetadata(t *testing.T) {
 		fileSize := zebedee.FileSize{Size: 1024}
 
 		Convey("When mapping to upload service metadata", func() {
-			_, err := MapResourceToUploadServiceMetadata(uri, fileSize)
+			_, err := MapResourceToUploadServiceMetadata(uri, datasetID, edition, version, fileSize)
 
 			Convey("Then an unsupported distribution format error is returned", func() {
 				So(err, ShouldNotBeNil)

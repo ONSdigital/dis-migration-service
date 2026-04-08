@@ -15,7 +15,7 @@ import (
 // and file size to an upload service Metadata struct. It derives
 // the MIME type from the fileextension. If the MIME type is
 // unsupported, it returns an error.
-func MapResourceToUploadServiceMetadata(uri string, fileSize zebedee.FileSize) (uploadAPI.Metadata, error) {
+func MapResourceToUploadServiceMetadata(uri, datasetID, edition, version string, fileSize zebedee.FileSize) (uploadAPI.Metadata, error) {
 	fileMimeType := DeriveMimeTypeFromFilename(uri)
 
 	// Checking for supported distribution format now so we don't map unsupported files.
@@ -29,6 +29,9 @@ func MapResourceToUploadServiceMetadata(uri string, fileSize zebedee.FileSize) (
 	uploadMetadata := uploadAPI.Metadata{
 		Path:          uuid.New().String(),
 		IsPublishable: &isPublishable,
+		DatasetID:     datasetID,
+		Edition:       edition,
+		Version:       version,
 		SizeInBytes:   fileSize.Size,
 		Title:         filepath.Base(uri),
 		Type:          fileMimeType,
