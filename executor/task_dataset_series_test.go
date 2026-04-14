@@ -471,9 +471,8 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 					Convey("And the topics are mapped from the URI", func() {
 						topics := mockDatasetClient.CreateDatasetCalls()[0].Dataset.Topics
-						So(len(topics), ShouldEqual, 2)
-						So(topics[0], ShouldEqual, "1234")
-						So(topics[1], ShouldEqual, "3456")
+						So(len(topics), ShouldEqual, 1)
+						So(topics[0], ShouldEqual, "3456")
 					})
 				})
 			})

@@ -35,7 +35,7 @@ func MapDatasetLandingPageToDatasetAPI(ctx context.Context, datasetID string, pa
 	// When mock cache is enabled, we skip topic validation as the cache is non-functional
 	var topicIDs []string
 	if !topicCache.IsMockCache(ctx) {
-		topicIDs = cache.ExtractTopicIDsFromURI(ctx, pageData.URI, existingTopicIDs, topicCache)
+		topicIDs = cache.ExtractTopicIDFromURI(ctx, pageData.URI, existingTopicIDs, topicCache)
 		if len(topicIDs) == 0 {
 			return nil, errors.New("no topics found for dataset - datasets must have at least one topic")
 		}

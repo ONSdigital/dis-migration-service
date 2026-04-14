@@ -8,12 +8,11 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
-// ExtractTopicIDsFromURI extracts topic IDs from a URI by matching
-// URI segments to topics in the cache. It breaks the URI into
-// segments, matches them against the topic cache, and returns a
-// deduplicated list of topic IDs. Existing topic IDs can be provided
-// and will be preserved in the result.
-func ExtractTopicIDsFromURI(ctx context.Context, uri string, existingTopicIDs []string, topicCache *TopicCache) []string {
+// ExtractTopicIDFromURI extracts the singular topic ID before
+// "datasets". It breaks the URI into segements, and matches
+// the topic against the topic cache, and returns the topic
+// ID.
+func ExtractTopicIDFromURI(ctx context.Context, uri string, existingTopicIDs []string, topicCache *TopicCache) []string {
 	// Set to track unique topic IDs
 	uniqueTopics := make(map[string]struct{})
 
@@ -31,15 +30,25 @@ func ExtractTopicIDsFromURI(ctx context.Context, uri string, existingTopicIDs []
 	}
 	log.Info(ctx, "extracting topics from URI segments", logData)
 
-	// Add topics based on URI segments (up to 3 segments)
-	parentSlug := ""
+	// Add topic from the single URI segment immediately before "datasets"
 	for i, segment := range uriSegments {
-		if i >= 3 {
-			// Only process up to the first 3 segments as per requirements
+		if segment != "datasets" || i == 0 {
+			continue
+		}
+
+		topic, err := topicCache.GetTopic(ctx, uriSegments[i-1])
+		if err != nil {
+			log.Info(ctx, "topic slug not found in cache, skipping", log.Data{
+				"slug": uriSegments[i-1],
+			})
 			break
 		}
-		addTopicWithParents(ctx, segment, parentSlug, topicCache, uniqueTopics)
-		parentSlug = segment // Update parentSlug for the next iteration
+
+		uniqueTopics[topic.ID] = struct{}{}
+		log.Info(ctx, "added topic from URI segment", log.Data{
+			"topic_id": topic.ID,
+		})
+		break
 	}
 
 	// Convert set to slice
@@ -83,46 +92,4 @@ func extractPathSegments(path string) []string {
 	}
 
 	return result
-}
-
-// addTopicWithParents adds a topic and its parents to uniqueTopics
-// map if they don't already exist. It recursively adds parent topics
-// until it reaches the root topic.
-func addTopicWithParents(ctx context.Context, slug, parentSlug string, topicCache *TopicCache, uniqueTopics map[string]struct{}) {
-	topic, err := topicCache.GetTopic(ctx, slug)
-	if err != nil {
-		// Topic not found in cache, skip
-		log.Info(ctx, "topic slug not found in cache, skipping", log.Data{
-			"slug":        slug,
-			"parent_slug": parentSlug,
-		})
-		return
-	}
-
-	// Check if this topic has already been processed
-	if _, alreadyProcessed := uniqueTopics[topic.ID]; alreadyProcessed {
-		return
-	}
-
-	// Verify the parent slug matches (or is empty for root topics)
-	if parentSlug != "" && topic.ParentSlug != parentSlug {
-		log.Info(ctx, "parent slug mismatch, skipping topic", log.Data{
-			"slug":                 slug,
-			"expected_parent_slug": parentSlug,
-			"actual_parent_slug":   topic.ParentSlug,
-		})
-		return
-	}
-
-	uniqueTopics[topic.ID] = struct{}{}
-	log.Info(ctx, "added topic from URI segment", log.Data{
-		"topic_id":    topic.ID,
-		"slug":        slug,
-		"parent_slug": topic.ParentSlug,
-	})
-
-	// Recursively add the parent topic if it exists
-	if topic.ParentSlug != "" {
-		addTopicWithParents(ctx, topic.ParentSlug, "", topicCache, uniqueTopics)
-	}
 }

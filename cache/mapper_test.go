@@ -42,38 +42,40 @@ func TestExtractTopicIDsFromURI(t *testing.T) {
 
 		Convey("When extracting topic IDs from a full URI", func() {
 			uri := "https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/example"
-			topicIDs := ExtractTopicIDsFromURI(ctx, uri, nil, topicCache)
 
-			Convey("Then it should extract topic IDs from URI segments", func() {
-				So(len(topicIDs), ShouldBeGreaterThan, 0)
+			topicIDs := ExtractTopicIDFromURI(ctx, uri, nil, topicCache)
+
+			Convey("Then it should extract ONLY the topic before datasets", func() {
+				So(topicIDs, ShouldContain, "inflation-id")
+				So(len(topicIDs), ShouldEqual, 1)
 			})
 		})
 
 		Convey("When extracting topic IDs from a path-only URI", func() {
-			topicIDs := ExtractTopicIDsFromURI(ctx, testEconomyURI, nil, topicCache)
+			topicID := ExtractTopicIDFromURI(ctx, "/economy/inflationandpriceindices/datasets", nil, topicCache)
 
-			Convey("Then it should extract topic IDs", func() {
-				So(len(topicIDs), ShouldBeGreaterThan, 0)
+			Convey("Then it should extract the correct topic", func() {
+				So(topicID, ShouldContain, "inflation-id")
+				So(len(topicID), ShouldEqual, 1)
 			})
 		})
 
 		Convey("When extracting topic IDs with existing topics", func() {
 			uri := "/economy"
 			existingTopics := []string{"existing-topic-id"}
-			topicIDs := ExtractTopicIDsFromURI(ctx, uri, existingTopics, topicCache)
+			topicID := ExtractTopicIDFromURI(ctx, uri, existingTopics, topicCache)
 
 			Convey("Then it should preserve existing topics", func() {
-				So(topicIDs, ShouldContain, "existing-topic-id")
+				So(topicID, ShouldContain, "existing-topic-id")
 			})
 		})
 
-		Convey("When extracting from URI with more than 3 segments", func() {
-			uri := "/segment1/segment2/segment3/segment4/segment5"
-			topicIDs := ExtractTopicIDsFromURI(ctx, uri, nil, topicCache)
+		Convey("When URI contains less than three segments before datasets", func() {
+			topicID := ExtractTopicIDFromURI(ctx, testEconomyURI, nil, topicCache)
 
-			Convey("Then it should only process first 3 segments", func() {
-				// The function limits to 3 segments
-				So(len(topicIDs), ShouldBeLessThanOrEqualTo, 3)
+			Convey("Then it should extract ONLY the segment immediately before datasets", func() {
+				So(topicID, ShouldContain, "inflation-id")
+				So(len(topicID), ShouldEqual, 1)
 			})
 		})
 	})

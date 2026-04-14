@@ -134,8 +134,6 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 					topicMap[topicID] = true
 				}
 
-				// Should contain the economy topic
-				So(topicMap["1234"], ShouldBeTrue)
 				// Should contain the inflationandpriceindices topic
 				So(topicMap["5678"], ShouldBeTrue)
 			})
@@ -233,7 +231,6 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 				}
 
 				// Should contain URI-derived topics
-				So(topicMap["1234"], ShouldBeTrue)
 				So(topicMap["5678"], ShouldBeTrue)
 
 				// Should contain existing Zebedee topics
@@ -242,8 +239,8 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 				// Should contain canonical topic
 				So(topicMap["1357"], ShouldBeTrue)
 
-				// Should have exactly 4 unique topics
-				So(len(dataset.Topics), ShouldEqual, 4)
+				// Should have exactly 3 unique topics
+				So(len(dataset.Topics), ShouldEqual, 3)
 			})
 		})
 	})
