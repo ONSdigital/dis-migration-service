@@ -37,7 +37,7 @@ var getJobExecutors = func(jobService application.JobService, appClients *client
 func (mig *migrator) getJobExecutor(ctx context.Context, job *domain.Job) (executor.JobExecutor, error) {
 	jobExecutor := mig.jobExecutors[job.Config.Type]
 	if jobExecutor == nil {
-		return nil, fmt.Errorf("no executor found for task type: %s", job.Config.Type)
+		return nil, fmt.Errorf("no executor found for job type: %s", job.Config.Type)
 	}
 	return jobExecutor, nil
 }
@@ -99,6 +99,26 @@ func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 		switch job.State {
 		case domain.StateMigrating:
 			err = jobExecutor.Migrate(ctx, job)
+		case domain.StateReverting:
+			shouldWaitForTasks, revertFailureReason, checkErr := mig.checkRevertState(ctx, job.JobNumber)
+			if checkErr != nil {
+				err = checkErr
+				break
+			}
+
+			if shouldWaitForTasks {
+				return
+			}
+
+			if revertFailureReason != "" {
+				err = mig.transitionJobFailure(ctx, job, mig.GetStateTransitionRules()[domain.StateReverting], revertFailureReason)
+				break
+			}
+
+			err = jobExecutor.Revert(ctx, job)
+			if err == nil {
+				err = mig.jobService.UpdateJobState(ctx, job.JobNumber, domain.StateRejected, "")
+			}
 		default:
 			err = fmt.Errorf("unsupported job state: %s", job.State)
 			log.Error(ctx, "unsupported job state for execution", err, logData)
@@ -109,6 +129,34 @@ func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 			_ = mig.failJob(ctx, job, err, failureReasonExecutionFailed)
 		}
 	}()
+}
+
+func (mig *migrator) checkRevertState(ctx context.Context, jobNumber int) (shouldWaitForTasks bool, revertFailureReason string, err error) {
+	totalTasks, err := mig.jobService.CountTasksByJobNumber(ctx, jobNumber)
+	if err != nil {
+		return false, "", err
+	}
+
+	tasksInRejected, err := mig.countTasksInState(ctx, jobNumber, domain.StateRejected)
+	if err != nil {
+		return false, "", err
+	}
+
+	tasksInFailedMigration, err := mig.countTasksInState(ctx, jobNumber, domain.StateFailedMigration)
+	if err != nil {
+		return false, "", err
+	}
+
+	tasksCompleted := tasksInRejected + tasksInFailedMigration
+	if tasksCompleted < totalTasks {
+		return true, "", nil
+	}
+
+	if tasksInFailedMigration > 0 {
+		return false, fmt.Sprintf("%d tasks failed out of %d", tasksInFailedMigration, totalTasks), nil
+	}
+
+	return false, "", nil
 }
 
 func (mig *migrator) failJob(ctx context.Context, job *domain.Job, originalErr error, failureReason string) error {

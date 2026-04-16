@@ -101,6 +101,18 @@ func TestCanTransition(t *testing.T) {
 			to:       domain.StateCancelled,
 			expected: true,
 		},
+		{
+			name:     "reverting to rejected is valid",
+			from:     domain.StateReverting,
+			to:       domain.StateRejected,
+			expected: true,
+		},
+		{
+			name:     "reverting to failed_migration is valid",
+			from:     domain.StateReverting,
+			to:       domain.StateFailedMigration,
+			expected: true,
+		},
 
 		// Failure recovery paths
 		{
@@ -227,6 +239,49 @@ func TestValidateTransition(t *testing.T) {
 			}
 			if !tt.expectError && err != nil {
 				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+func TestIsAllowedStateForJobUpdate(t *testing.T) {
+	tests := []struct {
+		name     string
+		state    domain.State
+		expected bool
+	}{
+		{
+			name:     "approved is allowed",
+			state:    domain.StateApproved,
+			expected: true,
+		},
+		{
+			name:     "rejected is allowed",
+			state:    domain.StateRejected,
+			expected: true,
+		},
+		{
+			name:     "cancelled is allowed",
+			state:    domain.StateCancelled,
+			expected: true,
+		},
+		{
+			name:     "migrating is not allowed",
+			state:    domain.StateMigrating,
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := statemachine.IsAllowedStateForJobUpdate(tt.state)
+			if result != tt.expected {
+				t.Errorf(
+					"IsAllowedStateForJobUpdate(%q) = %v, want %v",
+					tt.state,
+					result,
+					tt.expected,
+				)
 			}
 		})
 	}
