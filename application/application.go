@@ -61,15 +61,9 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 		return &domain.Job{}, err
 	}
 
-	// increment and get the job number counter
-	jobNumberCounter, err := js.GetNextJobNumber(ctx)
-	if err != nil {
-		log.Error(ctx, "failed to get next job number counter", err)
-		return &domain.Job{}, appErrors.ErrInternalServerError
-	}
-
-	// Create job with label
-	job := domain.NewJob(jobConfig, jobNumberCounter.CounterValue, label)
+	// Create job with label.
+	// Set job number to 0, initially, to prevent the next consecutive number from being skipped if validation fails.
+	job := domain.NewJob(jobConfig, 0, label)
 
 	foundJobs, err := js.store.GetJobsBySourceOrTargetAndState(ctx, job.Config, domain.GetNonCancelledStates(), 1, 0)
 	if err != nil {
@@ -82,6 +76,14 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 		})
 		return &domain.Job{}, appErrors.ErrJobAlreadyRunning
 	}
+
+	// increment and get the job number counter
+	jobNumberCounter, err := js.GetNextJobNumber(ctx)
+	if err != nil {
+		log.Error(ctx, "failed to get next job number counter", err)
+		return &domain.Job{}, appErrors.ErrInternalServerError
+	}
+	job.JobNumber = jobNumberCounter.CounterValue
 
 	err = js.store.CreateJob(ctx, &job)
 	if err != nil {
