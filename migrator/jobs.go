@@ -99,6 +99,8 @@ func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 		switch job.State {
 		case domain.StateMigrating:
 			err = jobExecutor.Migrate(ctx, job)
+		case domain.StatePublishing:
+			err = jobExecutor.Publish(ctx, job)
 		default:
 			err = fmt.Errorf("unsupported job state: %s", job.State)
 			log.Error(ctx, "unsupported job state for execution", err, logData)

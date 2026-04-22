@@ -183,6 +183,7 @@ func (js *jobService) ClaimJob(ctx context.Context) (*domain.Job, error) {
 		to   domain.State
 	}{
 		{from: domain.StateSubmitted, to: domain.StateMigrating},
+		{from: domain.StateApproved, to: domain.StatePublishing},
 	}
 
 	for _, tr := range transitions {
