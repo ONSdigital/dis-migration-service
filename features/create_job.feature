@@ -213,6 +213,115 @@ Feature: Create a Job
         }
         """
 
+    Scenario: Create jobs with consecutive job numbers despite invalid job creation in between
+      Given a get page data request to zebedee for "/test-source-id" returns with status 200 and payload:
+        """
+        {
+          "type": "dataset_landing_page",
+          "description": {
+            "title": "Test Dataset Series"
+          }
+        }
+        """
+      And a get dataset request to the dataset API for "test-target-id" returns with status 404
+      When I POST "/v1/migration-jobs"
+        """
+        {
+          "source_id": "/test-source-id",
+          "target_id": "test-target-id",
+          "type": "static_dataset"
+        }
+        """
+      Then I should receive the following JSON response with status "202":
+        """
+        {
+          "id": "{{DYNAMIC_UUID}}",
+          "job_number":1,
+          "last_updated": "{{DYNAMIC_RECENT_TIMESTAMP}}",
+          "label": "Test Dataset Series",
+          "state": "submitted",
+          "config": {
+            "source_id": "/test-source-id",
+            "target_id": "test-target-id",
+            "type": "static_dataset"
+          },
+          "links": {
+            "self": {
+              "href": "{{DYNAMIC_URI_PATH}}"
+            },
+            "tasks": {
+              "href": "{{DYNAMIC_URI_PATH}}"
+            },
+            "events": {
+              "href": "{{DYNAMIC_URI_PATH}}"
+            }
+          }
+        }
+        """
+      When I POST "/v1/migration-jobs"
+        """
+        {
+          "source_id": "/test-source-id",
+          "target_id": "test-target-id",
+          "type": "static_dataset"
+        }
+        """
+      Then I should receive the following JSON response with status "409":
+        """
+        {
+          "errors": [
+            {
+              "code": 409,
+              "description": "job already running"
+            }
+          ]
+        }
+        """
+      Given a get page data request to zebedee for "/test-source-id-2" returns with status 200 and payload:
+        """
+        {
+          "type": "dataset_landing_page",
+          "description": {
+            "title": "Test Dataset Series"
+          }
+        }
+        """
+      And a get dataset request to the dataset API for "test-target-id-2" returns with status 404
+      When I POST "/v1/migration-jobs"
+        """
+        {
+          "source_id": "/test-source-id-2",
+          "target_id": "test-target-id-2",
+          "type": "static_dataset"
+        }
+        """
+      Then I should receive the following JSON response with status "202":
+        """
+        {
+          "id": "{{DYNAMIC_UUID}}",
+          "job_number":2,
+          "last_updated": "{{DYNAMIC_RECENT_TIMESTAMP}}",
+          "label": "Test Dataset Series",
+          "state": "submitted",
+          "config": {
+            "source_id": "/test-source-id-2",
+            "target_id": "test-target-id-2",
+            "type": "static_dataset"
+          },
+          "links": {
+            "self": {
+              "href": "{{DYNAMIC_URI_PATH}}"
+            },
+            "tasks": {
+              "href": "{{DYNAMIC_URI_PATH}}"
+            },
+            "events": {
+              "href": "{{DYNAMIC_URI_PATH}}"
+            }
+          }
+        }
+        """
+
     @StoreError
     Scenario: Create a job which is already running
       Given the following document exists in the "jobs" collection:
