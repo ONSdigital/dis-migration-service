@@ -157,6 +157,6 @@ func NewMockTopicCache(ctx context.Context) (*TopicCache, error) {
 }
 
 // IsMockCache checks if this is a mock topic cache
-func (tc *TopicCache) IsMockCache(ctx context.Context) bool {
+func (tc *TopicCache) IsMockCache() bool {
 	return tc.isMock
 }

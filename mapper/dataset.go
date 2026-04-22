@@ -24,18 +24,11 @@ func MapDatasetLandingPageToDatasetAPI(ctx context.Context, datasetID string, pa
 		return nil, errors.New("topicCache is required for dataset mapping")
 	}
 
-	// Extract topic IDs from the URI and merge with any existing topics from Zebedee data
-	// Zebedee data contains topicIDs in Description.Topics (secondaryTopics) and CanonicalTopic
-	existingTopicIDs := pageData.Description.Topics
-	if pageData.Description.CanonicalTopic != "" {
-		existingTopicIDs = append(existingTopicIDs, pageData.Description.CanonicalTopic)
-	}
-
 	// Only validate topics if not using mock cache
 	// When mock cache is enabled, we skip topic validation as the cache is non-functional
 	var topicIDs []string
-	if !topicCache.IsMockCache(ctx) {
-		topicIDs = cache.ExtractTopicIDFromURI(ctx, pageData.URI, existingTopicIDs, topicCache)
+	if !topicCache.IsMockCache() {
+		topicIDs = cache.ExtractTopicIDFromURI(ctx, pageData.URI, topicCache)
 		if len(topicIDs) == 0 {
 			return nil, errors.New("no topics found for dataset - datasets must have at least one topic")
 		}

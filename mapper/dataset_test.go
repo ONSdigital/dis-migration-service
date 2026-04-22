@@ -233,14 +233,8 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 				// Should contain URI-derived topics
 				So(topicMap["5678"], ShouldBeTrue)
 
-				// Should contain existing Zebedee topics
-				So(topicMap["2468"], ShouldBeTrue)
-
-				// Should contain canonical topic
-				So(topicMap["1357"], ShouldBeTrue)
-
-				// Should have exactly 3 unique topics
-				So(len(dataset.Topics), ShouldEqual, 3)
+				// Should have exactly 1 unique topic
+				So(len(dataset.Topics), ShouldEqual, 1)
 			})
 		})
 	})

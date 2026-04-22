@@ -43,7 +43,7 @@ func TestExtractTopicIDsFromURI(t *testing.T) {
 		Convey("When extracting topic IDs from a full URI", func() {
 			uri := "https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/example"
 
-			topicIDs := ExtractTopicIDFromURI(ctx, uri, nil, topicCache)
+			topicIDs := ExtractTopicIDFromURI(ctx, uri, topicCache)
 
 			Convey("Then it should extract ONLY the topic before datasets", func() {
 				So(topicIDs, ShouldContain, "inflation-id")
@@ -52,7 +52,7 @@ func TestExtractTopicIDsFromURI(t *testing.T) {
 		})
 
 		Convey("When extracting topic IDs from a path-only URI", func() {
-			topicID := ExtractTopicIDFromURI(ctx, "/economy/inflationandpriceindices/datasets", nil, topicCache)
+			topicID := ExtractTopicIDFromURI(ctx, "/economy/inflationandpriceindices/datasets", topicCache)
 
 			Convey("Then it should extract the correct topic", func() {
 				So(topicID, ShouldContain, "inflation-id")
@@ -60,18 +60,8 @@ func TestExtractTopicIDsFromURI(t *testing.T) {
 			})
 		})
 
-		Convey("When extracting topic IDs with existing topics", func() {
-			uri := "/economy"
-			existingTopics := []string{"existing-topic-id"}
-			topicID := ExtractTopicIDFromURI(ctx, uri, existingTopics, topicCache)
-
-			Convey("Then it should preserve existing topics", func() {
-				So(topicID, ShouldContain, "existing-topic-id")
-			})
-		})
-
 		Convey("When URI contains less than three segments before datasets", func() {
-			topicID := ExtractTopicIDFromURI(ctx, testEconomyURI, nil, topicCache)
+			topicID := ExtractTopicIDFromURI(ctx, testEconomyURI, topicCache)
 
 			Convey("Then it should extract ONLY the segment immediately before datasets", func() {
 				So(topicID, ShouldContain, "inflation-id")

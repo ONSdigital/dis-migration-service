@@ -249,7 +249,7 @@ func TestNewMockTopicCache(t *testing.T) {
 			})
 
 			Convey("And it should be identified as a mock cache", func() {
-				isMock := mockCache.IsMockCache(ctx)
+				isMock := mockCache.IsMockCache()
 				So(isMock, ShouldBeTrue)
 			})
 
@@ -266,7 +266,7 @@ func TestNewMockTopicCache(t *testing.T) {
 			populatedCache, _ := NewPopulatedTopicCacheForTest(ctx)
 
 			Convey("Then it should not be identified as a mock cache", func() {
-				isMock := populatedCache.IsMockCache(ctx)
+				isMock := populatedCache.IsMockCache()
 				So(isMock, ShouldBeFalse)
 			})
 		})

@@ -12,14 +12,9 @@ import (
 // "datasets". It breaks the URI into segements, and matches
 // the topic against the topic cache, and returns the topic
 // ID.
-func ExtractTopicIDFromURI(ctx context.Context, uri string, existingTopicIDs []string, topicCache *TopicCache) []string {
+func ExtractTopicIDFromURI(ctx context.Context, uri string, topicCache *TopicCache) []string {
 	// Set to track unique topic IDs
 	uniqueTopics := make(map[string]struct{})
-
-	// Add existing topic IDs
-	for _, topicID := range existingTopicIDs {
-		uniqueTopics[topicID] = struct{}{}
-	}
 
 	// Parse and extract URI segments
 	uriSegments := extractURISegments(uri)
