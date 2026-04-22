@@ -14,6 +14,7 @@ import (
 // fields and methods specifically for caching topics
 type TopicCache struct {
 	*dpcache.Cache
+	isMock bool
 }
 
 // Topic represents the data which is cached for a topic to be used
@@ -45,7 +46,7 @@ func NewTopicCache(ctx context.Context, updateInterval *time.Duration) (*TopicCa
 		return nil, err
 	}
 
-	topicCache := &TopicCache{cache}
+	topicCache := &TopicCache{cache, false}
 
 	return topicCache, nil
 }
@@ -150,13 +151,12 @@ func NewMockTopicCache(ctx context.Context) (*TopicCache, error) {
 	}
 
 	topicCache.Set(TopicCacheKey, mockTopic)
+	topicCache.isMock = true
 
 	return topicCache, nil
 }
 
 // IsMockCache checks if this is a mock topic cache
-// by looking for the mock-topic
 func (tc *TopicCache) IsMockCache(ctx context.Context) bool {
-	_, err := tc.GetTopic(ctx, "mock-topic")
-	return err == nil
+	return tc.isMock
 }
