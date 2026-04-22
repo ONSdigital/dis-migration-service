@@ -46,6 +46,9 @@ func TestMigratorExecuteJob(t *testing.T) {
 			MigrateFunc: func(ctx context.Context, job *domain.Job) error {
 				return nil
 			},
+			PublishFunc: func(ctx context.Context, job *domain.Job) error {
+				return nil
+			},
 		}
 
 		getJobExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.JobType]executor.JobExecutor {
@@ -106,6 +109,24 @@ func TestMigratorExecuteJob(t *testing.T) {
 
 			Convey("Then the executor is not called to migrate", func() {
 				So(len(mockJobExecutor.MigrateCalls()), ShouldEqual, 0)
+			})
+		})
+
+		Convey("When a job in state publishing is executed", func() {
+			job := &domain.Job{
+				JobNumber: fakeJobNumber,
+				Config: &domain.JobConfig{
+					Type: fakeJobType,
+				},
+				State: domain.StatePublishing,
+			}
+
+			mig.executeJob(ctx, job)
+			mig.wg.Wait()
+
+			Convey("Then the executor is called to publish", func() {
+				So(len(mockJobExecutor.PublishCalls()), ShouldEqual, 1)
+				So(mockJobExecutor.PublishCalls()[0].Job.JobNumber, ShouldEqual, fakeJobNumber)
 			})
 		})
 	})
@@ -202,6 +223,60 @@ func TestMigratorExecuteJob(t *testing.T) {
 			Convey("Then the job is failed", func() {
 				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
 				So(mockJobService.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.StateFailedMigration)
+			})
+		})
+	})
+
+	Convey("Given a migrator with an executor that fails to publish the job", t, func() {
+		mockJobExecutor := &executorMocks.JobExecutorMock{
+			MigrateFunc: func(ctx context.Context, job *domain.Job) error {
+				return nil
+			},
+			PublishFunc: func(ctx context.Context, job *domain.Job) error {
+				return errors.New("publish error")
+			},
+		}
+
+		getJobExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.JobType]executor.JobExecutor {
+			return map[domain.JobType]executor.JobExecutor{
+				fakeJobType: mockJobExecutor,
+			}
+		}
+
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
+				return nil
+			},
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
+				fakeCounter := domain.Counter{}
+				return &fakeCounter, nil
+			},
+		}
+
+		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
+		cfg := &config.Config{
+			MigratorMaxConcurrentExecutions: 1,
+		}
+
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
+		ctx := context.Background()
+
+		Convey("When a job is executed that errors during publishing", func() {
+			job := &domain.Job{
+				JobNumber: fakeJobNumber,
+				State:     domain.StatePublishing,
+				Config: &domain.JobConfig{
+					Type: fakeJobType,
+				},
+			}
+			mig.executeJob(ctx, job)
+			mig.wg.Wait()
+
+			Convey("Then the job is failed", func() {
+				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
+				So(mockJobService.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.StateFailedPublish)
 			})
 		})
 	})

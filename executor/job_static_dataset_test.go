@@ -31,6 +31,18 @@ func TestJobStaticDataset(t *testing.T) {
 			UpdateJobCollectionIDFunc: func(ctx context.Context, jobNumber int, collectionID string) error {
 				return nil
 			},
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 2, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+				return []*domain.Task{
+					{ID: "task-1", State: domain.StateInReview},
+					{ID: "task-2", State: domain.StateInReview},
+				}, 2, nil
+			},
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
+				return nil
+			},
 		}
 		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
 			CreateCollectionFunc: func(ctx context.Context, userAuthToken string, collection zebedee.Collection) (zebedee.Collection, error) {
@@ -74,6 +86,27 @@ func TestJobStaticDataset(t *testing.T) {
 						So(mockJobService.CreateTaskCalls()[0].Task.Source.ID, ShouldEqual, "source-dataset-id")
 						So(mockJobService.CreateTaskCalls()[0].Task.Target.ID, ShouldEqual, "target-dataset-id")
 					})
+				})
+			})
+		})
+
+		Convey("When publish is called for a job", func() {
+			job := &domain.Job{
+				JobNumber: testJobNumber,
+				State:     domain.StatePublishing,
+			}
+
+			err := executor.Publish(ctx, job)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And all tasks are updated to approved", func() {
+					So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 2)
+					So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, "task-1")
+					So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateApproved)
+					So(mockJobService.UpdateTaskStateCalls()[1].TaskID, ShouldEqual, "task-2")
+					So(mockJobService.UpdateTaskStateCalls()[1].NewState, ShouldEqual, domain.StateApproved)
 				})
 			})
 		})
@@ -159,6 +192,105 @@ func TestJobStaticDataset(t *testing.T) {
 			Convey("Then an error is returned", func() {
 				So(err, ShouldEqual, errTest)
 				So(mockJobService.UpdateJobCollectionIDCalls(), ShouldHaveLength, 0)
+			})
+		})
+	})
+
+	Convey("Given a static dataset job executor and a job service that errors when getting tasks", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 2, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+				return nil, 0, errTest
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			Zebedee: &clientMocks.ZebedeeClientMock{},
+		}
+
+		ctx := context.Background()
+		executor := NewStaticDatasetJobExecutor(mockJobService, mockClientList, "faketoken")
+
+		Convey("When publish is called for a job", func() {
+			job := &domain.Job{
+				JobNumber: testJobNumber,
+				State:     domain.StatePublishing,
+			}
+
+			err := executor.Publish(ctx, job)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
+				So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 0)
+			})
+		})
+	})
+
+	Convey("Given a static dataset job executor and a job service that errors when updating task state", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 2, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+				return []*domain.Task{
+					{ID: "task-1", State: domain.StateInReview},
+					{ID: "task-2", State: domain.StateInReview},
+				}, 2, nil
+			},
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
+				return errTest
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			Zebedee: &clientMocks.ZebedeeClientMock{},
+		}
+
+		ctx := context.Background()
+		executor := NewStaticDatasetJobExecutor(mockJobService, mockClientList, "faketoken")
+
+		Convey("When publish is called for a job", func() {
+			job := &domain.Job{
+				JobNumber: testJobNumber,
+				State:     domain.StatePublishing,
+			}
+
+			err := executor.Publish(ctx, job)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
+				So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 1)
+			})
+		})
+	})
+
+	Convey("Given a static dataset job executor and a job service that errors when counting tasks", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 0, errTest
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			Zebedee: &clientMocks.ZebedeeClientMock{},
+		}
+
+		ctx := context.Background()
+		executor := NewStaticDatasetJobExecutor(mockJobService, mockClientList, "faketoken")
+
+		Convey("When publish is called for a job", func() {
+			job := &domain.Job{
+				JobNumber: testJobNumber,
+				State:     domain.StatePublishing,
+			}
+
+			err := executor.Publish(ctx, job)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
+				So(mockJobService.GetJobTasksCalls(), ShouldHaveLength, 0)
 			})
 		})
 	})

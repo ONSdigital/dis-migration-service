@@ -74,6 +74,31 @@ func (e *StaticDatasetJobExecutor) Migrate(ctx context.Context, job *domain.Job)
 // Publish handles the publish operations for a static dataset job.
 func (e *StaticDatasetJobExecutor) Publish(ctx context.Context, job *domain.Job) error {
 	// Implementation of publish for static dataset
+	logData := log.Data{"job_number": job.JobNumber}
+	log.Info(ctx, "starting publishing for job", logData)
+
+	totalTasks, err := e.jobService.CountTasksByJobNumber(ctx, job.JobNumber)
+	if err != nil {
+		log.Error(ctx, "failed to count tasks", err, logData)
+		return err
+	}
+
+	tasks, _, err := e.jobService.GetJobTasks(ctx, []domain.State{domain.StateInReview}, job.JobNumber, totalTasks, 0)
+	if err != nil {
+		log.Error(ctx, "failed to get job tasks", err, logData)
+		return err
+	}
+	log.Info(ctx, "successfully got all job tasks", logData)
+
+	for _, task := range tasks {
+		err := e.jobService.UpdateTaskState(ctx, task.ID, domain.StateApproved)
+		if err != nil {
+			log.Error(ctx, "failed to update task state", err, logData)
+			return err
+		}
+	}
+	log.Info(ctx, "successfully updated all job tasks state to approved", logData)
+
 	return nil
 }
 
