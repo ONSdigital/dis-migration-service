@@ -10,8 +10,8 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/ONSdigital/dis-redirect-api v0.38.0 h1:aiQ5l8oa9mRAChL235f2KmwlPc8/SH8epYfjz8kqj2M=
 github.com/ONSdigital/dis-redirect-api v0.38.0/go.mod h1:kb+NiCmnVUC6unuYNHKl9mfXihNCFc7ysp9mGYVdyB0=
-github.com/ONSdigital/dp-api-clients-go/v2 v2.278.0 h1:0otaQRj6++S7FbgJIbenBeuIK0sRa+B6KctaF34VOyo=
-github.com/ONSdigital/dp-api-clients-go/v2 v2.278.0/go.mod h1:bLseTP21r8LCStUEeOdVPyqtrTomOFP/azPjKWW4deA=
+github.com/ONSdigital/dp-api-clients-go/v2 v2.279.0 h1:BQ+8GiomGO33ANQ9XVUVRiXW5zUtf19XLUN4b+httJI=
+github.com/ONSdigital/dp-api-clients-go/v2 v2.279.0/go.mod h1:dTOrseSPzH9WRV/qgNy/zu5BeZWbea02Qz4Z6lvHhFQ=
 github.com/ONSdigital/dp-authorisation/v2 v2.34.0 h1:Zc096gAh5S7PFG1LlbM/siZDvyzd7fU11dMK8X6m98k=
 github.com/ONSdigital/dp-authorisation/v2 v2.34.0/go.mod h1:y3zXIX/x8baEKucG05v/PL86GtL7MAz9Eb3HcwZmuvQ=
 github.com/ONSdigital/dp-cache v0.6.1 h1:wiYvxRIef9nu3Uk1//il5vNLTeKgajZ2kYacwkF4Xig=
@@ -34,8 +34,8 @@ github.com/ONSdigital/dp-mongodb/v3 v3.13.0 h1:nTb47hKUj4wI3+1Q9KxqYRr6iDfh6/xlu
 github.com/ONSdigital/dp-mongodb/v3 v3.13.0/go.mod h1:/68EwFrtOgChAMMfaUTm3kTHe2zvB3MZtizrvz1vVxw=
 github.com/ONSdigital/dp-net/v2 v2.22.0 h1:LY9C5x1+sfK9QyjNpB2G3TPvAtSuOFR9FRcXsR9twqs=
 github.com/ONSdigital/dp-net/v2 v2.22.0/go.mod h1:F6yL3jjuVwBLVMFIKgHF3zhMRbmZysAxBiu+aIAi3Z0=
-github.com/ONSdigital/dp-net/v3 v3.10.0 h1:/IF6dKThaHNpy6e+bdpkrKJQGSIjyfKSwdRXoAhOAu4=
-github.com/ONSdigital/dp-net/v3 v3.10.0/go.mod h1:ur4LLCvd2xW2jpa785pElE6HB2bPvszZxdAjqv0XFGg=
+github.com/ONSdigital/dp-net/v3 v3.11.0 h1:oLaP0cFem0KKvxeg9ozPUux5yCGRUWlB+XQPEtzt6yU=
+github.com/ONSdigital/dp-net/v3 v3.11.0/go.mod h1:ur4LLCvd2xW2jpa785pElE6HB2bPvszZxdAjqv0XFGg=
 github.com/ONSdigital/dp-otel-go v0.0.8 h1:jSX32oDmOUKlHyH3FPCBkBpiBKYmWKELoNo6jontKRM=
 github.com/ONSdigital/dp-otel-go v0.0.8/go.mod h1:pCDuFqZX8+7CBQX1nMlLMPj52VsMAN3Y8h0uLmzC3cU=
 github.com/ONSdigital/dp-permissions-api v1.11.0 h1:wgDRuSy74Xv35SMKJ80VB9/NZwh5Ae36VaP1NC0y+jw=

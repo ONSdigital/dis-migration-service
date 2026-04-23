@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/ONSdigital/dis-redirect-api v0.38.0
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.278.0
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.279.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.34.0
 	github.com/ONSdigital/dp-cache v0.6.1
 	github.com/ONSdigital/dp-component-test v1.4.4-alpha
@@ -12,7 +12,7 @@ require (
 	github.com/ONSdigital/dp-files-api v1.19.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-mongodb/v3 v3.13.0
-	github.com/ONSdigital/dp-net/v3 v3.10.0
+	github.com/ONSdigital/dp-net/v3 v3.11.0
 	github.com/ONSdigital/dp-otel-go v0.0.8
 	github.com/ONSdigital/dp-permissions-api v1.11.0
 	github.com/ONSdigital/dp-topic-api v1.3.1
