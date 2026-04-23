@@ -90,6 +90,8 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 		switch task.State {
 		case domain.StateMigrating:
 			err = taskExecutor.Migrate(ctx, task)
+		case domain.StateReverting:
+			err = taskExecutor.Revert(ctx, task)
 		default:
 			err = fmt.Errorf("unsupported task state: %s", task.State)
 			log.Error(ctx, "unsupported task state for execution", err, logData)
