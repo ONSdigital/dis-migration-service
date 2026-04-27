@@ -281,11 +281,11 @@ Feature: Get list of jobs
       And the following document exists in the "jobs" collection:
         """
         {
-          "_id": "job-approved-1",
+          "_id": "job-in-review-1",
           "job_number": 21,
-          "label": "job-approved-1",
+          "label": "job-in-review-1",
           "last_updated": "2025-11-19T14:00:00Z",
-          "state": "approved",
+          "state": "in_review",
           "config": {
             "source_id": "s2",
             "target_id": "t2",
@@ -293,19 +293,19 @@ Feature: Get list of jobs
           }
         }
         """
-      When I GET "/v1/migration-jobs?state=migrating&state=approved"
+      When I GET "/v1/migration-jobs?state=migrating&state=in_review"
       Then I should receive the following JSON response with status "200":
         """
         {
           "count": 2,
           "items": [
             {
-              "id": "job-approved-1",
+              "id": "job-in-review-1",
               "job_number": 21,
-              "label": "job-approved-1",
+              "label": "job-in-review-1",
               "last_updated": "2025-11-19T14:00:00Z",
               "links": {},
-              "state": "approved",
+              "state": "in_review",
               "config": {
                 "source_id": "s2",
                 "target_id": "t2",
@@ -351,11 +351,11 @@ Feature: Get list of jobs
       And the following document exists in the "jobs" collection:
         """
         {
-          "_id": "job-approved-1",
+          "_id": "job-in-review-1",
           "job_number": 2,
-          "label": "job-approved-1",
+          "label": "job-in-review-1",
           "last_updated": "2025-11-19T14:00:00Z",
-          "state": "approved",
+          "state": "in_review",
           "config": {
             "source_id": "s2",
             "target_id": "t2",
@@ -363,19 +363,19 @@ Feature: Get list of jobs
           }
         }
         """
-      When I GET "/v1/migration-jobs?state=migrating,approved"
+      When I GET "/v1/migration-jobs?state=migrating,in_review"
       Then I should receive the following JSON response with status "200":
         """
         {
           "count": 2,
           "items": [
             {
-              "id": "job-approved-1",
+              "id": "job-in-review-1",
               "job_number": 2,
-              "label": "job-approved-1",
+              "label": "job-in-review-1",
               "last_updated": "2025-11-19T14:00:00Z",
               "links": {},
-              "state": "approved",
+              "state": "in_review",
               "config": {
                 "source_id": "s2",
                 "target_id": "t2",
