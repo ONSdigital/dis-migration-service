@@ -79,6 +79,12 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
 				return nil
 			},
+			CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+				return nil
+			},
+			ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+				return nil
+			},
 		}
 
 		mockClientList := &clients.ClientList{
@@ -106,6 +112,14 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 						So(len(mockZebedeeClient.SaveContentToCollectionCalls()), ShouldEqual, 1)
 						So(mockZebedeeClient.SaveContentToCollectionCalls()[0].CollectionID, ShouldEqual, testCollectionID)
 						So(mockZebedeeClient.SaveContentToCollectionCalls()[0].Path, ShouldEqual, testSeriesTask.Source.ID)
+						So(len(mockZebedeeClient.CompleteCollectionContentCalls()), ShouldEqual, 1)
+						So(mockZebedeeClient.CompleteCollectionContentCalls()[0].CollectionID, ShouldEqual, testCollectionID)
+						So(mockZebedeeClient.CompleteCollectionContentCalls()[0].PagePath, ShouldEqual, testSeriesTask.Source.ID)
+						So(mockZebedeeClient.CompleteCollectionContentCalls()[0].Lang, ShouldEqual, zebedee.EnglishLangCode)
+						So(len(mockZebedeeClient.ApproveCollectionContentCalls()), ShouldEqual, 1)
+						So(mockZebedeeClient.ApproveCollectionContentCalls()[0].CollectionID, ShouldEqual, testCollectionID)
+						So(mockZebedeeClient.ApproveCollectionContentCalls()[0].PagePath, ShouldEqual, testSeriesTask.Source.ID)
+						So(mockZebedeeClient.ApproveCollectionContentCalls()[0].Lang, ShouldEqual, zebedee.EnglishLangCode)
 					})
 
 					Convey("And an edition task is created for each dataset", func() {
@@ -253,6 +267,126 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 		})
 	})
 
+	Convey("Given a dataset series task executor and a zebedee API client that fails to complete collection content", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
+		}
+
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
+				return zebedee.DatasetLandingPage{
+					Type: zebedee.PageTypeDatasetLandingPage,
+					Datasets: []zebedee.Link{
+						{
+							URI: getEditionURI(testDatasetSeriesURI, "2021"),
+						},
+					},
+					URI: "/economy/datasets/test-dataset",
+				}, nil
+			},
+			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+				return nil
+			},
+			CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+				return errTest
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: &datasetSDKMock.ClienterMock{
+				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+					return models.DatasetUpdate{}, nil
+				},
+			},
+			Zebedee: mockZebedeeClient,
+		}
+
+		ctx := context.Background()
+
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
+
+		Convey("When migrate is called for a task", func() {
+			err := executor.Migrate(ctx, testSeriesTask)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
+				So(len(mockZebedeeClient.ApproveCollectionContentCalls()), ShouldEqual, 0)
+
+				Convey("And no edition tasks are created for the dataset", func() {
+					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
+				})
+			})
+		})
+	})
+
+	Convey("Given a dataset series task executor and a zebedee API client that fails to approve collection content", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
+		}
+
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
+				return zebedee.DatasetLandingPage{
+					Type: zebedee.PageTypeDatasetLandingPage,
+					Datasets: []zebedee.Link{
+						{
+							URI: getEditionURI(testDatasetSeriesURI, "2021"),
+						},
+					},
+					URI: "/economy/datasets/test-dataset",
+				}, nil
+			},
+			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+				return nil
+			},
+			CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+				return nil
+			},
+			ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+				return errTest
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: &datasetSDKMock.ClienterMock{
+				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+					return models.DatasetUpdate{}, nil
+				},
+			},
+			Zebedee: mockZebedeeClient,
+		}
+
+		ctx := context.Background()
+
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
+
+		Convey("When migrate is called for a task", func() {
+			err := executor.Migrate(ctx, testSeriesTask)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
+
+				Convey("And no edition tasks are created for the dataset", func() {
+					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
+				})
+			})
+		})
+	})
+
 	Convey("Given a dataset series task executor and a dataset API client that fails to create a dataset", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{}
 		mockClientList := &clients.ClientList{
@@ -331,6 +465,12 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
 					return nil
 				},
+				CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+					return nil
+				},
+				ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+					return nil
+				},
 			},
 		}
 
@@ -384,6 +524,12 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 					}, nil
 				},
 				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+					return nil
+				},
+				CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+					return nil
+				},
+				ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
 					return nil
 				},
 			},
@@ -450,6 +596,12 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
 				return nil
 			},
+			CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+				return nil
+			},
+			ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+				return nil
+			},
 		}
 
 		mockClientList := &clients.ClientList{
@@ -468,6 +620,8 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				Convey("And the datasetAPI is called to create a dataset with topics", func() {
 					So(len(mockDatasetClient.CreateDatasetCalls()), ShouldEqual, 1)
 					So(mockDatasetClient.CreateDatasetCalls()[0].Dataset.ID, ShouldEqual, testDatasetSeriesID)
+					So(len(mockZebedeeClient.CompleteCollectionContentCalls()), ShouldEqual, 1)
+					So(len(mockZebedeeClient.ApproveCollectionContentCalls()), ShouldEqual, 1)
 
 					Convey("And the topics are mapped from the URI", func() {
 						topics := mockDatasetClient.CreateDatasetCalls()[0].Dataset.Topics

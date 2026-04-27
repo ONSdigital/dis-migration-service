@@ -19,15 +19,26 @@ const (
 
 // FakeAPI contains all the information for a fake component API
 type FakeAPI struct {
-	fakeHTTP                *httpfake.HTTPFake
-	datasetCreateHandler    *httpfake.Request
-	collectionCreateHandler *httpfake.Request
-	collectionUpdateHandler *httpfake.Request
+	fakeHTTP                         *httpfake.HTTPFake
+	datasetCreateHandler             *httpfake.Request
+	collectionCreateHandler          *httpfake.Request
+	collectionUpdateHandler          *httpfake.Request
+	collectionContentCompleteHandler *httpfake.Request
+	collectionContentApproveHandler  *httpfake.Request
 }
 
 // NewFakeAPI creates a new fake component API
 func NewFakeAPI() *FakeAPI {
 	fakeAPI := httpfake.New()
+
+	// These are setting success criteria for collection interactions with zebedee.
+	// To control this from component tests you will need to implement steps to update
+	// these responses.
+	collectionContentCompleteHandler := fakeAPI.NewHandler().Post(fmt.Sprintf("/complete/%s", testCollectionID))
+	collectionContentCompleteHandler.Reply(200)
+
+	collectionContentApproveHandler := fakeAPI.NewHandler().Post(fmt.Sprintf("/review/%s", testCollectionID))
+	collectionContentApproveHandler.Reply(200)
 
 	// This is setting success criteria for collection interactions with zebedee.
 	// To control this from component tests you will need to implement steps to update
@@ -41,10 +52,12 @@ func NewFakeAPI() *FakeAPI {
 	collectionUpdateHandler.Reply(200)
 
 	return &FakeAPI{
-		fakeHTTP:                fakeAPI,
-		datasetCreateHandler:    fakeAPI.NewHandler().Post("/datasets"),
-		collectionCreateHandler: collectionCreateHandler,
-		collectionUpdateHandler: collectionUpdateHandler,
+		fakeHTTP:                         fakeAPI,
+		datasetCreateHandler:             fakeAPI.NewHandler().Post("/datasets"),
+		collectionCreateHandler:          collectionCreateHandler,
+		collectionUpdateHandler:          collectionUpdateHandler,
+		collectionContentCompleteHandler: collectionContentCompleteHandler,
+		collectionContentApproveHandler:  collectionContentApproveHandler,
 	}
 }
 

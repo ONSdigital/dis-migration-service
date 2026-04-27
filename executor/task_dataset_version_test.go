@@ -78,6 +78,12 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 					SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
 						return nil
 					},
+					CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+						return nil
+					},
+					ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+						return nil
+					},
 				},
 			}
 
@@ -97,6 +103,8 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 						So(mockDatasetClient.PostVersionCalls()[0].EditionID, ShouldEqual, testEditionID)
 						So(mockDatasetClient.PostVersionCalls()[0].VersionID, ShouldEqual, "1")
 						So(mockDatasetClient.PostVersionCalls()[0].Headers.AccessToken, ShouldEqual, testServiceAuthToken)
+						So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).CompleteCollectionContentCalls()), ShouldEqual, 1)
+						So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).ApproveCollectionContentCalls()), ShouldEqual, 1)
 
 						Convey("And no download tasks are created", func() {
 							So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
@@ -137,6 +145,12 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 					SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
 						return nil
 					},
+					CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+						return nil
+					},
+					ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+						return nil
+					},
 				},
 			}
 
@@ -152,6 +166,8 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 
 					Convey("And version tasks are created", func() {
 						So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 2)
+						So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).CompleteCollectionContentCalls()), ShouldEqual, 1)
+						So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).ApproveCollectionContentCalls()), ShouldEqual, 1)
 						So(mockJobService.CreateTaskCalls()[0].Task.Type, ShouldEqual, domain.TaskTypeDatasetDownload)
 						So(mockJobService.CreateTaskCalls()[0].Task.Source.ID, ShouldEqual, testEditionURI+"/"+generateFileName(1))
 						So(mockJobService.CreateTaskCalls()[0].Task.Target.DatasetID, ShouldEqual, testDatasetSeriesID)
@@ -315,6 +331,128 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 		})
 	})
 
+	Convey("Given a dataset version task executor and a zebedee API client that fails to complete collection content", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
+			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+				return nil
+			},
+		}
+
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
+				return zebedee.DatasetLandingPage{
+					Type: zebedee.PageTypeDatasetLandingPage,
+				}, nil
+			},
+			GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
+				return zebedee.Dataset{
+					Type: zebedee.PageTypeDataset,
+				}, nil
+			},
+			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+				return nil
+			},
+			CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+				return errTest
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: &datasetSDKMock.ClienterMock{
+				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version) (*models.Version, error) {
+					return &models.Version{}, nil
+				},
+			},
+			Zebedee: mockZebedeeClient,
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+		Convey("When migrate is called for a task", func() {
+			err := executor.Migrate(ctx, testVersionTask)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
+				So(len(mockZebedeeClient.ApproveCollectionContentCalls()), ShouldEqual, 0)
+
+				Convey("And no download tasks are created for the dataset", func() {
+					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
+				})
+			})
+		})
+	})
+
+	Convey("Given a dataset version task executor and a zebedee API client that fails to approve collection content", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{
+					Config: &domain.JobConfig{
+						CollectionID: testCollectionID,
+					},
+				}, nil
+			},
+			UpdateTaskFunc: func(ctx context.Context, task *domain.Task) error {
+				return nil
+			},
+		}
+
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
+				return zebedee.DatasetLandingPage{
+					Type: zebedee.PageTypeDatasetLandingPage,
+				}, nil
+			},
+			GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
+				return zebedee.Dataset{
+					Type: zebedee.PageTypeDataset,
+				}, nil
+			},
+			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+				return nil
+			},
+			CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+				return nil
+			},
+			ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+				return errTest
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: &datasetSDKMock.ClienterMock{
+				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version) (*models.Version, error) {
+					return &models.Version{}, nil
+				},
+			},
+			Zebedee: mockZebedeeClient,
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+		Convey("When migrate is called for a task", func() {
+			err := executor.Migrate(ctx, testVersionTask)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
+
+				Convey("And no download tasks are created for the dataset", func() {
+					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
+				})
+			})
+		})
+	})
+
 	Convey("Given a dataset version task executor and a dataset API client that fails to create a version", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
 			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
@@ -351,6 +489,12 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 					}, nil
 				},
 				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+					return nil
+				},
+				CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+					return nil
+				},
+				ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
 					return nil
 				},
 			},
@@ -422,6 +566,12 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
 					return nil
 				},
+				CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+					return nil
+				},
+				ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+					return nil
+				},
 			},
 		}
 
@@ -478,6 +628,12 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 					}, nil
 				},
 				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+					return nil
+				},
+				CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+					return nil
+				},
+				ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
 					return nil
 				},
 			},

@@ -98,7 +98,31 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		sourceData,
 	)
 	if err != nil {
-		log.Error(ctx, "failed to save updated dataset landing page with migration link to zebedee collection", err, logData)
+		log.Error(ctx, "failed to save updated dataset version page with migration link to zebedee collection", err, logData)
+		return err
+	}
+
+	err = e.clientList.Zebedee.CompleteCollectionContent(
+		ctx,
+		e.serviceAuthToken,
+		job.Config.CollectionID,
+		zebedee.EnglishLangCode,
+		task.Source.ID,
+	)
+	if err != nil {
+		log.Error(ctx, "failed to complete dataset version content in zebedee collection", err, logData)
+		return err
+	}
+
+	err = e.clientList.Zebedee.ApproveCollectionContent(
+		ctx,
+		e.serviceAuthToken,
+		job.Config.CollectionID,
+		zebedee.EnglishLangCode,
+		task.Source.ID,
+	)
+	if err != nil {
+		log.Error(ctx, "failed to approve dataset version content in zebedee collection", err, logData)
 		return err
 	}
 

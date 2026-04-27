@@ -86,6 +86,30 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 		return err
 	}
 
+	err = e.clientList.Zebedee.CompleteCollectionContent(
+		ctx,
+		e.serviceAuthToken,
+		job.Config.CollectionID,
+		zebedee.EnglishLangCode,
+		task.Source.ID,
+	)
+	if err != nil {
+		log.Error(ctx, "failed to complete dataset landing page content in zebedee collection", err, logData)
+		return err
+	}
+
+	err = e.clientList.Zebedee.ApproveCollectionContent(
+		ctx,
+		e.serviceAuthToken,
+		job.Config.CollectionID,
+		zebedee.EnglishLangCode,
+		task.Source.ID,
+	)
+	if err != nil {
+		log.Error(ctx, "failed to approve dataset landing page content in zebedee collection", err, logData)
+		return err
+	}
+
 	for _, edition := range sourceData.Datasets {
 		editionTask := domain.NewTask(task.JobNumber)
 
