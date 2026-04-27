@@ -103,16 +103,19 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 						So(mockDatasetClient.PostVersionCalls()[0].EditionID, ShouldEqual, testEditionID)
 						So(mockDatasetClient.PostVersionCalls()[0].VersionID, ShouldEqual, "1")
 						So(mockDatasetClient.PostVersionCalls()[0].Headers.AccessToken, ShouldEqual, testServiceAuthToken)
-						So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).CompleteCollectionContentCalls()), ShouldEqual, 1)
-						So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).ApproveCollectionContentCalls()), ShouldEqual, 1)
 
-						Convey("And no download tasks are created", func() {
-							So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
+						Convey("And the zebedee client is called to complete and approve the collection content", func() {
+							So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).SaveContentToCollectionCalls()), ShouldEqual, 1)
+							So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).CompleteCollectionContentCalls()), ShouldEqual, 1)
+							So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).ApproveCollectionContentCalls()), ShouldEqual, 1)
+							Convey("And no download tasks are created", func() {
+								So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
 
-							Convey("And the task state is updated to InReview", func() {
-								So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
-								So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, testVersionTask.ID)
-								So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateInReview)
+								Convey("And the task state is updated to InReview", func() {
+									So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+									So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, testVersionTask.ID)
+									So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateInReview)
+								})
 							})
 						})
 					})

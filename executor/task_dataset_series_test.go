@@ -108,7 +108,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 					So(mockDatasetClient.CreateDatasetCalls()[0].Dataset.ID, ShouldEqual, testDatasetSeriesID)
 					So(mockDatasetClient.CreateDatasetCalls()[0].Headers.AccessToken, ShouldEqual, testServiceAuthToken)
 
-					Convey("And the collection is updated with the migrationLink", func() {
+					Convey("And the collection is updated with the migrationLink and the content is approved", func() {
 						So(len(mockZebedeeClient.SaveContentToCollectionCalls()), ShouldEqual, 1)
 						So(mockZebedeeClient.SaveContentToCollectionCalls()[0].CollectionID, ShouldEqual, testCollectionID)
 						So(mockZebedeeClient.SaveContentToCollectionCalls()[0].Path, ShouldEqual, testSeriesTask.Source.ID)
