@@ -75,7 +75,6 @@ func TestMigratorExecuteJob(t *testing.T) {
 
 		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
-		ctx := context.Background()
 
 		Convey("When a job in state migrating is executed", func() {
 			job := &domain.Job{
@@ -86,7 +85,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 				State: domain.StateMigrating,
 			}
 
-			mig.executeJob(ctx, job)
+			mig.executeJob(job)
 			mig.wg.Wait()
 
 			Convey("Then the executor is called to migrate", func() {
@@ -104,7 +103,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 				State: "unknown-state",
 			}
 
-			mig.executeJob(ctx, job)
+			mig.executeJob(job)
 			mig.wg.Wait()
 
 			Convey("Then the executor is not called to migrate", func() {
@@ -121,7 +120,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 				State: domain.StatePublishing,
 			}
 
-			mig.executeJob(ctx, job)
+			mig.executeJob(job)
 			mig.wg.Wait()
 
 			Convey("Then the executor is called to publish", func() {
@@ -154,7 +153,6 @@ func TestMigratorExecuteJob(t *testing.T) {
 
 		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
-		ctx := context.Background()
 
 		Convey("When a job is executed", func() {
 			job := &domain.Job{
@@ -165,7 +163,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 				State: domain.StateMigrating,
 			}
 
-			mig.executeJob(ctx, job)
+			mig.executeJob(job)
 			mig.wg.Wait()
 
 			Convey("Then the job is marked as failed", func() {
@@ -207,7 +205,6 @@ func TestMigratorExecuteJob(t *testing.T) {
 
 		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
-		ctx := context.Background()
 
 		Convey("When a job is executed that errors during migration", func() {
 			job := &domain.Job{
@@ -217,7 +214,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 					Type: fakeJobType,
 				},
 			}
-			mig.executeJob(ctx, job)
+			mig.executeJob(job)
 			mig.wg.Wait()
 
 			Convey("Then the job is failed", func() {
@@ -261,7 +258,6 @@ func TestMigratorExecuteJob(t *testing.T) {
 
 		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
-		ctx := context.Background()
 
 		Convey("When a job is executed that errors during publishing", func() {
 			job := &domain.Job{
@@ -271,7 +267,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 					Type: fakeJobType,
 				},
 			}
-			mig.executeJob(ctx, job)
+			mig.executeJob(job)
 			mig.wg.Wait()
 
 			Convey("Then the job is failed", func() {

@@ -74,17 +74,18 @@ func (mig *migrator) monitorJobs(ctx context.Context) {
 				}
 			}
 
-			requestID := dpRequest.NewRequestID(RequestIDLength)
-			ctx = dpRequest.WithRequestId(context.Background(), requestID)
 			log.Info(ctx, "claimed job", log.Data{"job_id": job.ID, "job_state": job.State})
-			mig.executeJob(ctx, job)
+			mig.executeJob(job)
 		}
 	}
 }
 
 // executeJob executes the provided job in a separate goroutine based on
 // it's state
-func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
+func (mig *migrator) executeJob(job *domain.Job) {
+	requestID := dpRequest.NewRequestID(RequestIDLength)
+	ctx := dpRequest.WithRequestId(context.Background(), requestID)
+	log.Info(ctx, "executing job", log.Data{"job_id": job.ID, "job_state": job.State})
 	mig.wg.Add(1)
 	go func() {
 		defer mig.wg.Done()
