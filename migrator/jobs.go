@@ -41,7 +41,7 @@ var getJobExecutors = func(jobService application.JobService, appClients *client
 	return jobExecutors
 }
 
-func (mig *migrator) getJobExecutor(ctx context.Context, job *domain.Job) (executor.JobExecutor, error) {
+func (mig *migrator) getJobExecutor(job *domain.Job) (executor.JobExecutor, error) {
 	jobExecutor := mig.jobExecutors[job.Config.Type]
 	if jobExecutor == nil {
 		return nil, fmt.Errorf("no executor found for task type: %s", job.Config.Type)
@@ -99,7 +99,7 @@ func (mig *migrator) executeJob(job *domain.Job) {
 			return
 		}
 
-		jobExecutor, err := mig.getJobExecutor(ctx, job)
+		jobExecutor, err := mig.getJobExecutor(job)
 		if err != nil {
 			log.Error(ctx, "failed to get job executor", err, logData)
 			_ = mig.failJob(ctx, job, err, failureReasonExecutorMissing)

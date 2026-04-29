@@ -67,7 +67,6 @@ func TestMigratorExecuteTask(t *testing.T) {
 		}
 
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, mockTopicCache)
-		ctx := context.Background()
 
 		Convey("When a task in state migrating is executed", func() {
 			task := &domain.Task{
@@ -77,7 +76,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				State:     domain.StateMigrating,
 			}
 
-			mig.executeTask(ctx, task)
+			mig.executeTask(task)
 			mig.wg.Wait()
 
 			Convey("Then the executor is called to migrate", func() {
@@ -92,7 +91,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				State: "unknown-state",
 			}
 
-			mig.executeTask(ctx, task)
+			mig.executeTask(task)
 			mig.wg.Wait()
 
 			Convey("Then the executor is not called to migrate", func() {
@@ -140,7 +139,6 @@ func TestMigratorExecuteTask(t *testing.T) {
 		}
 
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, mockTopicCache)
-		ctx := context.Background()
 
 		Convey("When a task is executed", func() {
 			task := &domain.Task{
@@ -148,7 +146,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				State: domain.StateMigrating,
 			}
 
-			mig.executeTask(ctx, task)
+			mig.executeTask(task)
 			mig.wg.Wait()
 
 			Convey("Then the task is failed", func() {
@@ -202,7 +200,6 @@ func TestMigratorExecuteTask(t *testing.T) {
 		}
 
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, mockTopicCache)
-		ctx := context.Background()
 
 		Convey("When a task is executed that errors during migration", func() {
 			task := &domain.Task{
@@ -210,7 +207,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				Type:      fakeTaskType,
 				State:     domain.StateMigrating,
 			}
-			mig.executeTask(ctx, task)
+			mig.executeTask(task)
 			mig.wg.Wait()
 
 			Convey("Then the task is failed", func() {
@@ -337,14 +334,13 @@ func TestGetTaskExecutor(t *testing.T) {
 
 		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
-		ctx := context.Background()
 
 		Convey("When getTaskExecutor is called for a task with a known type", func() {
 			task := &domain.Task{
 				Type: fakeTaskType,
 			}
 
-			taskExecutor, err := mig.getTaskExecutor(ctx, task)
+			taskExecutor, err := mig.getTaskExecutor(task)
 
 			Convey("Then the correct executor is returned", func() {
 				So(err, ShouldBeNil)
@@ -357,7 +353,7 @@ func TestGetTaskExecutor(t *testing.T) {
 				Type: "unknown-task-type",
 			}
 
-			taskExecutor, err := mig.getTaskExecutor(ctx, task)
+			taskExecutor, err := mig.getTaskExecutor(task)
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldNotBeNil)

@@ -389,7 +389,6 @@ func TestGetJobExecutor(t *testing.T) {
 
 		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
 		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
-		ctx := context.Background()
 
 		Convey("When getJobExecutor is called for a job with a known type", func() {
 			job := &domain.Job{
@@ -398,7 +397,7 @@ func TestGetJobExecutor(t *testing.T) {
 				},
 			}
 
-			jobExecutor, err := mig.getJobExecutor(ctx, job)
+			jobExecutor, err := mig.getJobExecutor(job)
 
 			Convey("Then the correct executor is returned", func() {
 				So(err, ShouldBeNil)
@@ -413,7 +412,7 @@ func TestGetJobExecutor(t *testing.T) {
 				},
 			}
 
-			jobExecutor, err := mig.getJobExecutor(ctx, job)
+			jobExecutor, err := mig.getJobExecutor(job)
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldNotBeNil)
