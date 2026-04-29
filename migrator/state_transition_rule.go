@@ -38,7 +38,7 @@ func (mig *migrator) GetStateTransitionRules() map[domain.State]StateTransitionR
 		},
 		domain.StateReverting: {
 			TargetState:  domain.StateRejected,
-			FailureState: domain.StateCancelled,
+			FailureState: domain.StateFailedMigration,
 			Description:  "revert successful, move to cancelled",
 		},
 	}

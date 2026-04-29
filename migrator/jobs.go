@@ -12,6 +12,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/executor"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -130,6 +131,12 @@ func (mig *migrator) executeJob(job *domain.Job) {
 			err = jobExecutor.Revert(ctx, job)
 			if err == nil {
 				err = mig.jobService.UpdateJobState(ctx, job.JobNumber, domain.StateRejected, "")
+				if errors.Is(err, appErrors.ErrStateAlreadyAtTarget) {
+					err = nil
+				} else if errors.Is(err, appErrors.ErrJobStateTransitionNotAllowed) {
+					log.Info(ctx, "job revert completion deferred while tasks are still transitioning", logData)
+					return
+				}
 			}
 		default:
 			err = fmt.Errorf("unsupported job state: %s", job.State)
@@ -172,6 +179,13 @@ func (mig *migrator) checkRevertState(ctx context.Context, jobNumber int) (shoul
 }
 
 func (mig *migrator) failJob(ctx context.Context, job *domain.Job, originalErr error, failureReason string) error {
+	if job.State == domain.StateReverting {
+		latestJob, err := mig.jobService.GetJob(ctx, job.JobNumber)
+		if err == nil && latestJob != nil {
+			job = latestJob
+		}
+	}
+
 	stateTransitionRule, ok := mig.GetStateTransitionRules()[job.State]
 	if !ok {
 		log.Error(ctx, "no state transition rule found for job state", fmt.Errorf("job state: %s", job.State))

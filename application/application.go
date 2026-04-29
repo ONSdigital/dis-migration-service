@@ -152,7 +152,7 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 		return err
 	}
 
-	if newState == domain.StateRejected && userID != "" {
+	if newState == domain.StateRejected && job.State != domain.StateReverting {
 		if err := js.transitionJobTasksToReverting(ctx, jobNumber); err != nil {
 			return fmt.Errorf("failed to reject job tasks: %w", err)
 		}
@@ -165,9 +165,13 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 		return nil
 	}
 
-	if newState == domain.StateRejected && job.State != domain.StateReverting {
-		if err := js.transitionJobTasksToReverting(ctx, jobNumber); err != nil {
-			return fmt.Errorf("failed to reject job tasks: %w", err)
+	if newState == domain.StateRejected && job.State == domain.StateReverting {
+		allTasksTerminal, err := js.areAllRevertTasksTerminal(ctx, jobNumber)
+		if err != nil {
+			return fmt.Errorf("failed to validate reverting tasks: %w", err)
+		}
+		if !allTasksTerminal {
+			return appErrors.ErrJobStateTransitionNotAllowed
 		}
 	}
 
@@ -188,6 +192,24 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 		}
 	}
 	return nil
+}
+
+func (js *jobService) areAllRevertTasksTerminal(ctx context.Context, jobNumber int) (bool, error) {
+	totalTasks, err := js.store.CountTasksByJobNumber(ctx, jobNumber)
+	if err != nil {
+		return false, err
+	}
+
+	if totalTasks == 0 {
+		return true, nil
+	}
+
+	_, terminalTasks, err := js.store.GetJobTasks(ctx, []domain.State{domain.StateRejected, domain.StateFailedMigration}, jobNumber, totalTasks, 0)
+	if err != nil {
+		return false, err
+	}
+
+	return terminalTasks == totalTasks, nil
 }
 
 func (js *jobService) transitionJobTasksToReverting(ctx context.Context, jobNumber int) error {
@@ -219,32 +241,19 @@ func (js *jobService) transitionTaskToReverting(ctx context.Context, task *domai
 		return nil
 	}
 
-	currentState := task.State
-	for {
-		nextState, ok := nextTaskStateTowardsReverting(currentState)
-		if !ok {
-			return nil
-		}
-
-		now := time.Now().UTC()
-		if err := js.store.UpdateTaskState(ctx, task.ID, nextState, now); err != nil {
-			return err
-		}
-
-		if nextState == domain.StateReverting {
-			return nil
-		}
-
-		currentState = nextState
+	nextState, ok := nextTaskStateTowardsReverting(task.State)
+	if !ok {
+		return nil
 	}
+
+	now := time.Now().UTC()
+	return js.store.UpdateTaskState(ctx, task.ID, nextState, now)
 }
 
 func nextTaskStateTowardsReverting(currentState domain.State) (domain.State, bool) {
 	switch currentState {
-	case domain.StateSubmitted:
-		return domain.StateReverting, true
-	case domain.StateMigrating, domain.StateFailedMigration, domain.StateInReview, domain.StateReverting:
-		return domain.StateReverting, true
+	case domain.StateSubmitted, domain.StateMigrating, domain.StateInReview, domain.StateApproved, domain.StatePublishing, domain.StatePostPublishing, domain.StateReverting:
+		return domain.StateRejected, true
 	default:
 		return "", false
 	}
@@ -263,7 +272,6 @@ func (js *jobService) ClaimJob(ctx context.Context) (*domain.Job, error) {
 	}{
 		{from: domain.StateSubmitted, to: domain.StateMigrating},
 		{from: domain.StateApproved, to: domain.StatePublishing},
-		{from: domain.StateReverting, to: domain.StateReverting},
 	}
 	for _, tr := range transitions {
 		job, err := js.store.ClaimJob(ctx, tr.from, tr.to)
@@ -274,6 +282,23 @@ func (js *jobService) ClaimJob(ctx context.Context) (*domain.Job, error) {
 			return job, nil
 		}
 	}
+
+	revertingJobs, totalRevertingJobs, err := js.store.GetJobs(
+		ctx,
+		sort.SortParameterFieldJobNumber,
+		sort.SortParameterDirectionAsc,
+		[]domain.State{domain.StateReverting},
+		1,
+		0,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if totalRevertingJobs > 0 && len(revertingJobs) > 0 {
+		return revertingJobs[0], nil
+	}
+
 	return nil, nil
 }
 
@@ -342,7 +367,6 @@ func (js *jobService) ClaimTask(ctx context.Context) (*domain.Task, error) {
 		to   domain.State
 	}{
 		{from: domain.StateSubmitted, to: domain.StateMigrating},
-		{from: domain.StateReverting, to: domain.StateReverting},
 	}
 
 	for _, tr := range transitions {
@@ -354,7 +378,46 @@ func (js *jobService) ClaimTask(ctx context.Context) (*domain.Task, error) {
 			return task, nil
 		}
 	}
-	return nil, nil
+
+	revertingJobs, totalRevertingJobs, err := js.store.GetJobs(
+		ctx,
+		sort.SortParameterFieldJobNumber,
+		sort.SortParameterDirectionAsc,
+		[]domain.State{domain.StateReverting},
+		1,
+		0,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if totalRevertingJobs == 0 || len(revertingJobs) == 0 {
+		return nil, nil
+	}
+
+	for {
+		task, claimErr := js.store.ClaimTask(ctx, domain.StateRejected, domain.StateReverting)
+		if claimErr != nil {
+			return nil, claimErr
+		}
+		if task == nil {
+			return nil, nil
+		}
+
+		job, getJobErr := js.store.GetJob(ctx, task.JobNumber)
+		if getJobErr != nil {
+			return nil, getJobErr
+		}
+
+		if job.State == domain.StateReverting {
+			return task, nil
+		}
+
+		restoreErr := js.store.UpdateTaskState(ctx, task.ID, domain.StateRejected, time.Now().UTC())
+		if restoreErr != nil {
+			return nil, restoreErr
+		}
+	}
 }
 
 // GetJobTasks retrieves a list of migration tasks for a job with pagination.

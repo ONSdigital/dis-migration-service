@@ -261,9 +261,9 @@ func TestIsAllowedStateForJobUpdate(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "cancelled is allowed",
+			name:     "cancelled is not allowed",
 			state:    domain.StateCancelled,
-			expected: true,
+			expected: false,
 		},
 		{
 			name:     "migrating is not allowed",

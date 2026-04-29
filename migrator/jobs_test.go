@@ -12,6 +12,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/executor"
 	executorMocks "github.com/ONSdigital/dis-migration-service/executor/mock"
 	"github.com/ONSdigital/dis-migration-service/slack"
@@ -321,6 +322,81 @@ func TestMigratorExecuteJob(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given a migrator with a reverting job that cannot be finalized to rejected yet", t, func() {
+		mockJobExecutor := &executorMocks.JobExecutorMock{
+			RevertFunc: func(ctx context.Context, job *domain.Job) error {
+				return nil
+			},
+		}
+
+		getJobExecutors = func(_ application.JobService, _ *clients.ClientList, _ *config.Config) map[domain.JobType]executor.JobExecutor {
+			return map[domain.JobType]executor.JobExecutor{
+				fakeJobType: mockJobExecutor,
+			}
+		}
+
+		updateStates := make([]domain.State, 0)
+		mockJobService := &applicationMocks.JobServiceMock{
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 1, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit int, offset int) ([]*domain.Task, int, error) {
+				switch states[0] {
+				case domain.StateRejected:
+					return []*domain.Task{{ID: "task-1", JobNumber: jobNumber, State: domain.StateRejected}}, 1, nil
+				case domain.StateFailedMigration:
+					return nil, 0, nil
+				default:
+					return nil, 0, nil
+				}
+			},
+			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
+				updateStates = append(updateStates, state)
+				if state == domain.StateRejected {
+					return appErrors.ErrJobStateTransitionNotAllowed
+				}
+				return nil
+			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{JobNumber: jobNumber, State: domain.StateReverting}, nil
+			},
+			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
+				fakeCounter := domain.Counter{}
+				return &fakeCounter, nil
+			},
+		}
+
+		mockClients := &clients.ClientList{}
+		mockSlackClient := createMockSlackClient()
+		cfg := &config.Config{MigratorMaxConcurrentExecutions: 1}
+
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(context.Background())
+		mig, _ := NewDefaultMigrator(cfg, mockJobService, mockClients, mockSlackClient, topicCache)
+		ctx := context.Background()
+
+		Convey("When the reverting job is executed", func() {
+			job := &domain.Job{
+				JobNumber: fakeJobNumber,
+				State:     domain.StateReverting,
+				Config: &domain.JobConfig{
+					Type: fakeJobType,
+				},
+			}
+
+			mig.executeJob(ctx, job)
+			mig.wg.Wait()
+
+			Convey("Then revert is executed", func() {
+				So(len(mockJobExecutor.RevertCalls()), ShouldEqual, 1)
+			})
+
+			Convey("And job failure transition is not attempted", func() {
+				So(len(updateStates), ShouldEqual, 1)
+				So(updateStates[0], ShouldEqual, domain.StateRejected)
+			})
+		})
+	})
 }
 
 func TestMigratorFailJob(t *testing.T) {
@@ -328,6 +404,9 @@ func TestMigratorFailJob(t *testing.T) {
 		mockJobService := &applicationMocks.JobServiceMock{
 			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
 				return nil
+			},
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{JobNumber: jobNumber, State: domain.StateMigrating}, nil
 			},
 			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
 				fakeCounter := domain.Counter{}
@@ -369,6 +448,25 @@ func TestMigratorFailJob(t *testing.T) {
 
 			Convey("Then the job service is not called to update the job", func() {
 				So(err, ShouldNotBeNil)
+				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 0)
+			})
+		})
+
+		Convey("When failJob is called for a stale reverting job that is already rejected in store", func() {
+			mockJobService.GetJobFunc = func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{JobNumber: jobNumber, State: domain.StateRejected}, nil
+			}
+
+			job := &domain.Job{
+				JobNumber: fakeJobNumber,
+				State:     domain.StateReverting,
+			}
+
+			originalErr := errors.New("test error")
+			err := mig.failJob(ctx, job, originalErr, failureReasonExecutionFailed)
+
+			Convey("Then the job service is not called to update job state", func() {
+				So(err, ShouldEqual, originalErr)
 				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 0)
 			})
 		})
@@ -461,7 +559,7 @@ func TestGetJobExecutor(t *testing.T) {
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "no executor found for task type: unknown-job-type")
+				So(err.Error(), ShouldEqual, "no executor found for job type: unknown-job-type")
 				So(jobExecutor, ShouldBeNil)
 			})
 		})
