@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	dpRequest "github.com/ONSdigital/dp-net/v3/request"
+
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -26,6 +28,11 @@ const (
 	EventUpdateJobStateFailed = "Failed to update job state"
 	// EventUpdateTaskStateFailed is sent when updating a task state fails.
 	EventUpdateTaskStateFailed = "Failed to update task state"
+
+	// RequestIDLength is the length of the request id, which is needed
+	// for creating a trace_id. It is set to 20 for consistency with the
+	// request id length used in log.go
+	RequestIDLength = 20
 )
 
 var getJobExecutors = func(jobService application.JobService, appClients *clients.ClientList, cfg *config.Config) map[domain.JobType]executor.JobExecutor {
@@ -67,6 +74,8 @@ func (mig *migrator) monitorJobs(ctx context.Context) {
 				}
 			}
 
+			requestID := dpRequest.NewRequestID(RequestIDLength)
+			ctx = dpRequest.WithRequestId(context.Background(), requestID)
 			log.Info(ctx, "claimed job", log.Data{"job_id": job.ID, "job_state": job.State})
 			mig.executeJob(ctx, job)
 		}
