@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	dpRequest "github.com/ONSdigital/dp-net/v3/request"
+
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
@@ -26,7 +28,7 @@ var getTaskExecutors = func(jobService application.JobService, appClients *clien
 	return taskExecutors
 }
 
-func (mig *migrator) getTaskExecutor(ctx context.Context, task *domain.Task) (executor.TaskExecutor, error) {
+func (mig *migrator) getTaskExecutor(task *domain.Task) (executor.TaskExecutor, error) {
 	taskExecutor := mig.taskExecutors[task.Type]
 	if taskExecutor == nil {
 		return nil, fmt.Errorf("no executor found for task type: %s", task.Type)
@@ -59,13 +61,16 @@ func (mig *migrator) monitorTasks(ctx context.Context) {
 				}
 			}
 			log.Info(ctx, "claimed task", log.Data{"task_id": task.ID, "task_state": task.State})
-			mig.executeTask(ctx, task)
+			mig.executeTask(task)
 		}
 	}
 }
 
 // executeTask executes a task based on its state
-func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
+func (mig *migrator) executeTask(task *domain.Task) {
+	requestID := dpRequest.NewRequestID(RequestIDLength)
+	ctx := dpRequest.WithRequestId(context.Background(), requestID)
+	log.Info(ctx, "executing task", log.Data{"task_id": task.ID, "task_state": task.State})
 	mig.wg.Add(1)
 	go func() {
 		defer mig.wg.Done()
@@ -79,7 +84,7 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 			return
 		}
 
-		taskExecutor, err := mig.getTaskExecutor(ctx, task)
+		taskExecutor, err := mig.getTaskExecutor(task)
 		if err != nil {
 			log.Error(ctx, "failed to get task executor", err, logData)
 			_ = mig.failTask(ctx, task, err, failureReasonExecutorMissing)

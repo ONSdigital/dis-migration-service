@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	dpRequest "github.com/ONSdigital/dp-net/v3/request"
+
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
@@ -26,6 +28,11 @@ const (
 	EventUpdateJobStateFailed = "Failed to update job state"
 	// EventUpdateTaskStateFailed is sent when updating a task state fails.
 	EventUpdateTaskStateFailed = "Failed to update task state"
+
+	// RequestIDLength is the length of the request id, which is needed
+	// for creating a trace_id. It is set to 20 for consistency with the
+	// request id length used in log.go
+	RequestIDLength = 20
 )
 
 var getJobExecutors = func(jobService application.JobService, appClients *clients.ClientList, cfg *config.Config) map[domain.JobType]executor.JobExecutor {
@@ -34,7 +41,7 @@ var getJobExecutors = func(jobService application.JobService, appClients *client
 	return jobExecutors
 }
 
-func (mig *migrator) getJobExecutor(ctx context.Context, job *domain.Job) (executor.JobExecutor, error) {
+func (mig *migrator) getJobExecutor(job *domain.Job) (executor.JobExecutor, error) {
 	jobExecutor := mig.jobExecutors[job.Config.Type]
 	if jobExecutor == nil {
 		return nil, fmt.Errorf("no executor found for task type: %s", job.Config.Type)
@@ -68,14 +75,17 @@ func (mig *migrator) monitorJobs(ctx context.Context) {
 			}
 
 			log.Info(ctx, "claimed job", log.Data{"job_id": job.ID, "job_state": job.State})
-			mig.executeJob(ctx, job)
+			mig.executeJob(job)
 		}
 	}
 }
 
 // executeJob executes the provided job in a separate goroutine based on
 // it's state
-func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
+func (mig *migrator) executeJob(job *domain.Job) {
+	requestID := dpRequest.NewRequestID(RequestIDLength)
+	ctx := dpRequest.WithRequestId(context.Background(), requestID)
+	log.Info(ctx, "executing job", log.Data{"job_id": job.ID, "job_state": job.State})
 	mig.wg.Add(1)
 	go func() {
 		defer mig.wg.Done()
@@ -89,7 +99,7 @@ func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 			return
 		}
 
-		jobExecutor, err := mig.getJobExecutor(ctx, job)
+		jobExecutor, err := mig.getJobExecutor(job)
 		if err != nil {
 			log.Error(ctx, "failed to get job executor", err, logData)
 			_ = mig.failJob(ctx, job, err, failureReasonExecutorMissing)
