@@ -99,9 +99,9 @@ func (mig *migrator) executeTask(task *domain.Task) {
 		case domain.StateReverting:
 			err = taskExecutor.Revert(ctx, task)
 			if err == nil {
-				updateErr := mig.jobService.UpdateTaskState(ctx, task.ID, domain.StateRejected)
-				if updateErr != nil && !errors.Is(updateErr, appErrors.ErrStateAlreadyAtTarget) {
-					err = updateErr
+				err = mig.jobService.UpdateTaskState(ctx, task.ID, domain.StateRejected)
+				if errors.Is(err, appErrors.ErrStateAlreadyAtTarget) {
+					err = nil
 				}
 			}
 		default:

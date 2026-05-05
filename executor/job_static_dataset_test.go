@@ -487,19 +487,23 @@ func TestJobStaticDataset(t *testing.T) {
 		}))
 		defer server.Close()
 
+		jobTaskCalls := 0
 		mockJobService := &applicationMocks.JobServiceMock{
-			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
-				return 2, nil
-			},
 			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
-				return []*domain.Task{
-					{
-						ID:   "series-task",
-						Type: domain.TaskTypeDatasetSeries,
-						Source: &domain.TaskMetadata{
-							ID: "/datasets/my-dataset",
+				jobTaskCalls++
+				if offset == 0 {
+					return []*domain.Task{
+						{
+							ID:   "series-task",
+							Type: domain.TaskTypeDatasetSeries,
+							Source: &domain.TaskMetadata{
+								ID: "/datasets/my-dataset",
+							},
 						},
-					},
+					}, 2, nil
+				}
+
+				return []*domain.Task{
 					{
 						ID:   "version-task",
 						Type: domain.TaskTypeDatasetVersion,
@@ -542,6 +546,7 @@ func TestJobStaticDataset(t *testing.T) {
 
 			Convey("Then no error is returned and zebedee cleanup methods are called", func() {
 				So(err, ShouldBeNil)
+				So(jobTaskCalls, ShouldEqual, 2)
 				So(len(mockZebedeeClient.DeleteCollectionContentCalls()), ShouldEqual, 2)
 				So(mockZebedeeClient.DeleteCollectionContentCalls()[0].CollectionID, ShouldEqual, testCollectionID)
 				So(mockZebedeeClient.DeleteCollectionContentCalls()[0].Path, ShouldEqual, "/datasets/my-dataset")

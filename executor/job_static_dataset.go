@@ -227,38 +227,43 @@ func (e *StaticDatasetJobExecutor) revertZebedeeCollection(ctx context.Context, 
 }
 
 func (e *StaticDatasetJobExecutor) getZebedeeContentPathsForRevert(ctx context.Context, jobNumber int) ([]string, error) {
-	total, err := e.jobService.CountTasksByJobNumber(ctx, jobNumber)
-	if err != nil {
-		return nil, err
-	}
-
-	if total == 0 {
-		return nil, nil
-	}
-
-	tasks, _, err := e.jobService.GetJobTasks(ctx, nil, jobNumber, total, 0)
-	if err != nil {
-		return nil, err
-	}
-
 	seen := make(map[string]struct{})
 	paths := make([]string, 0)
 
-	for _, task := range tasks {
-		if task == nil || task.Source == nil || task.Source.ID == "" {
-			continue
+	const pageSize = 100
+	offset := 0
+
+	for {
+		tasks, total, err := e.jobService.GetJobTasks(ctx, nil, jobNumber, pageSize, offset)
+		if err != nil {
+			return nil, err
 		}
 
-		if task.Type != domain.TaskTypeDatasetSeries && task.Type != domain.TaskTypeDatasetVersion {
-			continue
+		if len(tasks) == 0 {
+			break
 		}
 
-		if _, ok := seen[task.Source.ID]; ok {
-			continue
+		for _, task := range tasks {
+			if task == nil || task.Source == nil || task.Source.ID == "" {
+				continue
+			}
+
+			if task.Type != domain.TaskTypeDatasetSeries && task.Type != domain.TaskTypeDatasetVersion {
+				continue
+			}
+
+			if _, ok := seen[task.Source.ID]; ok {
+				continue
+			}
+
+			seen[task.Source.ID] = struct{}{}
+			paths = append(paths, task.Source.ID)
 		}
 
-		seen[task.Source.ID] = struct{}{}
-		paths = append(paths, task.Source.ID)
+		offset += len(tasks)
+		if offset >= total {
+			break
+		}
 	}
 
 	return paths, nil
