@@ -76,16 +76,16 @@ func (mig *migrator) monitorJobs(ctx context.Context) {
 			}
 
 			log.Info(ctx, "claimed job", log.Data{"job_id": job.ID, "job_state": job.State})
-			mig.executeJob(job)
+			mig.executeJob(ctx, job)
 		}
 	}
 }
 
 // executeJob executes the provided job in a separate goroutine based on
 // it's state
-func (mig *migrator) executeJob(job *domain.Job) {
+func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 	requestID := dpRequest.NewRequestID(RequestIDLength)
-	ctx := dpRequest.WithRequestId(context.Background(), requestID)
+	ctx = dpRequest.WithRequestId(ctx, requestID)
 	log.Info(ctx, "executing job", log.Data{"job_id": job.ID, "job_state": job.State})
 	mig.wg.Add(1)
 	go func() {
@@ -113,6 +113,11 @@ func (mig *migrator) executeJob(job *domain.Job) {
 		case domain.StatePublishing:
 			err = jobExecutor.Publish(ctx, job)
 		case domain.StateReverting:
+			if _, alreadyActive := mig.activeRevertJobs.LoadOrStore(job.JobNumber, struct{}{}); alreadyActive {
+				return
+			}
+			defer mig.activeRevertJobs.Delete(job.JobNumber)
+
 			shouldWaitForTasks, revertFailureReason, checkErr := mig.checkRevertState(ctx, job.JobNumber)
 			if checkErr != nil {
 				err = checkErr
@@ -184,6 +189,12 @@ func (mig *migrator) failJob(ctx context.Context, job *domain.Job, originalErr e
 		if err == nil && latestJob != nil {
 			job = latestJob
 		}
+	}
+
+	switch job.State {
+	case domain.StateFailedMigration, domain.StateRejected, domain.StateCancelled,
+		domain.StateCompleted, domain.StateFailedPostPublish, domain.StateFailedPublish:
+		return originalErr
 	}
 
 	stateTransitionRule, ok := mig.GetStateTransitionRules()[job.State]

@@ -62,15 +62,15 @@ func (mig *migrator) monitorTasks(ctx context.Context) {
 				}
 			}
 			log.Info(ctx, "claimed task", log.Data{"task_id": task.ID, "task_state": task.State})
-			mig.executeTask(task)
+			mig.executeTask(ctx, task)
 		}
 	}
 }
 
 // executeTask executes a task based on its state
-func (mig *migrator) executeTask(task *domain.Task) {
+func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 	requestID := dpRequest.NewRequestID(RequestIDLength)
-	ctx := dpRequest.WithRequestId(context.Background(), requestID)
+	ctx = dpRequest.WithRequestId(ctx, requestID)
 	log.Info(ctx, "executing task", log.Data{"task_id": task.ID, "task_state": task.State})
 	mig.wg.Add(1)
 	go func() {

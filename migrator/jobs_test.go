@@ -105,7 +105,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 				State: domain.StateMigrating,
 			}
 
-			mig.executeJob(job)
+			mig.executeJob(context.Background(), job)
 			mig.wg.Wait()
 
 			Convey("Then the executor is called to migrate", func() {
@@ -123,7 +123,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 				State: domain.StateReverting,
 			}
 
-			mig.executeJob(ctx, job)
+			mig.executeJob(context.Background(), job)
 			mig.wg.Wait()
 
 			Convey("Then the executor is not called yet while tasks are still reverting", func() {
@@ -149,7 +149,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 				State: "unknown-state",
 			}
 
-			mig.executeJob(job)
+			mig.executeJob(context.Background(), job)
 			mig.wg.Wait()
 
 			Convey("Then the executor is not called to migrate", func() {
@@ -166,7 +166,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 				State: domain.StatePublishing,
 			}
 
-			mig.executeJob(job)
+			mig.executeJob(context.Background(), job)
 			mig.wg.Wait()
 
 			Convey("Then the executor is called to publish", func() {
@@ -209,7 +209,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 				State: domain.StateMigrating,
 			}
 
-			mig.executeJob(job)
+			mig.executeJob(context.Background(), job)
 			mig.wg.Wait()
 
 			Convey("Then the job is marked as failed", func() {
@@ -260,7 +260,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 					Type: fakeJobType,
 				},
 			}
-			mig.executeJob(job)
+			mig.executeJob(context.Background(), job)
 			mig.wg.Wait()
 
 			Convey("Then the job is failed", func() {
@@ -313,7 +313,7 @@ func TestMigratorExecuteJob(t *testing.T) {
 					Type: fakeJobType,
 				},
 			}
-			mig.executeJob(job)
+			mig.executeJob(context.Background(), job)
 			mig.wg.Wait()
 
 			Convey("Then the job is failed", func() {

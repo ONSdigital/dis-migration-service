@@ -79,7 +79,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				State:     domain.StateMigrating,
 			}
 
-			mig.executeTask(task)
+			mig.executeTask(context.Background(), task)
 			mig.wg.Wait()
 
 			Convey("Then the executor is called to migrate", func() {
@@ -96,7 +96,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				State:     domain.StateReverting,
 			}
 
-			mig.executeTask(ctx, task)
+			mig.executeTask(context.Background(), task)
 			mig.wg.Wait()
 
 			Convey("Then the executor is called to revert", func() {
@@ -118,7 +118,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				State: "unknown-state",
 			}
 
-			mig.executeTask(task)
+			mig.executeTask(context.Background(), task)
 			mig.wg.Wait()
 
 			Convey("Then the executor is not called to migrate", func() {
@@ -173,7 +173,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				State: domain.StateMigrating,
 			}
 
-			mig.executeTask(task)
+			mig.executeTask(context.Background(), task)
 			mig.wg.Wait()
 
 			Convey("Then the task is failed", func() {
@@ -234,7 +234,7 @@ func TestMigratorExecuteTask(t *testing.T) {
 				Type:      fakeTaskType,
 				State:     domain.StateMigrating,
 			}
-			mig.executeTask(task)
+			mig.executeTask(context.Background(), task)
 			mig.wg.Wait()
 
 			Convey("Then the task is failed", func() {
