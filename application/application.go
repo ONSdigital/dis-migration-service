@@ -152,33 +152,20 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 		return err
 	}
 
-	if newState == domain.StateRejected && job.State != domain.StateReverting {
-		if err := js.transitionJobTasksToReverting(ctx, jobNumber); err != nil {
-			return fmt.Errorf("failed to reject job tasks: %w", err)
-		}
+	if err := js.handleRejectedTransition(ctx, job, jobNumber, newState); err != nil {
+		return err
+	}
 
-		now := time.Now().UTC()
-		err = js.store.UpdateJobState(ctx, job.ID, job.State, domain.StateReverting, now)
-		if err != nil {
-			return fmt.Errorf("failed to queue job rejection: %w", err)
-		}
+	if newState == domain.StateRejected && job.State != domain.StateReverting {
 		return nil
 	}
 
-	if newState == domain.StateRejected && job.State == domain.StateReverting {
-		allTasksTerminal, err := js.areAllRevertTasksTerminal(ctx, jobNumber)
-		if err != nil {
-			return fmt.Errorf("failed to validate reverting tasks: %w", err)
-		}
-		if !allTasksTerminal {
-			return appErrors.ErrJobStateTransitionNotAllowed
-		}
+	if err := js.transitionJobState(ctx, job, newState); err != nil {
+		return err
 	}
 
-	now := time.Now().UTC()
-	err = js.store.UpdateJobState(ctx, job.ID, job.State, newState, now)
-	if err != nil {
-		return fmt.Errorf("failed to update job state: %w", err)
+	if err := js.validateRevertAfterJobUpdate(ctx, job, jobNumber, newState); err != nil {
+		return err
 	}
 
 	// Log event for approval or rejected state transitions if feature is enabled
@@ -191,6 +178,66 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 			// TODO: Consider implementing a notification mechanism (e.g., alerts) for event logging failure
 		}
 	}
+	return nil
+}
+
+func (js *jobService) handleRejectedTransition(ctx context.Context, job *domain.Job, jobNumber int, newState domain.State) error {
+	if newState != domain.StateRejected {
+		return nil
+	}
+
+	if job.State != domain.StateReverting {
+		if err := js.transitionJobTasksToReverting(ctx, jobNumber); err != nil {
+			return fmt.Errorf("failed to reject job tasks: %w", err)
+		}
+
+		now := time.Now().UTC()
+		err := js.store.UpdateJobState(ctx, job.ID, job.State, domain.StateReverting, now)
+		if err != nil {
+			return fmt.Errorf("failed to queue job rejection: %w", err)
+		}
+		return nil
+	}
+
+	allTasksTerminal, err := js.areAllRevertTasksTerminal(ctx, jobNumber)
+	if err != nil {
+		return fmt.Errorf("failed to validate reverting tasks: %w", err)
+	}
+	if !allTasksTerminal {
+		return appErrors.ErrJobStateTransitionNotAllowed
+	}
+
+	return nil
+}
+
+func (js *jobService) transitionJobState(ctx context.Context, job *domain.Job, newState domain.State) error {
+	now := time.Now().UTC()
+	err := js.store.UpdateJobState(ctx, job.ID, job.State, newState, now)
+	if err != nil {
+		return fmt.Errorf("failed to update job state: %w", err)
+	}
+
+	return nil
+}
+
+func (js *jobService) validateRevertAfterJobUpdate(ctx context.Context, job *domain.Job, jobNumber int, newState domain.State) error {
+	if newState != domain.StateRejected || job.State != domain.StateReverting {
+		return nil
+	}
+
+	allTasksTerminal, terminalErr := js.areAllRevertTasksTerminal(ctx, jobNumber)
+	if terminalErr != nil {
+		return fmt.Errorf("failed to validate reverting tasks after update: %w", terminalErr)
+	}
+
+	if !allTasksTerminal {
+		rollbackErr := js.store.UpdateJobState(ctx, job.ID, newState, domain.StateReverting, time.Now().UTC())
+		if rollbackErr != nil {
+			return fmt.Errorf("failed to rollback job state after revert race: %w", rollbackErr)
+		}
+		return appErrors.ErrJobStateTransitionNotAllowed
+	}
+
 	return nil
 }
 

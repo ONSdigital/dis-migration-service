@@ -897,6 +897,57 @@ func TestUpdateJobState(t *testing.T) {
 		})
 	})
 
+	Convey("Given a reverting job where tasks become non-terminal", t, func() {
+		fakeJob := &domain.Job{
+			ID:        "test-job-id",
+			JobNumber: testJobNumber,
+			State:     domain.StateReverting,
+		}
+
+		var mockMongo *storeMocks.MongoDBMock
+		mockMongo = &storeMocks.MongoDBMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return fakeJob, nil
+			},
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 2, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit int, offset int) ([]*domain.Task, int, error) {
+				if len(mockMongo.UpdateJobStateCalls()) == 0 {
+					return []*domain.Task{
+						{ID: "task-1", JobNumber: jobNumber, State: domain.StateRejected},
+						{ID: "task-2", JobNumber: jobNumber, State: domain.StateFailedMigration},
+					}, 2, nil
+				}
+
+				return []*domain.Task{{ID: "task-1", JobNumber: jobNumber, State: domain.StateRejected}}, 1, nil
+			},
+			UpdateJobStateFunc: func(ctx context.Context, id string, oldState, newState domain.State, lastUpdated time.Time) error {
+				return nil
+			},
+		}
+
+		mockStore := store.Datastore{Backend: mockMongo}
+		mockClients := clients.ClientList{}
+		cfg := &config.Config{EnableEventLogging: true}
+		jobService := Setup(&mockStore, &mockClients, cfg)
+
+		ctx := context.Background()
+
+		Convey("When transitioning the job to rejected", func() {
+			err := jobService.UpdateJobState(ctx, fakeJob.JobNumber, domain.StateRejected, "")
+
+			Convey("Then the transition should be rolled back and reported as not allowed", func() {
+				So(err, ShouldEqual, appErrors.ErrJobStateTransitionNotAllowed)
+				So(len(mockMongo.UpdateJobStateCalls()), ShouldEqual, 2)
+				So(mockMongo.UpdateJobStateCalls()[0].OldState, ShouldEqual, domain.StateReverting)
+				So(mockMongo.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.StateRejected)
+				So(mockMongo.UpdateJobStateCalls()[1].OldState, ShouldEqual, domain.StateRejected)
+				So(mockMongo.UpdateJobStateCalls()[1].NewState, ShouldEqual, domain.StateReverting)
+			})
+		})
+	})
+
 	Convey("Given a job service where state transition validation fails", t, func() {
 		fakeJob := &domain.Job{
 			JobNumber: testJobNumber,

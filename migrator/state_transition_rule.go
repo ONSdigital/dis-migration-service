@@ -219,6 +219,10 @@ func (mig *migrator) TriggerJobStateTransitions(ctx context.Context, jobNumber i
 		return err
 	}
 
+	if job.State == domain.StateReverting {
+		return nil
+	}
+
 	rule, ok := mig.GetStateTransitionRules()[job.State]
 	if !ok {
 		return nil // No transitions available from current state
