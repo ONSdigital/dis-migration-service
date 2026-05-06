@@ -95,6 +95,8 @@ func (mig *migrator) executeTask(task *domain.Task) {
 		switch task.State {
 		case domain.StateMigrating:
 			err = taskExecutor.Migrate(ctx, task)
+		case domain.StateApproved:
+			err = taskExecutor.Publish(ctx, task)
 		default:
 			err = fmt.Errorf("unsupported task state: %s", task.State)
 			log.Error(ctx, "unsupported task state for execution", err, logData)
