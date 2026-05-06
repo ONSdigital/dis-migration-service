@@ -25,6 +25,9 @@ type FakeAPI struct {
 	collectionUpdateHandler          *httpfake.Request
 	collectionContentCompleteHandler *httpfake.Request
 	collectionContentApproveHandler  *httpfake.Request
+	collectionGetHandler             *httpfake.Request
+	collectionApproveHandler         *httpfake.Request
+	collectionDetailsHandler         *httpfake.Request
 }
 
 // NewFakeAPI creates a new fake component API
@@ -51,6 +54,21 @@ func NewFakeAPI() *FakeAPI {
 	collectionUpdateHandler := fakeAPI.NewHandler().Post(fmt.Sprintf("/content/%s", testCollectionID))
 	collectionUpdateHandler.Reply(200)
 
+	collectionGetHandler := fakeAPI.NewHandler().Get(fmt.Sprintf("/collection/%s", testCollectionID))
+	collectionGetHandler.Reply(200).BodyStruct(zebedee.Collection{
+		ID:             testCollectionID,
+		ApprovalStatus: "APPROVED",
+	})
+
+	collectionApproveHandler := fakeAPI.NewHandler().Post(fmt.Sprintf("/approve/%s", testCollectionID))
+	collectionApproveHandler.Reply(200)
+
+	collectionDetailsHandler := fakeAPI.NewHandler().Get(fmt.Sprintf("/collectionDetails/%s", testCollectionID))
+	collectionDetailsHandler.Reply(200).BodyStruct(zebedee.Collection{
+		ID:             testCollectionID,
+		ApprovalStatus: "APPROVED",
+	})
+
 	return &FakeAPI{
 		fakeHTTP:                         fakeAPI,
 		datasetCreateHandler:             fakeAPI.NewHandler().Post("/datasets"),
@@ -58,6 +76,9 @@ func NewFakeAPI() *FakeAPI {
 		collectionUpdateHandler:          collectionUpdateHandler,
 		collectionContentCompleteHandler: collectionContentCompleteHandler,
 		collectionContentApproveHandler:  collectionContentApproveHandler,
+		collectionGetHandler:             collectionGetHandler,
+		collectionApproveHandler:         collectionApproveHandler,
+		collectionDetailsHandler:         collectionDetailsHandler,
 	}
 }
 

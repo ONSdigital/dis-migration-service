@@ -49,6 +49,12 @@ func TestJobStaticDataset(t *testing.T) {
 				collection.ID = testCollectionID
 				return collection, nil
 			},
+			ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
+				return nil
+			},
+			GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
+				return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusApproved}, nil
+			},
 		}
 		mockClientList := &clients.ClientList{
 			Zebedee: mockZebedeeClient,
@@ -94,6 +100,9 @@ func TestJobStaticDataset(t *testing.T) {
 			job := &domain.Job{
 				JobNumber: testJobNumber,
 				State:     domain.StatePublishing,
+				Config: &domain.JobConfig{
+					CollectionID: testCollectionID,
+				},
 			}
 
 			err := executor.Publish(ctx, job)
@@ -101,12 +110,17 @@ func TestJobStaticDataset(t *testing.T) {
 			Convey("Then no error is returned", func() {
 				So(err, ShouldBeNil)
 
-				Convey("And all tasks are updated to approved", func() {
-					So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 2)
-					So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, "task-1")
-					So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateApproved)
-					So(mockJobService.UpdateTaskStateCalls()[1].TaskID, ShouldEqual, "task-2")
-					So(mockJobService.UpdateTaskStateCalls()[1].NewState, ShouldEqual, domain.StateApproved)
+				Convey("And the collection is approved", func() {
+					So(mockZebedeeClient.ApproveCollectionCalls(), ShouldHaveLength, 1)
+					So(mockZebedeeClient.GetCollectionCalls(), ShouldHaveLength, 1)
+
+					Convey("And all tasks are updated to approved", func() {
+						So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 2)
+						So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, "task-1")
+						So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateApproved)
+						So(mockJobService.UpdateTaskStateCalls()[1].TaskID, ShouldEqual, "task-2")
+						So(mockJobService.UpdateTaskStateCalls()[1].NewState, ShouldEqual, domain.StateApproved)
+					})
 				})
 			})
 		})
@@ -196,18 +210,101 @@ func TestJobStaticDataset(t *testing.T) {
 		})
 	})
 
-	Convey("Given a static dataset job executor and a job service that errors when getting tasks", t, func() {
-		mockJobService := &applicationMocks.JobServiceMock{
-			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
-				return 2, nil
+	Convey("Given a static dataset job executor and a zebedee client that errors when getting collection status", t, func() {
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
+				return nil
 			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
-				return nil, 0, errTest
+			GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
+				return zebedee.Collection{}, errTest
 			},
 		}
-
 		mockClientList := &clients.ClientList{
-			Zebedee: &clientMocks.ZebedeeClientMock{},
+			Zebedee: mockZebedeeClient,
+		}
+
+		ctx := context.Background()
+		executor := NewStaticDatasetJobExecutor(&applicationMocks.JobServiceMock{}, mockClientList, "faketoken")
+
+		Convey("When publish is called for a job", func() {
+			job := &domain.Job{
+				JobNumber: testJobNumber,
+				State:     domain.StatePublishing,
+				Config: &domain.JobConfig{
+					CollectionID: testCollectionID,
+				},
+			}
+
+			err := executor.Publish(ctx, job)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
+			})
+		})
+	})
+
+	Convey("Given a static dataset job executor and a zebedee client that returns an error collection status", t, func() {
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
+				return nil
+			},
+			GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
+				return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusError}, nil
+			},
+		}
+		mockClientList := &clients.ClientList{
+			Zebedee: mockZebedeeClient,
+		}
+
+		ctx := context.Background()
+		executor := NewStaticDatasetJobExecutor(&applicationMocks.JobServiceMock{}, mockClientList, "faketoken")
+
+		Convey("When publish is called for a job", func() {
+			job := &domain.Job{
+				JobNumber: testJobNumber,
+				State:     domain.StatePublishing,
+				Config: &domain.JobConfig{
+					CollectionID: testCollectionID,
+				},
+			}
+
+			err := executor.Publish(ctx, job)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldNotBeNil)
+			})
+		})
+	})
+
+	Convey("Given a static dataset job executor and a zebedee client that returns pending then approved collection status", t, func() {
+		callCount := 0
+		mockJobService := &applicationMocks.JobServiceMock{
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 1, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+				return []*domain.Task{
+					{ID: "task-1", State: domain.StateInReview},
+				}, 1, nil
+			},
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
+				return nil
+			},
+		}
+		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
+				return nil
+			},
+			GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
+				callCount++
+				if callCount < 3 {
+					return zebedee.Collection{ApprovalStatus: "IN_PROGRESS"}, nil
+				}
+				return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusApproved}, nil
+			},
+		}
+		mockClientList := &clients.ClientList{
+			Zebedee: mockZebedeeClient,
 		}
 
 		ctx := context.Background()
@@ -217,6 +314,51 @@ func TestJobStaticDataset(t *testing.T) {
 			job := &domain.Job{
 				JobNumber: testJobNumber,
 				State:     domain.StatePublishing,
+				Config: &domain.JobConfig{
+					CollectionID: testCollectionID,
+				},
+			}
+
+			err := executor.Publish(ctx, job)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+				So(mockZebedeeClient.GetCollectionCalls(), ShouldHaveLength, 3)
+				So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 1)
+			})
+		})
+	})
+
+	Convey("Given a static dataset job executor and a job service that errors when getting tasks", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 2, nil
+			},
+			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
+				return nil, 0, errTest
+			},
+		}
+		mockClientList := &clients.ClientList{
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
+					return nil
+				},
+				GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
+					return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusApproved}, nil
+				},
+			},
+		}
+
+		ctx := context.Background()
+		executor := NewStaticDatasetJobExecutor(mockJobService, mockClientList, "faketoken")
+
+		Convey("When publish is called for a job", func() {
+			job := &domain.Job{
+				JobNumber: testJobNumber,
+				State:     domain.StatePublishing,
+				Config: &domain.JobConfig{
+					CollectionID: testCollectionID,
+				},
 			}
 
 			err := executor.Publish(ctx, job)
@@ -243,9 +385,15 @@ func TestJobStaticDataset(t *testing.T) {
 				return errTest
 			},
 		}
-
 		mockClientList := &clients.ClientList{
-			Zebedee: &clientMocks.ZebedeeClientMock{},
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
+					return nil
+				},
+				GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
+					return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusApproved}, nil
+				},
+			},
 		}
 
 		ctx := context.Background()
@@ -255,6 +403,9 @@ func TestJobStaticDataset(t *testing.T) {
 			job := &domain.Job{
 				JobNumber: testJobNumber,
 				State:     domain.StatePublishing,
+				Config: &domain.JobConfig{
+					CollectionID: testCollectionID,
+				},
 			}
 
 			err := executor.Publish(ctx, job)
@@ -272,9 +423,15 @@ func TestJobStaticDataset(t *testing.T) {
 				return 0, errTest
 			},
 		}
-
 		mockClientList := &clients.ClientList{
-			Zebedee: &clientMocks.ZebedeeClientMock{},
+			Zebedee: &clientMocks.ZebedeeClientMock{
+				ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
+					return nil
+				},
+				GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
+					return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusApproved}, nil
+				},
+			},
 		}
 
 		ctx := context.Background()
@@ -284,6 +441,9 @@ func TestJobStaticDataset(t *testing.T) {
 			job := &domain.Job{
 				JobNumber: testJobNumber,
 				State:     domain.StatePublishing,
+				Config: &domain.JobConfig{
+					CollectionID: testCollectionID,
+				},
 			}
 
 			err := executor.Publish(ctx, job)

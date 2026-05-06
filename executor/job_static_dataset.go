@@ -2,10 +2,12 @@ package executor
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -76,6 +78,30 @@ func (e *StaticDatasetJobExecutor) Publish(ctx context.Context, job *domain.Job)
 	// Implementation of publish for static dataset
 	logData := log.Data{"job_number": job.JobNumber}
 	log.Info(ctx, "starting publishing for job", logData)
+
+	// approving zebedee collection
+	log.Info(ctx, "starting zebedee collection approval for job", logData)
+	err := e.clientList.Zebedee.ApproveCollection(ctx, e.serviceAuthToken, job.Config.CollectionID)
+	if err != nil {
+		log.Error(ctx, "failed to approve collection in zebedee", err, logData)
+		return err
+	}
+
+	collectionStatus := zebedee.CollectionStatusNotStarted
+
+	for collectionStatus != zebedee.CollectionStatusApproved {
+		collection, err := e.clientList.Zebedee.GetCollection(ctx, e.serviceAuthToken, job.Config.CollectionID)
+		if err != nil {
+			log.Error(ctx, "failed to get collection in zebedee", err, logData)
+			return err
+		}
+		collectionStatus = collection.ApprovalStatus
+		if collectionStatus == zebedee.CollectionStatusError {
+			err := fmt.Errorf("zebedee collection approval failed with error status")
+			log.Error(ctx, "collection approval failed", err, logData)
+			return err
+		}
+	}
 
 	totalTasks, err := e.jobService.CountTasksByJobNumber(ctx, job.JobNumber)
 	if err != nil {

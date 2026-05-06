@@ -23,9 +23,11 @@ type RedirectAPIClient interface {
 // ZebedeeClient is an interface defining the methods for the Zebedee
 // (github.com/ONSdigital/zebedee) client.
 type ZebedeeClient interface {
+	ApproveCollection(ctx context.Context, authToken, collectionID string) error
 	ApproveCollectionContent(ctx context.Context, authToken, collectionID, lang, pagePath string) error
 	CompleteCollectionContent(ctx context.Context, authToken, collectionID, lang, pagePath string) error
 	CreateCollection(ctx context.Context, authToken string, collection zebedee.Collection) (zebedee.Collection, error)
+	GetCollection(ctx context.Context, authToken, collectionID string) (zebedee.Collection, error)
 	GetDataset(ctx context.Context, authToken, collectionID, lang, path string) (d zebedee.Dataset, err error)
 	GetDatasetLandingPage(ctx context.Context, authToken, collectionID, lang, path string) (d zebedee.DatasetLandingPage, err error)
 	GetFileSize(ctx context.Context, authToken, collectionID, lang, uri string) (f zebedee.FileSize, err error)
