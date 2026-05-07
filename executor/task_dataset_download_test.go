@@ -131,6 +131,20 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 					})
 				})
 			})
+
+			Convey("When publish is called for a download task", func() {
+				err := executor.Publish(ctx, testDownloadTask)
+
+				Convey("Then no error is returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And the task state is updated to Published", func() {
+						So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+						So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, testDownloadTask.ID)
+						So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StatePublished)
+					})
+				})
+			})
 		})
 
 		Convey("And a dataset download task executor with a zebedee client mock that errors", func() {

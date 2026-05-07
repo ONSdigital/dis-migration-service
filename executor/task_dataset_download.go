@@ -136,6 +136,15 @@ func (e *DatasetDownloadTaskExecutor) Migrate(ctx context.Context, task *domain.
 // Publish handles the publish operations for a dataset download task.
 func (e *DatasetDownloadTaskExecutor) Publish(ctx context.Context, task *domain.Task) error {
 	// Implementation of publish for dataset download
+	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber}
+	log.Info(ctx, "starting publish for dataset download task", logData)
+
+	err := e.jobService.UpdateTaskState(ctx, task.ID, domain.StatePublished)
+	if err != nil {
+		log.Error(ctx, "failed to update publish task", err, logData)
+		return err
+	}
+	log.Info(ctx, "completed publish for dataset download task", logData)
 	return nil
 }
 
