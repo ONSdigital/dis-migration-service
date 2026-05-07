@@ -88,6 +88,20 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("When publish is called for a task", func() {
+			err := executor.Publish(ctx, testEditionTask)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And the task state is updated to Published", func() {
+					So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+					So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, testEditionTask.ID)
+					So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StatePublished)
+				})
+			})
+		})
 	})
 
 	Convey("Given a dataset edition task executor with a zebedee client mock that returns a dataset with multiple versions", t, func() {
