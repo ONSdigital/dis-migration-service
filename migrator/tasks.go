@@ -13,7 +13,6 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
-	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/executor"
 	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -100,12 +99,6 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 			err = taskExecutor.Publish(ctx, task)
 		case domain.StateReverting:
 			err = taskExecutor.Revert(ctx, task)
-			if err == nil {
-				err = mig.jobService.UpdateTaskState(ctx, task.ID, domain.StateRejected)
-				if errors.Is(err, appErrors.ErrStateAlreadyAtTarget) {
-					err = nil
-				}
-			}
 		default:
 			err = fmt.Errorf("unsupported task state: %s", task.State)
 			log.Error(ctx, "unsupported task state for execution", err, logData)

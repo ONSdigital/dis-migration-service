@@ -4,16 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
-	dprequest "github.com/ONSdigital/dp-net/v3/request"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -154,11 +150,6 @@ func (e *StaticDatasetJobExecutor) Revert(ctx context.Context, job *domain.Job) 
 	log.Info(ctx, "starting revert for static dataset job", logData)
 	revertErrors := make([]error, 0, 2)
 
-	if err := e.deleteDatasetFromAPI(ctx, e.clientList.DatasetAPI.URL(), job.Config.TargetID, e.serviceAuthToken); err != nil {
-		log.Error(ctx, "failed to delete dataset during job revert", err, logData)
-		revertErrors = append(revertErrors, err)
-	}
-
 	if job.Config.CollectionID != "" {
 		logData["collection_id"] = job.Config.CollectionID
 		if err := e.revertZebedeeCollection(ctx, job.JobNumber, job.Config.CollectionID); err != nil {
@@ -171,40 +162,30 @@ func (e *StaticDatasetJobExecutor) Revert(ctx context.Context, job *domain.Job) 
 		return fmt.Errorf("failed to fully revert static dataset job: %w", errors.Join(revertErrors...))
 	}
 
+	totalTasks, err := e.jobService.CountTasksByJobNumber(ctx, job.JobNumber)
+	if err != nil {
+		log.Error(ctx, "failed to count tasks", err, logData)
+		return err
+	}
+
+	tasks, _, err := e.jobService.GetJobTasks(ctx, []domain.State{domain.StateInReview}, job.JobNumber, totalTasks, 0)
+	if err != nil {
+		log.Error(ctx, "failed to get job tasks", err, logData)
+		return err
+	}
+	log.Info(ctx, "successfully got all job tasks", logData)
+
+	for _, task := range tasks {
+		err := e.jobService.UpdateTaskState(ctx, task.ID, domain.StateRejected)
+		if err != nil {
+			log.Error(ctx, "failed to update task state", err, logData)
+			return err
+		}
+	}
+	log.Info(ctx, "successfully updated all job tasks state to reverting", logData)
+
 	log.Info(ctx, "completed revert for static dataset job", logData)
 	return nil
-}
-
-func (e *StaticDatasetJobExecutor) deleteDatasetFromAPI(ctx context.Context, datasetAPIURL, datasetID, serviceAuthToken string) error {
-	if datasetAPIURL == "" || datasetID == "" {
-		return fmt.Errorf("dataset api url and dataset id are required")
-	}
-
-	endpoint := strings.TrimRight(datasetAPIURL, "/") + "/datasets/" + url.PathEscape(datasetID)
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, endpoint, http.NoBody)
-	if err != nil {
-		return err
-	}
-
-	dprequest.AddServiceTokenHeader(req, serviceAuthToken)
-
-	//nolint:gosec // G704 false positive: destination is derived from trusted Dataset API config.
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil
-	}
-
-	if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
-		return nil
-	}
-
-	body, _ := io.ReadAll(resp.Body)
-	return fmt.Errorf("failed to delete dataset %q: status %d body %q", datasetID, resp.StatusCode, strings.TrimSpace(string(body)))
 }
 
 // revertZebedeeCollection removes collection content first

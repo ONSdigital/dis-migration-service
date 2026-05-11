@@ -33,6 +33,8 @@ const (
 	StateFailedPublish State = "failed_publish"
 	// StateFailedMigration indicates a job or task failed during migration
 	StateFailedMigration State = "failed_migration"
+	// StateFailedReversion indicates a job or task failed during reverting
+	StateFailedReversion State = "failed_reversion"
 	// StateCancelled indicates a job or task has been cancelled
 	StateCancelled State = "cancelled"
 )
@@ -42,7 +44,7 @@ func IsValidState(state State) bool {
 	switch state {
 	case StateSubmitted, StateInReview, StateApproved, StateRejected, StatePublished,
 		StateCompleted, StateMigrating, StatePublishing, StatePostPublishing,
-		StateReverting, StateFailedMigration, StateFailedPostPublish, StateFailedPublish,
+		StateReverting, StateFailedMigration, StateFailedPostPublish, StateFailedPublish, StateFailedReversion,
 		StateCancelled:
 		return true
 	default:
@@ -56,14 +58,14 @@ func GetNonCancelledStates() []State {
 	return []State{
 		StateSubmitted, StateInReview, StateApproved, StatePublished,
 		StateCompleted, StateMigrating, StatePublishing, StatePostPublishing,
-		StateReverting, StateFailedMigration, StateFailedPostPublish, StateFailedPublish,
+		StateReverting, StateFailedMigration, StateFailedPostPublish, StateFailedPublish, StateFailedReversion,
 	}
 }
 
 // IsFailedState checks if the provided state is a failure state.
 func IsFailedState(state State) bool {
 	switch state {
-	case StateFailedMigration, StateFailedPostPublish, StateFailedPublish:
+	case StateFailedMigration, StateFailedPostPublish, StateFailedPublish, StateFailedReversion:
 		return true
 	default:
 		return false

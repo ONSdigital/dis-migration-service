@@ -37,8 +37,8 @@ func (mig *migrator) GetStateTransitionRules() map[domain.State]StateTransitionR
 			Description:  "publish successful, move to published",
 		},
 		domain.StateReverting: {
-			TargetState:  domain.StateRejected,
-			FailureState: domain.StateFailedMigration,
+			TargetState:  domain.StateCancelled,
+			FailureState: domain.StateFailedReversion,
 			Description:  "revert successful, move to cancelled",
 		},
 	}
@@ -217,10 +217,6 @@ func (mig *migrator) TriggerJobStateTransitions(ctx context.Context, jobNumber i
 	job, err := mig.jobService.GetJob(ctx, jobNumber)
 	if err != nil {
 		return err
-	}
-
-	if job.State == domain.StateReverting {
-		return nil
 	}
 
 	rule, ok := mig.GetStateTransitionRules()[job.State]

@@ -120,7 +120,17 @@ func (e *DatasetEditionTaskExecutor) PostPublish(ctx context.Context, task *doma
 
 // Revert handles the revert operations for a dataset edition task.
 func (e *DatasetEditionTaskExecutor) Revert(ctx context.Context, task *domain.Task) error {
-	// Implementation of revert for dataset edition
+	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber}
+
+	log.Info(ctx, "starting reversion for dataset edition task", logData)
+
+	err := e.jobService.UpdateTaskState(ctx, task.ID, domain.StateCancelled)
+	if err != nil {
+		log.Error(ctx, "failed to update migration task", err, logData)
+		return err
+	}
+	log.Info(ctx, "completed reversion for dataset edition task", logData)
+
 	return nil
 }
 
