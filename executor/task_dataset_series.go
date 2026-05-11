@@ -153,6 +153,27 @@ func (e *DatasetSeriesTaskExecutor) PostPublish(ctx context.Context, task *domai
 
 // Revert handles the revert operations for a dataset series task.
 func (e *DatasetSeriesTaskExecutor) Revert(ctx context.Context, task *domain.Task) error {
-	// Implementation of revert for static dataset
+	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber}
+
+	log.Info(ctx, "starting reversion for dataset series task", logData)
+
+	if err := e.deleteDatasetFromAPI(ctx, e.clientList.DatasetAPI.URL(), task.Target.ID, e.serviceAuthToken); err != nil {
+		log.Error(ctx, "failed to delete dataset during task revert", err, logData)
+	}
+
+	err := e.jobService.UpdateTaskState(ctx, task.ID, domain.StateCancelled)
+	if err != nil {
+		log.Error(ctx, "failed to update migration task", err, logData)
+		return err
+	}
+
+	log.Info(ctx, "completed reversion for dataset series task", logData)
+	return nil
+}
+
+func (e *DatasetSeriesTaskExecutor) deleteDatasetFromAPI(ctx context.Context, datasetAPIURL, datasetID, serviceAuthToken string) error {
+
+	//TODO - this needs a client method added for deletion.
+	log.Info(ctx, "deleted the dataset from the API")
 	return nil
 }

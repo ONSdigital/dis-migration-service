@@ -94,7 +94,7 @@ func Get() (*Config, error) {
 		HealthCheckInterval:             30 * time.Second,
 		HealthCheckCriticalTimeout:      90 * time.Second,
 		MigratorMaxConcurrentExecutions: 5,
-		MigratorPollInterval:            5 * time.Second,
+		MigratorPollInterval:            1 * time.Second,
 		OTBatchTimeout:                  5 * time.Second,
 		OTExporterOTLPEndpoint:          "localhost:4317",
 		OTServiceName:                   "dis-migration-service",

@@ -170,6 +170,12 @@ func (e *DatasetDownloadTaskExecutor) Revert(ctx context.Context, task *domain.T
 		return err
 	}
 
+	err := e.jobService.UpdateTaskState(ctx, task.ID, domain.StateCancelled)
+	if err != nil {
+		log.Error(ctx, "failed to update migration task", err, logData)
+		return err
+	}
+
 	log.Info(ctx, "completed revert for dataset download task", logData)
 	return nil
 }
