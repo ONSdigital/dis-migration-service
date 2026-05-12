@@ -47,8 +47,8 @@ github.com/ONSdigital/dp-s3/v3 v3.3.0 h1:l5QrJ4lFHMfhHmk0Cox+0xSNQ6RhkCHJ6ikqq5X
 github.com/ONSdigital/dp-s3/v3 v3.3.0/go.mod h1:KT4ZL+3p3RDYv4zfgAKXb4ofPey2eDUFZKk0E/c/jr4=
 github.com/ONSdigital/dp-topic-api v1.3.1 h1:rnYeiZPRM7vrA1k75OCw4a7ZGAfsM9gbqew+/eJlb88=
 github.com/ONSdigital/dp-topic-api v1.3.1/go.mod h1:5mUuCGbkfpTFpTY2Nt1PeJ4CGvvPzS5A74/3kN34A1w=
-github.com/ONSdigital/dp-upload-service v1.15.0 h1:vzFbbQ+QbhrXWm7WYRpKCISBa0brwMpkUy6DO46ysRE=
-github.com/ONSdigital/dp-upload-service v1.15.0/go.mod h1:m9se46D8a2hEy+iGAqPk31IeZXQSgtzL2F8lPVh084o=
+github.com/ONSdigital/dp-upload-service v1.16.0 h1:d5d3JLVNZcXRPEgWQ4VUBln4DtSEQAnFpkThX6yuBaw=
+github.com/ONSdigital/dp-upload-service v1.16.0/go.mod h1:wNpO98KJoogXl+skjsCgzJHKFsixEupzoKZQxOvi+WU=
 github.com/ONSdigital/log.go/v2 v2.5.2 h1:V6NYtbi+thHYTwckxOXPklZUgQCNBo1/fyPPIutu4V4=
 github.com/ONSdigital/log.go/v2 v2.5.2/go.mod h1:KZNEweCUHD8dKwhlvoRvgd2Y2aUIuU3H9/MmbFyVzW8=
 github.com/Shopify/sarama v1.38.1 h1:lqqPUPQZ7zPqYlWpTh+LQ9bhYNu2xJL6k1SJN4WVe2A=

@@ -2475,9 +2475,11 @@ func TestClaimTask(t *testing.T) {
 			task, err := jobService.ClaimTask(ctx)
 
 			Convey("Then the store should be called to claim a task", func() {
-				So(len(mockMongo.ClaimTaskCalls()), ShouldEqual, 1)
+				So(len(mockMongo.ClaimTaskCalls()), ShouldEqual, 2)
 				So(mockMongo.ClaimTaskCalls()[0].PendingState, ShouldEqual, domain.StateSubmitted)
 				So(mockMongo.ClaimTaskCalls()[0].ActiveState, ShouldEqual, domain.StateMigrating)
+				So(mockMongo.ClaimTaskCalls()[1].PendingState, ShouldEqual, domain.StateApproved)
+				So(mockMongo.ClaimTaskCalls()[1].ActiveState, ShouldEqual, domain.StatePublishing)
 			})
 
 			Convey("And no error should be returned", func() {

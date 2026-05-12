@@ -27,6 +27,7 @@ func TestMapResourceToUploadServiceMetadata(t *testing.T) {
 			})
 
 			Convey("Then the metadata fields are mapped correctly", func() {
+				So(metadata.Path, ShouldContainSubstring, "testfile.csv")
 				So(metadata.Title, ShouldEqual, "testfile.csv")
 				So(metadata.SizeInBytes, ShouldEqual, int64(2048))
 				So(metadata.Type, ShouldEqual, "text/csv")

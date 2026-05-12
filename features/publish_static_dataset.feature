@@ -77,7 +77,7 @@ Feature: Publish a static dataset job
       {
         "id": "3985ff0f-2d46-51gg-022g-6b33f8173802",
         "job_number": 30,
-        "state": "publishing",
+        "state": "published",
         "last_updated": "{{DYNAMIC_TIMESTAMP}}",
         "config": {
           "collection_id": "migration-job-test-collection",
@@ -102,7 +102,7 @@ Feature: Publish a static dataset job
             "id": "task-223e4567-e89b-12d3-a456-426614174000",
             "job_number": 30,
             "type": "dataset_series",
-            "state": "approved",
+            "state": "published",
             "last_updated": "{{DYNAMIC_RECENT_TIMESTAMP}}",
             "links": {
               "self": {

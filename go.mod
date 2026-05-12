@@ -16,7 +16,7 @@ require (
 	github.com/ONSdigital/dp-otel-go v0.0.8
 	github.com/ONSdigital/dp-permissions-api v1.11.0
 	github.com/ONSdigital/dp-topic-api v1.3.1
-	github.com/ONSdigital/dp-upload-service v1.15.0
+	github.com/ONSdigital/dp-upload-service v1.16.0
 	github.com/ONSdigital/log.go/v2 v2.5.2
 	github.com/cucumber/godog v0.15.1
 	github.com/google/uuid v1.6.0

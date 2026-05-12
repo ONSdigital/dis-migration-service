@@ -3,14 +3,22 @@ package executor
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/mapper"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	"github.com/ONSdigital/dp-dataset-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
+)
+
+// These could be abstracted to config later if desired.
+const (
+	versionPublishPollMaxRetries = 10
+	versionPublishPollDelay      = 500 * time.Millisecond
 )
 
 // DatasetVersionTaskExecutor executes migration tasks for dataset versions.
@@ -172,7 +180,58 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 
 // Publish handles the publish operations for a dataset version task.
 func (e *DatasetVersionTaskExecutor) Publish(ctx context.Context, task *domain.Task) error {
-	// Implementation of publish for dataset version
+	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber}
+
+	log.Info(ctx, "starting publish for dataset version task", logData)
+
+	headers := sdk.Headers{
+		AccessToken: e.serviceAuthToken,
+	}
+
+	err := e.clientList.DatasetAPI.PutVersionState(ctx, headers, task.Target.DatasetID, task.Target.EditionID, task.Target.ID, datasetModels.ApprovedState)
+	if err != nil {
+		log.Error(ctx, "failed to update dataset version state to approved", err, logData)
+		return err
+	}
+
+	err = e.clientList.DatasetAPI.PutVersionState(ctx, headers, task.Target.DatasetID, task.Target.EditionID, task.Target.ID, datasetModels.PublishedState)
+	if err != nil {
+		log.Error(ctx, "failed to update dataset version state to published", err, logData)
+		return err
+	}
+
+	for attempt := 1; attempt <= versionPublishPollMaxRetries; attempt++ {
+		if attempt > 1 {
+			log.Info(ctx, "version not yet published, retrying", log.Data{
+				"attempt": attempt,
+				"delay":   versionPublishPollDelay.String(),
+			}, logData)
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(versionPublishPollDelay):
+			}
+		}
+		version, err := e.clientList.DatasetAPI.GetVersion(ctx, headers, task.Target.DatasetID, task.Target.EditionID, task.Target.ID)
+		if err != nil {
+			log.Error(ctx, "failed to get dataset version", err, logData)
+			return err
+		}
+
+		if version.State == datasetModels.PublishedState {
+			log.Info(ctx, "dataset version is now published", logData)
+			break
+		}
+	}
+
+	// Mark task as complete
+	err = e.jobService.UpdateTaskState(ctx, task.ID, domain.StatePublished)
+	if err != nil {
+		log.Error(ctx, "failed to update migration task", err, logData)
+		return err
+	}
+	log.Info(ctx, "completed migration for dataset version task", logData)
 	return nil
 }
 

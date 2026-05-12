@@ -36,7 +36,7 @@ func generateFileName(n int) string {
 	return "file" + strconv.Itoa(n) + ".csv"
 }
 
-func TestDatasetVersionTaskExecutor(t *testing.T) {
+func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 	Convey("Given a job service and datasetAPI clients that don't error", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{
 			CreateTaskFunc: func(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error) {
@@ -658,6 +658,173 @@ func TestDatasetVersionTaskExecutor(t *testing.T) {
 					So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 1)
 				})
 			})
+		})
+	})
+}
+
+func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
+	Convey("Given a dataset version task executor and a dataset API client that succeeds on first poll", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
+		}
+
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+				return nil
+			},
+			GetVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string) (models.Version, error) {
+				return models.Version{State: models.PublishedState}, nil
+			},
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+		}, testServiceAuthToken)
+
+		err := executor.Publish(ctx, testVersionTask)
+
+		Convey("Then no error is returned", func() {
+			So(err, ShouldBeNil)
+			So(len(mockDatasetClient.PutVersionStateCalls()), ShouldEqual, 2)
+			So(mockDatasetClient.PutVersionStateCalls()[0].State, ShouldEqual, models.ApprovedState)
+			So(mockDatasetClient.PutVersionStateCalls()[1].State, ShouldEqual, models.PublishedState)
+			So(len(mockDatasetClient.GetVersionCalls()), ShouldEqual, 1)
+			So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+			So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StatePublished)
+		})
+	})
+
+	Convey("Given a dataset version task executor and a dataset API client that succeeds on the 3rd poll", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
+		}
+
+		callCount := 0
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+				return nil
+			},
+			GetVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string) (models.Version, error) {
+				callCount++
+				if callCount < 3 {
+					return models.Version{State: models.ApprovedState}, nil
+				}
+				return models.Version{State: models.PublishedState}, nil
+			},
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+		}, testServiceAuthToken)
+
+		err := executor.Publish(ctx, testVersionTask)
+
+		Convey("Then no error is returned and polling occurs successfully", func() {
+			So(err, ShouldBeNil)
+			So(len(mockDatasetClient.GetVersionCalls()), ShouldEqual, 3)
+			So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+		})
+	})
+
+	Convey("Given a dataset version task executor and a dataset API client that fails to set approved state", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{}
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+				return errTest
+			},
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+		}, testServiceAuthToken)
+
+		err := executor.Publish(ctx, testVersionTask)
+
+		Convey("Then an error is returned and no further calls happen", func() {
+			So(err, ShouldEqual, errTest)
+			So(len(mockDatasetClient.PutVersionStateCalls()), ShouldEqual, 1)
+			So(len(mockDatasetClient.GetVersionCalls()), ShouldEqual, 0)
+		})
+	})
+
+	Convey("Given a dataset version task executor and a dataset API client that fails to set published state", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{}
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+				return errTest
+			},
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+		}, testServiceAuthToken)
+
+		err := executor.Publish(ctx, testVersionTask)
+
+		Convey("Then an error is returned and polling does not start", func() {
+			So(err, ShouldEqual, errTest)
+			So(len(mockDatasetClient.PutVersionStateCalls()), ShouldEqual, 1)
+			So(len(mockDatasetClient.GetVersionCalls()), ShouldEqual, 0)
+		})
+	})
+
+	Convey("Given a dataset version task executor and a dataset API client that fails to get version", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{}
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+				return nil
+			},
+			GetVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string) (models.Version, error) {
+				return models.Version{}, errTest
+			},
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+		}, testServiceAuthToken)
+
+		err := executor.Publish(ctx, testVersionTask)
+
+		Convey("Then an error is returned and polling stops", func() {
+			So(err, ShouldEqual, errTest)
+			So(len(mockDatasetClient.GetVersionCalls()), ShouldEqual, 1)
+		})
+	})
+
+	Convey("Given a dataset version task executor and a store that fails to update task state", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return errTest },
+		}
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+				return nil
+			},
+			GetVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string) (models.Version, error) {
+				return models.Version{State: models.PublishedState}, nil
+			},
+		}
+
+		ctx := context.Background()
+
+		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+		}, testServiceAuthToken)
+
+		err := executor.Publish(ctx, testVersionTask)
+
+		Convey("Then an error is returned", func() {
+			So(err, ShouldEqual, errTest)
+			So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
 		})
 	})
 }

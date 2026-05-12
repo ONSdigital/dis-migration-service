@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -27,7 +28,7 @@ func MapResourceToUploadServiceMetadata(uri, datasetID, edition, version string,
 	// isPublishable is currently always true for migrated files.
 	isPublishable := true
 	uploadMetadata := uploadAPI.Metadata{
-		Path:          uuid.New().String(),
+		Path:          fmt.Sprintf("%s/%s", uuid.New().String(), filepath.Base(uri)),
 		IsPublishable: &isPublishable,
 		DatasetID:     datasetID,
 		Edition:       edition,
