@@ -102,15 +102,9 @@ func TestCanTransition(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "reverting to rejected is valid",
+			name:     "reverting to failed_reversion is valid",
 			from:     domain.StateReverting,
-			to:       domain.StateRejected,
-			expected: true,
-		},
-		{
-			name:     "reverting to failed_migration is valid",
-			from:     domain.StateReverting,
-			to:       domain.StateFailedMigration,
+			to:       domain.StateFailedReversion,
 			expected: true,
 		},
 

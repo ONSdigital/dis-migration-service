@@ -49,7 +49,9 @@ var (
 
 func TestDatasetDownloadTaskExecutor(t *testing.T) {
 	Convey("Given a dataset download task executor when revert is called", t, func() {
-		mockJobService := &applicationMocks.JobServiceMock{}
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
+		}
 
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
 			GetVersionWithHeadersFunc: func(ctx context.Context, headers sdk.Headers, datasetID, edition, version string) (datasetModels.Version, sdk.ResponseHeaders, error) {

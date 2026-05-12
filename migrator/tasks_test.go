@@ -104,11 +104,9 @@ func TestMigratorExecuteTask(t *testing.T) {
 				So(mockTestExecutor.RevertCalls()[0].Task.Type, ShouldEqual, fakeTaskType)
 			})
 
-			Convey("And the task is transitioned to rejected", func() {
+			Convey("And the task is not automatically transitioned after success", func() {
 				calls := mockJobService.UpdateTaskStateCalls()
-				So(len(calls), ShouldEqual, 1)
-				So(calls[0].TaskID, ShouldEqual, fakeTaskID)
-				So(calls[0].NewState, ShouldEqual, domain.StateRejected)
+				So(len(calls), ShouldEqual, 0)
 			})
 		})
 

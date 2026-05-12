@@ -126,17 +126,12 @@ func TestMigratorExecuteJob(t *testing.T) {
 			mig.executeJob(context.Background(), job)
 			mig.wg.Wait()
 
-			Convey("Then the executor is not called yet while tasks are still reverting", func() {
-				So(len(mockJobExecutor.RevertCalls()), ShouldEqual, 0)
+			Convey("Then the executor is called to revert", func() {
+				So(len(mockJobExecutor.RevertCalls()), ShouldEqual, 1)
 			})
 
-			Convey("And the job is not transitioned yet", func() {
+			Convey("And the job is not transitioned automatically after success", func() {
 				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 0)
-			})
-
-			Convey("And task transitions are delegated to job service update flow", func() {
-				calls := mockJobService.UpdateTaskStateCalls()
-				So(len(calls), ShouldEqual, 0)
 			})
 		})
 
@@ -391,9 +386,8 @@ func TestMigratorExecuteJob(t *testing.T) {
 				So(len(mockJobExecutor.RevertCalls()), ShouldEqual, 1)
 			})
 
-			Convey("And job failure transition is not attempted", func() {
-				So(len(updateStates), ShouldEqual, 1)
-				So(updateStates[0], ShouldEqual, domain.StateRejected)
+			Convey("And job state is not automatically transitioned after success", func() {
+				So(len(updateStates), ShouldEqual, 0)
 			})
 		})
 	})
@@ -465,9 +459,9 @@ func TestMigratorFailJob(t *testing.T) {
 			originalErr := errors.New("test error")
 			err := mig.failJob(ctx, job, originalErr, failureReasonExecutionFailed)
 
-			Convey("Then the job service is not called to update job state", func() {
-				So(err, ShouldEqual, originalErr)
-				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 0)
+			Convey("Then failJob succeeds and job state transition is attempted", func() {
+				So(err, ShouldBeNil)
+				So(len(mockJobService.UpdateJobStateCalls()), ShouldEqual, 1)
 			})
 		})
 	})

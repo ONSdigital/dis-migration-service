@@ -3,8 +3,6 @@ package executor
 import (
 	"context"
 	"errors"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	applicationMocks "github.com/ONSdigital/dis-migration-service/application/mock"
@@ -12,11 +10,6 @@ import (
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
-	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
-	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk"
-	datasetSDKMocks "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
-	filesSDK "github.com/ONSdigital/dp-files-api/sdk"
-	filesSDKMocks "github.com/ONSdigital/dp-files-api/sdk/mocks"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -464,13 +457,6 @@ func TestJobStaticDataset(t *testing.T) {
 	})
 
 	Convey("Given a static dataset job executor with download tasks for reversion", t, func() {
-		deletedDatasetPath := ""
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			deletedDatasetPath = r.URL.Path
-			w.WriteHeader(http.StatusNoContent)
-		}))
-		defer server.Close()
-
 		mockJobService := &applicationMocks.JobServiceMock{
 			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
 				return 1, nil
@@ -491,138 +477,12 @@ func TestJobStaticDataset(t *testing.T) {
 					},
 				}, 1, nil
 			},
-		}
-
-		mockDatasetClient := &datasetSDKMocks.ClienterMock{
-			URLFunc: func() string {
-				return server.URL
-			},
-			GetVersionWithHeadersFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, edition, version string) (datasetModels.Version, datasetSDK.ResponseHeaders, error) {
-				return datasetModels.Version{
-					Distributions: &[]datasetModels.Distribution{
-						{Title: "file.csv", DownloadURL: "/uploads/file.csv"},
-					},
-				}, datasetSDK.ResponseHeaders{ETag: "test-etag"}, nil
-			},
-			PutVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string, version datasetModels.Version) (datasetModels.Version, error) {
-				return datasetModels.Version{}, nil
-			},
-		}
-
-		mockFilesClient := &filesSDKMocks.ClienterMock{
-			DeleteFileFunc: func(ctx context.Context, filePath string, headers filesSDK.Headers) error {
-				return nil
-			},
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 
 		executor := NewStaticDatasetJobExecutor(
 			mockJobService,
-			&clients.ClientList{DatasetAPI: mockDatasetClient, FilesAPI: mockFilesClient},
-			"faketoken",
-		)
-
-		Convey("When revert is called for a job", func() {
-			err := executor.Revert(context.Background(), &domain.Job{
-				JobNumber: testJobNumber,
-				Config: &domain.JobConfig{
-					TargetID:     "target-dataset-id",
-					CollectionID: testCollectionID,
-				},
-			})
-
-			Convey("Then no error is returned", func() {
-				So(err, ShouldBeNil)
-				So(len(mockDatasetClient.GetVersionWithHeadersCalls()), ShouldEqual, 0)
-				So(len(mockDatasetClient.PutVersionCalls()), ShouldEqual, 0)
-				So(len(mockFilesClient.DeleteFileCalls()), ShouldEqual, 0)
-				So(deletedDatasetPath, ShouldEqual, "/datasets/target-dataset-id")
-			})
-		})
-	})
-
-	Convey("Given a static dataset job executor and dataset deletion failure during revert", t, func() {
-		datasetDeleteAttempts := 0
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			datasetDeleteAttempts++
-			http.Error(w, errTest.Error(), http.StatusInternalServerError)
-		}))
-		defer server.Close()
-
-		mockJobService := &applicationMocks.JobServiceMock{
-			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
-				return 1, nil
-			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
-				return []*domain.Task{
-					{
-						ID:   "series-task",
-						Type: domain.TaskTypeDatasetSeries,
-						Source: &domain.TaskMetadata{
-							ID: "/datasets/my-dataset",
-						},
-					},
-				}, 1, nil
-			},
-		}
-
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
-			DeleteCollectionContentFunc: func(ctx context.Context, userAuthToken, collectionID, path string) error {
-				return nil
-			},
-			DeleteCollectionFunc: func(ctx context.Context, userAuthToken, collectionID string) error {
-				return nil
-			},
-		}
-
-		executor := NewStaticDatasetJobExecutor(
-			mockJobService,
-			&clients.ClientList{
-				DatasetAPI: &datasetSDKMocks.ClienterMock{URLFunc: func() string {
-					return server.URL
-				}},
-				Zebedee: mockZebedeeClient,
-			},
-			"faketoken",
-		)
-
-		Convey("When revert is called for a job", func() {
-			err := executor.Revert(context.Background(), &domain.Job{
-				JobNumber: testJobNumber,
-				Config: &domain.JobConfig{
-					TargetID:     "target-dataset-id",
-					CollectionID: testCollectionID,
-				},
-			})
-
-			Convey("Then an error is returned", func() {
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "failed to delete dataset \"target-dataset-id\"")
-				So(datasetDeleteAttempts, ShouldEqual, 1)
-				So(len(mockZebedeeClient.DeleteCollectionContentCalls()), ShouldEqual, 1)
-				So(len(mockZebedeeClient.DeleteCollectionCalls()), ShouldEqual, 1)
-			})
-		})
-	})
-
-	Convey("Given a static dataset job executor and a transient dataset deletion response", t, func() {
-		attempts := 0
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			attempts++
-			http.Error(w, errTest.Error(), http.StatusInternalServerError)
-		}))
-		defer server.Close()
-
-		mockJobService := &applicationMocks.JobServiceMock{
-			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
-				return 0, nil
-			},
-		}
-
-		executor := NewStaticDatasetJobExecutor(
-			mockJobService,
-			&clients.ClientList{DatasetAPI: &datasetSDKMocks.ClienterMock{URLFunc: func() string {
-				return server.URL
-			}}},
+			&clients.ClientList{},
 			"faketoken",
 		)
 
@@ -634,21 +494,20 @@ func TestJobStaticDataset(t *testing.T) {
 				},
 			})
 
-			Convey("Then an error is returned after one attempt", func() {
-				So(err, ShouldNotBeNil)
-				So(attempts, ShouldEqual, 1)
+			Convey("Then no error is returned and task states are updated", func() {
+				So(err, ShouldBeNil)
+				So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+				So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateRejected)
 			})
 		})
 	})
 
 	Convey("Given a static dataset job executor with zebedee collection cleanup during revert", t, func() {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNoContent)
-		}))
-		defer server.Close()
-
 		jobTaskCalls := 0
 		mockJobService := &applicationMocks.JobServiceMock{
+			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
+				return 2, nil
+			},
 			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error) {
 				jobTaskCalls++
 				if offset == 0 {
@@ -673,6 +532,7 @@ func TestJobStaticDataset(t *testing.T) {
 					},
 				}, 2, nil
 			},
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 
 		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
@@ -687,9 +547,6 @@ func TestJobStaticDataset(t *testing.T) {
 		executor := NewStaticDatasetJobExecutor(
 			mockJobService,
 			&clients.ClientList{
-				DatasetAPI: &datasetSDKMocks.ClienterMock{URLFunc: func() string {
-					return server.URL
-				}},
 				Zebedee: mockZebedeeClient,
 			},
 			"faketoken",
@@ -706,7 +563,7 @@ func TestJobStaticDataset(t *testing.T) {
 
 			Convey("Then no error is returned and zebedee cleanup methods are called", func() {
 				So(err, ShouldBeNil)
-				So(jobTaskCalls, ShouldEqual, 2)
+				So(jobTaskCalls, ShouldEqual, 3)
 				So(len(mockZebedeeClient.DeleteCollectionContentCalls()), ShouldEqual, 2)
 				So(mockZebedeeClient.DeleteCollectionContentCalls()[0].CollectionID, ShouldEqual, testCollectionID)
 				So(mockZebedeeClient.DeleteCollectionContentCalls()[0].Path, ShouldEqual, "/datasets/my-dataset")
