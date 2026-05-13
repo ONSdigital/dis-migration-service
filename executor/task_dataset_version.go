@@ -140,7 +140,13 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 
 	log.Info(ctx, "creating dataset version in dataset API", logData)
 
-	_, err = e.clientList.DatasetAPI.PostVersion(ctx, headers, task.Target.DatasetID, task.Target.EditionID, task.Target.ID, *datasetVersion)
+	// Populating latest_version
+	isLatest := false
+	if len(seriesData.Datasets) > 0 {
+		isLatest = editionData.URI == seriesData.Datasets[0].URI && datasetVersion.Version == len(editionData.Versions)+1
+	}
+
+	_, err = e.clientList.DatasetAPI.PostVersion(ctx, headers, task.Target.DatasetID, task.Target.EditionID, task.Target.ID, *datasetVersion, isLatest)
 	if err != nil {
 		log.Error(ctx, "failed to create target dataset version in dataset API", err, logData)
 		return err

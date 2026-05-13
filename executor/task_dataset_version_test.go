@@ -54,7 +54,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		}
 
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version) (*models.Version, error) {
+			PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 				return &models.Version{}, nil
 			},
 		}
@@ -103,6 +103,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 						So(mockDatasetClient.PostVersionCalls()[0].EditionID, ShouldEqual, testEditionID)
 						So(mockDatasetClient.PostVersionCalls()[0].VersionID, ShouldEqual, "1")
 						So(mockDatasetClient.PostVersionCalls()[0].Headers.AccessToken, ShouldEqual, testServiceAuthToken)
+						So(mockDatasetClient.PostVersionCalls()[0].IsLatest, ShouldBeFalse)
 
 						Convey("And the zebedee client is called to complete and approve the collection content", func() {
 							So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).SaveContentToCollectionCalls()), ShouldEqual, 1)
@@ -191,6 +192,108 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 							So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, testVersionTask.ID)
 							So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateInReview)
 						})
+					})
+				})
+			})
+		})
+
+		Convey("And a zebedee client that returns a dataset where the current version is the latest version", func() {
+			mockClientList := &clients.ClientList{
+				DatasetAPI: mockDatasetClient,
+				Zebedee: &clientMocks.ZebedeeClientMock{
+					GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
+						return zebedee.Dataset{
+							Type: zebedee.PageTypeDataset,
+							URI:  testEditionURI,
+							Versions: []zebedee.Version{
+								{URI: testEditionURI + "/previous/v1"},
+								{URI: testEditionURI + "/previous/v2"},
+							},
+						}, nil
+					},
+					GetDatasetLandingPageFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.DatasetLandingPage, error) {
+						return zebedee.DatasetLandingPage{
+							Type: zebedee.PageTypeDatasetLandingPage,
+							Datasets: []zebedee.Link{
+								{URI: testEditionURI},
+							},
+						}, nil
+					},
+					SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+						return nil
+					},
+					CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+						return nil
+					},
+					ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+						return nil
+					},
+				},
+			}
+
+			ctx := context.Background()
+			executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+			Convey("When migrate is called for a task", func() {
+				err := executor.Migrate(ctx, testVersionTask)
+
+				Convey("Then no error is returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And PostVersion is called with isLatest=true", func() {
+						So(len(mockDatasetClient.PostVersionCalls()), ShouldEqual, 1)
+						So(mockDatasetClient.PostVersionCalls()[0].IsLatest, ShouldBeTrue)
+					})
+				})
+			})
+		})
+
+		Convey("And a zebedee client that returns a dataset where the current version is not the latest version", func() {
+			mockClientList := &clients.ClientList{
+				DatasetAPI: mockDatasetClient,
+				Zebedee: &clientMocks.ZebedeeClientMock{
+					GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
+						return zebedee.Dataset{
+							Type: zebedee.PageTypeDataset,
+							URI:  testEditionURI,
+							Versions: []zebedee.Version{
+								{URI: testEditionURI + "/previous/v1"},
+								{URI: testEditionURI + "/previous/v2"},
+							},
+						}, nil
+					},
+					GetDatasetLandingPageFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.DatasetLandingPage, error) {
+						return zebedee.DatasetLandingPage{
+							Type: zebedee.PageTypeDatasetLandingPage,
+							Datasets: []zebedee.Link{
+								{URI: "/some-other-edition-uri"},
+							},
+						}, nil
+					},
+					SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
+						return nil
+					},
+					CompleteCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+						return nil
+					},
+					ApproveCollectionContentFunc: func(ctx context.Context, userAccessToken, collectionID, lang, pagePath string) error {
+						return nil
+					},
+				},
+			}
+
+			ctx := context.Background()
+			executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+			Convey("When migrate is called for a task", func() {
+				err := executor.Migrate(ctx, testVersionTask)
+
+				Convey("Then no error is returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And PostVersion is called with isLatest=false", func() {
+						So(len(mockDatasetClient.PostVersionCalls()), ShouldEqual, 1)
+						So(mockDatasetClient.PostVersionCalls()[0].IsLatest, ShouldBeFalse)
 					})
 				})
 			})
@@ -369,7 +472,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version) (*models.Version, error) {
+				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 					return &models.Version{}, nil
 				},
 			},
@@ -432,7 +535,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version) (*models.Version, error) {
+				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 					return &models.Version{}, nil
 				},
 			},
@@ -471,7 +574,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version) (*models.Version, error) {
+				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 					return &models.Version{}, errTest
 				},
 			},
@@ -546,7 +649,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version) (*models.Version, error) {
+				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 					return &models.Version{}, nil
 				},
 			},
@@ -610,7 +713,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version) (*models.Version, error) {
+				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 					return &models.Version{}, nil
 				},
 			},
