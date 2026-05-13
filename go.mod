@@ -8,7 +8,7 @@ require (
 	github.com/ONSdigital/dp-authorisation/v2 v2.34.0
 	github.com/ONSdigital/dp-cache v0.6.1
 	github.com/ONSdigital/dp-component-test v1.4.4-alpha
-	github.com/ONSdigital/dp-dataset-api v1.102.0
+	github.com/ONSdigital/dp-dataset-api v1.106.0
 	github.com/ONSdigital/dp-files-api v1.19.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
 	github.com/ONSdigital/dp-mongodb/v3 v3.13.0
