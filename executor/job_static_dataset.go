@@ -89,7 +89,7 @@ func (e *StaticDatasetJobExecutor) Publish(ctx context.Context, job *domain.Job)
 
 	collectionStatus := zebedee.CollectionStatusNotStarted
 
-	for collectionStatus != zebedee.CollectionStatusApproved {
+	for collectionStatus != zebedee.CollectionStatusComplete {
 		collection, err := e.clientList.Zebedee.GetCollection(ctx, e.serviceAuthToken, job.Config.CollectionID)
 		if err != nil {
 			log.Error(ctx, "failed to get collection in zebedee", err, logData)

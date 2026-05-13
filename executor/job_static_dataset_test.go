@@ -53,7 +53,7 @@ func TestJobStaticDataset(t *testing.T) {
 				return nil
 			},
 			GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
-				return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusApproved}, nil
+				return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusComplete}, nil
 			},
 		}
 		mockClientList := &clients.ClientList{
@@ -298,9 +298,9 @@ func TestJobStaticDataset(t *testing.T) {
 			GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
 				callCount++
 				if callCount < 3 {
-					return zebedee.Collection{ApprovalStatus: "IN_PROGRESS"}, nil
+					return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusInProgress}, nil
 				}
-				return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusApproved}, nil
+				return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusComplete}, nil
 			},
 		}
 		mockClientList := &clients.ClientList{
@@ -344,7 +344,7 @@ func TestJobStaticDataset(t *testing.T) {
 					return nil
 				},
 				GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
-					return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusApproved}, nil
+					return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusComplete}, nil
 				},
 			},
 		}
@@ -391,7 +391,7 @@ func TestJobStaticDataset(t *testing.T) {
 					return nil
 				},
 				GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
-					return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusApproved}, nil
+					return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusComplete}, nil
 				},
 			},
 		}
@@ -429,7 +429,7 @@ func TestJobStaticDataset(t *testing.T) {
 					return nil
 				},
 				GetCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) (zebedee.Collection, error) {
-					return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusApproved}, nil
+					return zebedee.Collection{ApprovalStatus: zebedee.CollectionStatusComplete}, nil
 				},
 			},
 		}

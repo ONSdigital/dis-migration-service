@@ -57,7 +57,7 @@ func NewFakeAPI() *FakeAPI {
 	collectionGetHandler := fakeAPI.NewHandler().Get(fmt.Sprintf("/collection/%s", testCollectionID))
 	collectionGetHandler.Reply(200).BodyStruct(zebedee.Collection{
 		ID:             testCollectionID,
-		ApprovalStatus: "APPROVED",
+		ApprovalStatus: "COMPLETE",
 	})
 
 	collectionApproveHandler := fakeAPI.NewHandler().Post(fmt.Sprintf("/approve/%s", testCollectionID))
@@ -66,7 +66,7 @@ func NewFakeAPI() *FakeAPI {
 	collectionDetailsHandler := fakeAPI.NewHandler().Get(fmt.Sprintf("/collectionDetails/%s", testCollectionID))
 	collectionDetailsHandler.Reply(200).BodyStruct(zebedee.Collection{
 		ID:             testCollectionID,
-		ApprovalStatus: "APPROVED",
+		ApprovalStatus: "COMPLETE",
 	})
 
 	return &FakeAPI{
