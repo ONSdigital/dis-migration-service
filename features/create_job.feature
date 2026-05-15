@@ -41,13 +41,13 @@ Feature: Create a Job
           },
           "links": {
             "self": {
-              "href": "{{DYNAMIC_URI_PATH}}"
+              "href": "/v1/migration-jobs/0"
             },
             "tasks": {
-              "href": "{{DYNAMIC_URI_PATH}}"
+              "href": "/v1/migration-jobs/0/tasks"
             },
             "events": {
-              "href": "{{DYNAMIC_URI_PATH}}"
+              "href": "/v1/migration-jobs/0/events"
             }
           }
         }
@@ -247,13 +247,13 @@ Feature: Create a Job
           },
           "links": {
             "self": {
-              "href": "{{DYNAMIC_URI_PATH}}"
+              "href": "/v1/migration-jobs/0"
             },
             "tasks": {
-              "href": "{{DYNAMIC_URI_PATH}}"
+              "href": "/v1/migration-jobs/0/tasks"
             },
             "events": {
-              "href": "{{DYNAMIC_URI_PATH}}"
+              "href": "/v1/migration-jobs/0/events"
             }
           }
         }
@@ -310,13 +310,13 @@ Feature: Create a Job
           },
           "links": {
             "self": {
-              "href": "{{DYNAMIC_URI_PATH}}"
+              "href": "/v1/migration-jobs/0"
             },
             "tasks": {
-              "href": "{{DYNAMIC_URI_PATH}}"
+              "href": "/v1/migration-jobs/0/tasks"
             },
             "events": {
-              "href": "{{DYNAMIC_URI_PATH}}"
+              "href": "/v1/migration-jobs/0/events"
             }
           }
         }
