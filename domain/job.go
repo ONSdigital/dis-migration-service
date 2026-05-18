@@ -58,13 +58,11 @@ func NewJobLinks(jobNumber string) JobLinks {
 	}
 }
 
-// SetJobNumber updates the Job provided, including its JobLinks, with the
-// new job number provided
+// SetJobNumber updates the Job, including its JobLinks, with the new job
+// number provided
 // @newJobNumber the new number for the job
-// @job the job to update
-func SetJobNumber(newJobNumber int, job Job) Job {
-	job.JobNumber = newJobNumber
+func (j *Job) SetJobNumber(newJobNumber int) {
+	j.JobNumber = newJobNumber
 	links := NewJobLinks(strconv.Itoa(newJobNumber))
-	job.Links = links
-	return job
+	j.Links = links
 }

@@ -83,7 +83,7 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 		log.Error(ctx, "failed to get next job number counter", err)
 		return &domain.Job{}, appErrors.ErrInternalServerError
 	}
-	job = domain.SetJobNumber(jobNumberCounter.CounterValue, job)
+	job.SetJobNumber(jobNumberCounter.CounterValue)
 
 	err = js.store.CreateJob(ctx, &job)
 	if err != nil {
