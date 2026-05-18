@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	sort "github.com/ONSdigital/dis-migration-service/api/sort"
@@ -84,10 +83,7 @@ func (js *jobService) CreateJob(ctx context.Context, jobConfig *domain.JobConfig
 		log.Error(ctx, "failed to get next job number counter", err)
 		return &domain.Job{}, appErrors.ErrInternalServerError
 	}
-	jobNumber := jobNumberCounter.CounterValue
-	job.JobNumber = jobNumber
-	links := domain.NewJobLinks(strconv.Itoa(jobNumber))
-	job.Links = links
+	job = domain.SetJobNumber(jobNumberCounter.CounterValue, job)
 
 	err = js.store.CreateJob(ctx, &job)
 	if err != nil {
