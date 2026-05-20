@@ -288,6 +288,8 @@ parameters:
       - approved
       - published
       - completed
+      - rejected
+      - cancelled
       # Running states
       - migrating
       - publishing
@@ -297,7 +299,7 @@ parameters:
       - failed_post_publish
       - failed_publish
       - failed_migration
-      - rejected
+      - failed_reversion
     required: false
   sort:
     in: query

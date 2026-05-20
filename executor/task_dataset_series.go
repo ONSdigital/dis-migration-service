@@ -166,7 +166,7 @@ func (e *DatasetSeriesTaskExecutor) Revert(ctx context.Context, task *domain.Tas
 
 	log.Info(ctx, "starting reversion for dataset series task", logData)
 
-	if err := e.deleteDatasetFromAPI(ctx, e.clientList.DatasetAPI.URL(), task.Target.ID, e.serviceAuthToken); err != nil {
+	if err := e.deleteDatasetFromAPI(ctx, task); err != nil {
 		log.Error(ctx, "failed to delete dataset during task revert", err, logData)
 	}
 
@@ -180,9 +180,15 @@ func (e *DatasetSeriesTaskExecutor) Revert(ctx context.Context, task *domain.Tas
 	return nil
 }
 
-func (e *DatasetSeriesTaskExecutor) deleteDatasetFromAPI(ctx context.Context, datasetAPIURL, datasetID, serviceAuthToken string) error {
+func (e *DatasetSeriesTaskExecutor) deleteDatasetFromAPI(ctx context.Context, task *domain.Task) error {
+	headers := sdk.Headers{
+		AccessToken: e.serviceAuthToken,
+	}
 
-	//TODO - this needs a client method added for deletion.
-	log.Info(ctx, "deleted the dataset from the API")
+	if err := e.clientList.DatasetAPI.DeleteDataset(ctx, headers, task.Target.ID); err != nil {
+		return fmt.Errorf("failed to delete dataset %q: %w", task.Target.ID, err)
+	}
+
+	log.Info(ctx, "deleted the dataset from the API", log.Data{"dataset_id": task.Target.ID})
 	return nil
 }

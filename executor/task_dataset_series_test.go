@@ -705,3 +705,117 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 		})
 	})
 }
+
+func TestDatasetSeriesTaskExecutor_Revert(t *testing.T) {
+	Convey("Given a dataset series task executor with a dataset API client that successfully deletes datasets", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
+				return nil
+			},
+		}
+
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			DeleteDatasetFunc: func(ctx context.Context, headers sdk.Headers, datasetID string) error {
+				return nil
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+		}
+
+		ctx := context.Background()
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
+
+		Convey("When revert is called for a task", func() {
+			err := executor.Revert(ctx, testSeriesTask)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And the datasetAPI is called to delete the dataset", func() {
+					So(len(mockDatasetClient.DeleteDatasetCalls()), ShouldEqual, 1)
+					So(mockDatasetClient.DeleteDatasetCalls()[0].DatasetID, ShouldEqual, testDatasetSeriesID)
+					So(mockDatasetClient.DeleteDatasetCalls()[0].Headers.AccessToken, ShouldEqual, testServiceAuthToken)
+				})
+
+				Convey("And the task state is updated to Cancelled", func() {
+					So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+					So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, testSeriesTaskID)
+					So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateCancelled)
+				})
+			})
+		})
+	})
+
+	Convey("Given a dataset series task executor with a dataset API client that fails to delete datasets", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
+				return nil
+			},
+		}
+
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			DeleteDatasetFunc: func(ctx context.Context, headers sdk.Headers, datasetID string) error {
+				return errTest
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+		}
+
+		ctx := context.Background()
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
+
+		Convey("When revert is called for a task", func() {
+			err := executor.Revert(ctx, testSeriesTask)
+
+			Convey("Then no error is returned (deletion errors are logged but not returned)", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And the datasetAPI was called to delete the dataset", func() {
+					So(len(mockDatasetClient.DeleteDatasetCalls()), ShouldEqual, 1)
+				})
+
+				Convey("And the task state is still updated to Cancelled", func() {
+					So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+					So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateCancelled)
+				})
+			})
+		})
+	})
+
+	Convey("Given a dataset series task executor with a jobService that fails to update task state", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
+				return errTest
+			},
+		}
+
+		mockDatasetClient := &datasetSDKMock.ClienterMock{
+			DeleteDatasetFunc: func(ctx context.Context, headers sdk.Headers, datasetID string) error {
+				return nil
+			},
+		}
+
+		mockClientList := &clients.ClientList{
+			DatasetAPI: mockDatasetClient,
+		}
+
+		ctx := context.Background()
+		executor := NewDatasetSeriesTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, nil)
+
+		Convey("When revert is called for a task", func() {
+			err := executor.Revert(ctx, testSeriesTask)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
+
+				Convey("And the datasetAPI was called to delete the dataset", func() {
+					So(len(mockDatasetClient.DeleteDatasetCalls()), ShouldEqual, 1)
+				})
+			})
+		})
+	})
+}
