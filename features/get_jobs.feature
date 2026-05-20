@@ -267,11 +267,11 @@ Feature: Get list of jobs
       And the following document exists in the "jobs" collection:
         """
         {
-          "_id": "job-published-1",
+          "_id": "job-completed-1",
           "job_number": 24,
-          "label": "job-published-1",
+          "label": "job-completed-1",
           "last_updated": "2025-11-19T14:00:00Z",
-          "state": "published",
+          "state": "completed",
           "config": {
             "source_id": "s2",
             "target_id": "t2",
@@ -279,17 +279,17 @@ Feature: Get list of jobs
           }
         }
         """
-      When I GET "/v1/migration-jobs?state=published"
+      When I GET "/v1/migration-jobs?state=completed"
       Then I should receive the following JSON response with status "200":
         """
         {
           "count": 1,
           "items": [
             {
-              "id": "job-published-1",
+              "id": "job-completed-1",
               "job_number": 24,
-              "label": "job-published-1",
-              "state": "published",
+              "label": "job-completed-1",
+              "state": "completed",
               "config": {
                 "source_id": "s2",
                 "target_id": "t2",
@@ -300,14 +300,14 @@ Feature: Get list of jobs
             }
           ],
           "states": [
-            {
-              "id": "migrating",
-              "label": "Migrating",
+          {
+              "id": "completed",
+              "label": "Completed",
               "count": 1
             },
             {
-              "id": "published",
-              "label": "Published",
+              "id": "migrating",
+              "label": "Migrating",
               "count": 1
             }
           ],

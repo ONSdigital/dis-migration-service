@@ -111,6 +111,8 @@ func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 			err = jobExecutor.Migrate(ctx, job)
 		case domain.StatePublishing:
 			err = jobExecutor.Publish(ctx, job)
+		case domain.StatePostPublishing:
+			err = jobExecutor.PostPublish(ctx, job)
 		case domain.StateReverting:
 			err = jobExecutor.Revert(ctx, job)
 		default:

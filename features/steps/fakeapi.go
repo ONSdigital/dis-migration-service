@@ -28,6 +28,7 @@ type FakeAPI struct {
 	collectionGetHandler             *httpfake.Request
 	collectionApproveHandler         *httpfake.Request
 	collectionDetailsHandler         *httpfake.Request
+	collectionPublishHandler         *httpfake.Request
 }
 
 // NewFakeAPI creates a new fake component API
@@ -69,6 +70,9 @@ func NewFakeAPI() *FakeAPI {
 		ApprovalStatus: "COMPLETE",
 	})
 
+	collectionPublishHandler := fakeAPI.NewHandler().Post(fmt.Sprintf("/publish/%s", testCollectionID))
+	collectionPublishHandler.Reply(200)
+
 	return &FakeAPI{
 		fakeHTTP:                         fakeAPI,
 		datasetCreateHandler:             fakeAPI.NewHandler().Post("/datasets"),
@@ -79,6 +83,7 @@ func NewFakeAPI() *FakeAPI {
 		collectionGetHandler:             collectionGetHandler,
 		collectionApproveHandler:         collectionApproveHandler,
 		collectionDetailsHandler:         collectionDetailsHandler,
+		collectionPublishHandler:         collectionPublishHandler,
 	}
 }
 

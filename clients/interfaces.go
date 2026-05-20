@@ -35,5 +35,6 @@ type ZebedeeClient interface {
 	GetFileSize(ctx context.Context, authToken, collectionID, lang, uri string) (f zebedee.FileSize, err error)
 	GetPageData(ctx context.Context, authToken, collectionID, lang, path string) (m zebedee.PageData, err error)
 	GetResourceStream(ctx context.Context, authToken, collectionID, lang, path string) (s io.ReadCloser, err error)
+	PublishCollection(ctx context.Context, authToken, collectionID string) error
 	SaveContentToCollection(ctx context.Context, authToken, collectionID, path string, content interface{}) error
 }

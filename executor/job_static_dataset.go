@@ -133,6 +133,66 @@ func (e *StaticDatasetJobExecutor) Publish(ctx context.Context, job *domain.Job)
 // PostPublish handles the post-publish operations for a static dataset job.
 func (e *StaticDatasetJobExecutor) PostPublish(ctx context.Context, job *domain.Job) error {
 	// Implementation of post-publish for static dataset
+	logData := log.Data{"job_number": job.JobNumber}
+	log.Info(ctx, "starting post-publishing for job", logData)
+
+	// update task state to post-publishing
+	totalTasks, err := e.jobService.CountTasksByJobNumber(ctx, job.JobNumber)
+	if err != nil {
+		log.Error(ctx, "failed to count tasks", err, logData)
+		return err
+	}
+
+	publishedTasks, _, err := e.jobService.GetJobTasks(ctx, []domain.State{domain.StatePublished}, job.JobNumber, totalTasks, 0)
+	if err != nil {
+		log.Error(ctx, "failed to get job tasks", err, logData)
+		return err
+	}
+	log.Info(ctx, "successfully got all job tasks", logData)
+
+	for _, task := range publishedTasks {
+		err := e.jobService.UpdateTaskState(ctx, task.ID, domain.StatePostPublishing)
+		if err != nil {
+			log.Error(ctx, "failed to update task state", err, logData)
+			return err
+		}
+	}
+	log.Info(ctx, "successfully updated all job tasks state to post-publishing", logData)
+
+	// publishing zebedee collection
+	log.Info(ctx, "starting zebedee collection publish for job", logData)
+	err = e.clientList.Zebedee.PublishCollection(ctx, e.serviceAuthToken, job.Config.CollectionID)
+	if err != nil {
+		log.Error(ctx, "failed to publish collection in zebedee", err, logData)
+		return err
+	}
+
+	// update task state to completed
+
+	postPublishingTasks, _, err := e.jobService.GetJobTasks(ctx, []domain.State{domain.StatePostPublishing}, job.JobNumber, totalTasks, 0)
+	if err != nil {
+		log.Error(ctx, "failed to get job tasks", err, logData)
+		return err
+	}
+	log.Info(ctx, "successfully got all job tasks", logData)
+
+	for _, task := range postPublishingTasks {
+		err := e.jobService.UpdateTaskState(ctx, task.ID, domain.StateCompleted)
+		if err != nil {
+			log.Error(ctx, "failed to update task state", err, logData)
+			return err
+		}
+	}
+	log.Info(ctx, "successfully updated all job tasks state to completed", logData)
+
+	// update job state to completed
+	err = e.jobService.UpdateJobState(ctx, job.JobNumber, domain.StateCompleted, "")
+	if err != nil {
+		log.Error(ctx, "failed to update job state to completed", err, logData)
+		return err
+	}
+	log.Info(ctx, "successfully updated job state to completed", logData)
+
 	return nil
 }
 

@@ -2626,13 +2626,15 @@ func TestClaimJob(t *testing.T) {
 			job, err := jobService.ClaimJob(ctx)
 
 			Convey("Then the store should be called to claim a job", func() {
-				So(len(mockMongo.ClaimJobCalls()), ShouldEqual, 3)
+				So(len(mockMongo.ClaimJobCalls()), ShouldEqual, 4)
 				So(mockMongo.ClaimJobCalls()[0].PendingState, ShouldEqual, domain.StateSubmitted)
 				So(mockMongo.ClaimJobCalls()[0].ActiveState, ShouldEqual, domain.StateMigrating)
 				So(mockMongo.ClaimJobCalls()[1].PendingState, ShouldEqual, domain.StateApproved)
 				So(mockMongo.ClaimJobCalls()[1].ActiveState, ShouldEqual, domain.StatePublishing)
-				So(mockMongo.ClaimJobCalls()[2].PendingState, ShouldEqual, domain.StateRejected)
-				So(mockMongo.ClaimJobCalls()[2].ActiveState, ShouldEqual, domain.StateReverting)
+				So(mockMongo.ClaimJobCalls()[2].PendingState, ShouldEqual, domain.StatePublished)
+				So(mockMongo.ClaimJobCalls()[2].ActiveState, ShouldEqual, domain.StatePostPublishing)
+				So(mockMongo.ClaimJobCalls()[3].PendingState, ShouldEqual, domain.StateRejected)
+				So(mockMongo.ClaimJobCalls()[3].ActiveState, ShouldEqual, domain.StateReverting)
 			})
 			Convey("And no error should be returned", func() {
 				So(err, ShouldBeNil)

@@ -36,6 +36,11 @@ func (mig *migrator) GetStateTransitionRules() map[domain.State]StateTransitionR
 			FailureState: domain.StateFailedPublish,
 			Description:  "publish successful, move to published",
 		},
+		domain.StatePostPublishing: {
+			TargetState:  domain.StateCompleted,
+			FailureState: domain.StateFailedPostPublish,
+			Description:  "post-publish successful, move to completed",
+		},
 		domain.StateReverting: {
 			TargetState:  domain.StateCancelled,
 			FailureState: domain.StateFailedReversion,
