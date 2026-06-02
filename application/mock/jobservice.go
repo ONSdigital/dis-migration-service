@@ -48,6 +48,9 @@ var _ application.JobService = &JobServiceMock{}
 //			GetJobEventsFunc: func(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Event, int, error) {
 //				panic("mock out the GetJobEvents method")
 //			},
+//			GetJobStatesSummaryFunc: func(ctx context.Context) ([]domain.StateSummary, error) {
+//				panic("mock out the GetJobStatesSummary method")
+//			},
 //			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit int, offset int) ([]*domain.Task, int, error) {
 //				panic("mock out the GetJobTasks method")
 //			},
@@ -102,6 +105,9 @@ type JobServiceMock struct {
 
 	// GetJobEventsFunc mocks the GetJobEvents method.
 	GetJobEventsFunc func(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Event, int, error)
+
+	// GetJobStatesSummaryFunc mocks the GetJobStatesSummary method.
+	GetJobStatesSummaryFunc func(ctx context.Context) ([]domain.StateSummary, error)
 
 	// GetJobTasksFunc mocks the GetJobTasks method.
 	GetJobTasksFunc func(ctx context.Context, states []domain.State, jobNumber int, limit int, offset int) ([]*domain.Task, int, error)
@@ -197,6 +203,11 @@ type JobServiceMock struct {
 			// Offset is the offset argument value.
 			Offset int
 		}
+		// GetJobStatesSummary holds details about calls to the GetJobStatesSummary method.
+		GetJobStatesSummary []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
 		// GetJobTasks holds details about calls to the GetJobTasks method.
 		GetJobTasks []struct {
 			// Ctx is the ctx argument value.
@@ -276,6 +287,7 @@ type JobServiceMock struct {
 	lockCreateTask             sync.RWMutex
 	lockGetJob                 sync.RWMutex
 	lockGetJobEvents           sync.RWMutex
+	lockGetJobStatesSummary    sync.RWMutex
 	lockGetJobTasks            sync.RWMutex
 	lockGetJobs                sync.RWMutex
 	lockGetNextJobNumber       sync.RWMutex
@@ -622,6 +634,38 @@ func (mock *JobServiceMock) GetJobEventsCalls() []struct {
 	mock.lockGetJobEvents.RLock()
 	calls = mock.calls.GetJobEvents
 	mock.lockGetJobEvents.RUnlock()
+	return calls
+}
+
+// GetJobStatesSummary calls GetJobStatesSummaryFunc.
+func (mock *JobServiceMock) GetJobStatesSummary(ctx context.Context) ([]domain.StateSummary, error) {
+	if mock.GetJobStatesSummaryFunc == nil {
+		panic("JobServiceMock.GetJobStatesSummaryFunc: method is nil but JobService.GetJobStatesSummary was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockGetJobStatesSummary.Lock()
+	mock.calls.GetJobStatesSummary = append(mock.calls.GetJobStatesSummary, callInfo)
+	mock.lockGetJobStatesSummary.Unlock()
+	return mock.GetJobStatesSummaryFunc(ctx)
+}
+
+// GetJobStatesSummaryCalls gets all the calls that were made to GetJobStatesSummary.
+// Check the length with:
+//
+//	len(mockedJobService.GetJobStatesSummaryCalls())
+func (mock *JobServiceMock) GetJobStatesSummaryCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockGetJobStatesSummary.RLock()
+	calls = mock.calls.GetJobStatesSummary
+	mock.lockGetJobStatesSummary.RUnlock()
 	return calls
 }
 

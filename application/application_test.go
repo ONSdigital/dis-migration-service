@@ -13,6 +13,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	domainMocks "github.com/ONSdigital/dis-migration-service/domain/mock"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
+	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dis-migration-service/store"
 	storeMocks "github.com/ONSdigital/dis-migration-service/store/mock"
 	. "github.com/smartystreets/goconvey/convey"
@@ -1134,6 +1135,156 @@ func TestGetJobs(t *testing.T) {
 						So(len(jobs), ShouldEqual, 0)
 						So(totalCount, ShouldEqual, 0)
 					})
+				})
+			})
+		})
+	})
+}
+
+func TestGetJobStatesSummary(t *testing.T) {
+	Convey("Given a job service and store that returns a summary of job states", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobStateCountsFunc: func(ctx context.Context) ([]mongo.StateCountResult, error) {
+				return []mongo.StateCountResult{
+					{State: domain.StateSubmitted, Count: 5},
+					{State: domain.StateApproved, Count: 3},
+					{State: domain.StateCompleted, Count: 2},
+				}, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+		cfg := &config.Config{}
+		jobService := Setup(&mockStore, &mockClients, cfg)
+
+		ctx := context.Background()
+
+		Convey("When GetJobStatesSummary is called", func() {
+			stateSummaries, err := jobService.GetJobStatesSummary(ctx)
+
+			Convey("Then the store should be called", func() {
+				So(len(mockMongo.GetJobStateCountsCalls()), ShouldEqual, 1)
+
+				Convey("Then no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And the summaries should be returned correctly", func() {
+						So(len(stateSummaries), ShouldEqual, 3)
+						So(stateSummaries[0].ID, ShouldEqual, domain.StateSubmitted)
+						So(stateSummaries[0].Label, ShouldEqual, "Submitted")
+						So(stateSummaries[0].Count, ShouldEqual, 5)
+						So(stateSummaries[1].ID, ShouldEqual, domain.StateApproved)
+						So(stateSummaries[1].Label, ShouldEqual, "Approved")
+						So(stateSummaries[1].Count, ShouldEqual, 3)
+						So(stateSummaries[2].ID, ShouldEqual, domain.StateCompleted)
+						So(stateSummaries[2].Label, ShouldEqual, "Completed")
+						So(stateSummaries[2].Count, ShouldEqual, 2)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service and store that returns an error when getting job state counts", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobStateCountsFunc: func(ctx context.Context) ([]mongo.StateCountResult, error) {
+				return nil, errors.New("database error")
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+		cfg := &config.Config{}
+		jobService := Setup(&mockStore, &mockClients, cfg)
+
+		ctx := context.Background()
+
+		Convey("When GetJobStatesSummary is called", func() {
+			stateSummaries, err := jobService.GetJobStatesSummary(ctx)
+
+			Convey("Then the store should be called", func() {
+				So(len(mockMongo.GetJobStateCountsCalls()), ShouldEqual, 1)
+
+				Convey("Then an error should be returned", func() {
+					So(stateSummaries, ShouldBeNil)
+					So(err, ShouldNotBeNil)
+					So(err.Error(), ShouldContainSubstring, "failed to get job state counts")
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service and store that returns an empty list of job state counts", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobStateCountsFunc: func(ctx context.Context) ([]mongo.StateCountResult, error) {
+				return []mongo.StateCountResult{}, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+		cfg := &config.Config{}
+		jobService := Setup(&mockStore, &mockClients, cfg)
+
+		ctx := context.Background()
+
+		Convey("When GetJobStatesSummary is called", func() {
+			stateSummaries, err := jobService.GetJobStatesSummary(ctx)
+
+			Convey("Then the store should be called", func() {
+				So(len(mockMongo.GetJobStateCountsCalls()), ShouldEqual, 1)
+
+				Convey("Then no error should be returned", func() {
+					So(err, ShouldBeNil)
+
+					Convey("And an empty list should be returned", func() {
+						So(stateSummaries, ShouldNotBeNil)
+						So(len(stateSummaries), ShouldEqual, 0)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service and store that returns a job state count with an unknown state", t, func() {
+		mockMongo := &storeMocks.MongoDBMock{
+			GetJobStateCountsFunc: func(ctx context.Context) ([]mongo.StateCountResult, error) {
+				return []mongo.StateCountResult{
+					{State: "unknown_state", Count: 5},
+				}, nil
+			},
+		}
+
+		mockStore := store.Datastore{
+			Backend: mockMongo,
+		}
+
+		mockClients := clients.ClientList{}
+		cfg := &config.Config{}
+		jobService := Setup(&mockStore, &mockClients, cfg)
+
+		ctx := context.Background()
+
+		Convey("When GetJobStatesSummary is called", func() {
+			stateSummaries, err := jobService.GetJobStatesSummary(ctx)
+
+			Convey("Then the store should be called", func() {
+				So(len(mockMongo.GetJobStateCountsCalls()), ShouldEqual, 1)
+
+				Convey("Then an error should be returned", func() {
+					So(stateSummaries, ShouldBeNil)
+					So(err, ShouldNotBeNil)
+					So(err.Error(), ShouldContainSubstring, "unknown state label mapping for state: unknown_state")
 				})
 			})
 		})
