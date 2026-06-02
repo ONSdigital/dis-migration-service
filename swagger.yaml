@@ -521,7 +521,7 @@ definitions:
     properties:
       id:
         type: string
-        example: 1
+        example: "1"
       last_updated:
         type: string
         format: date-time
@@ -540,7 +540,7 @@ definitions:
     properties:
       id:
         type: string
-        example: 1
+        example: "1"
       label:
         type: string
         example: "Consumer price inflation tables"
@@ -558,6 +558,11 @@ definitions:
             description: Array containing results.
             items:
               $ref: "#/definitions/MigrationJob"
+          states:
+            type: array
+            description: An array of states found in the full result set
+            items:
+              $ref: "#/definitions/StateSummary"
 
   MigrationTaskList:
     allOf:
@@ -610,7 +615,7 @@ definitions:
       jobId:
         description: The ID of the job this event took place on.
         type: string
-        example: 1
+        example: "1"
 
   List:
     type: object
@@ -627,6 +632,22 @@ definitions:
       total_count:
         type: integer
         description: How many jobs are available in total
+
+  StateSummary:
+    type: object
+    properties:
+      id:
+        type: string
+        description: A computer usable key for this state
+        example: in_review
+      label:
+        type: string
+        description: A human readable label for this state
+        example: In review
+      count:
+        type: integer
+        description: The number of results of this state type within the full set of results.
+        example: 1
 
   MigrationState:
     type: string
