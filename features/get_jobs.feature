@@ -52,6 +52,13 @@ Feature: Get list of jobs
               }
             }
           ],
+          "states": [
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            }
+          ],
           "limit": 10,
           "offset": 0,
           "total_count": 1
@@ -92,7 +99,7 @@ Feature: Get list of jobs
               "href": "/v1/migration-jobs/33"
             }
           },
-          "state": "in_progress",
+          "state": "publishing",
           "config": {
             "source_id": "another-source-id",
             "target_id": "another-target-id",
@@ -116,7 +123,7 @@ Feature: Get list of jobs
                   "href": "/v1/migration-jobs/33"
                 }
               },
-              "state": "in_progress",
+              "state": "publishing",
               "config": {
                 "source_id": "another-source-id",
                 "target_id": "another-target-id",
@@ -139,6 +146,18 @@ Feature: Get list of jobs
                 "target_id": "test-target-id",
                 "type": "test-type"
               }
+            }
+          ],
+          "states": [
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            },
+            {
+              "id": "publishing",
+              "label": "Publishing",
+              "count": 1
             }
           ],
           "limit": 10,
@@ -170,6 +189,18 @@ Feature: Get list of jobs
               }
             }
           ],
+          "states": [
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            },
+            {
+              "id": "publishing",
+              "label": "Publishing",
+              "count": 1
+            }
+          ],
           "limit": 1,
           "offset": 1,
           "total_count": 2
@@ -191,12 +222,24 @@ Feature: Get list of jobs
                   "href": "/v1/migration-jobs/33"
                 }
               },
-              "state": "in_progress",
+              "state": "publishing",
               "config": {
                 "source_id": "another-source-id",
                 "target_id": "another-target-id",
                 "type": "another-type"
               }
+            }
+          ],
+          "states": [
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            },
+            {
+              "id": "publishing",
+              "label": "Publishing",
+              "count": 1
             }
           ],
           "limit": 1,
@@ -224,11 +267,11 @@ Feature: Get list of jobs
       And the following document exists in the "jobs" collection:
         """
         {
-          "_id": "job-approved-1",
+          "_id": "job-published-1",
           "job_number": 24,
-          "label": "job-approved-1",
+          "label": "job-published-1",
           "last_updated": "2025-11-19T14:00:00Z",
-          "state": "approved",
+          "state": "published",
           "config": {
             "source_id": "s2",
             "target_id": "t2",
@@ -236,24 +279,36 @@ Feature: Get list of jobs
           }
         }
         """
-      When I GET "/v1/migration-jobs?state=migrating"
+      When I GET "/v1/migration-jobs?state=published"
       Then I should receive the following JSON response with status "200":
         """
         {
           "count": 1,
           "items": [
             {
-              "id": "job-submitted-1",
-              "job_number": 23,
-              "label": "job-submitted-1",
-              "state": "migrating",
+              "id": "job-published-1",
+              "job_number": 24,
+              "label": "job-published-1",
+              "state": "published",
               "config": {
-                "source_id": "s1",
-                "target_id": "t1",
-                "type": "type1"
+                "source_id": "s2",
+                "target_id": "t2",
+                "type": "type2"
               },
-              "last_updated": "2025-11-19T13:28:00Z",
+              "last_updated": "2025-11-19T14:00:00Z",
               "links": {}
+            }
+          ],
+          "states": [
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            },
+            {
+              "id": "published",
+              "label": "Published",
+              "count": 1
             }
           ],
           "limit": 10,
@@ -326,6 +381,18 @@ Feature: Get list of jobs
               }
             }
           ],
+          "states": [
+            {
+              "id": "in_review",
+              "label": "In review",
+              "count": 1
+            },
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            }
+          ],
           "limit": 10,
           "offset": 0,
           "total_count": 2
@@ -396,6 +463,18 @@ Feature: Get list of jobs
               }
             }
           ],
+          "states": [
+            {
+              "id": "in_review",
+              "label": "In review",
+              "count": 1
+            },
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            }
+          ],
           "limit": 10,
           "offset": 0,
           "total_count": 2
@@ -434,7 +513,7 @@ Feature: Get list of jobs
               "href": "/v1/migration-jobs/33"
             }
           },
-          "state": "in_progress",
+          "state": "publishing",
           "config": {
             "source_id": "another-source-id",
             "target_id": "another-target-id",
@@ -458,7 +537,7 @@ Feature: Get list of jobs
                   "href": "/v1/migration-jobs/33"
                 }
               },
-              "state": "in_progress",
+              "state": "publishing",
               "config": {
                 "source_id": "another-source-id",
                 "target_id": "another-target-id",
@@ -481,6 +560,18 @@ Feature: Get list of jobs
                 "target_id": "test-target-id",
                 "type": "test-type"
               }
+            }
+          ],
+          "states": [
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            },
+            {
+              "id": "publishing",
+              "label": "Publishing",
+              "count": 1
             }
           ],
           "limit": 10,
@@ -521,12 +612,24 @@ Feature: Get list of jobs
                   "href": "/v1/migration-jobs/33"
                 }
               },
-              "state": "in_progress",
+              "state": "publishing",
               "config": {
                 "source_id": "another-source-id",
                 "target_id": "another-target-id",
                 "type": "another-type"
               }
+            }
+          ],
+          "states": [
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            },
+            {
+              "id": "publishing",
+              "label": "Publishing",
+              "count": 1
             }
           ],
           "limit": 10,
@@ -567,12 +670,24 @@ Feature: Get list of jobs
                   "href": "/v1/migration-jobs/33"
                 }
               },
-              "state": "in_progress",
+              "state": "publishing",
               "config": {
                 "source_id": "another-source-id",
                 "target_id": "another-target-id",
                 "type": "another-type"
               }
+            }
+          ],
+          "states": [
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            },
+            {
+              "id": "publishing",
+              "label": "Publishing",
+              "count": 1
             }
           ],
           "limit": 10,
@@ -596,7 +711,7 @@ Feature: Get list of jobs
                   "href": "/v1/migration-jobs/33"
                 }
               },
-              "state": "in_progress",
+              "state": "publishing",
               "config": {
                 "source_id": "another-source-id",
                 "target_id": "another-target-id",
@@ -619,6 +734,18 @@ Feature: Get list of jobs
                 "target_id": "test-target-id",
                 "type": "test-type"
               }
+            }
+          ],
+          "states": [
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            },
+            {
+              "id": "publishing",
+              "label": "Publishing",
+              "count": 1
             }
           ],
           "limit": 10,
@@ -713,6 +840,7 @@ Feature: Get list of jobs
         {
           "count": 0,
           "items": [],
+          "states": [],
           "limit": 10,
           "offset": 0,
           "total_count": 0
