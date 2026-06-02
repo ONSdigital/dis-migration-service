@@ -73,6 +73,18 @@ func TestGetJob(t *testing.T) {
 				So(resp.Body.String(), ShouldContainSubstring, strconv.Itoa(testJobNumber))
 			})
 		})
+
+		Convey("When an invalid request is made with a non-integer job number", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/invalid", http.NoBody)
+			resp := httptest.NewRecorder()
+
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 400 Bad Request is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrJobNumberMustBeInt.Error())
+			})
+		})
 	})
 
 	Convey("Given a test API instance and a mocked jobservice that returns not found", t, func() {
@@ -131,14 +143,14 @@ func TestGetJob(t *testing.T) {
 		api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 		Convey("When a request is made and the service errors", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%d", testJobNumber), http.NoBody)
 			resp := httptest.NewRecorder()
 
 			api.Router.ServeHTTP(resp, req)
 
 			Convey("Then a 500 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusBadRequest)
-				// you can assert on the body if your handleError writes a specific message
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrInternalServerError.Error())
 			})
 		})
 	})
@@ -146,14 +158,29 @@ func TestGetJob(t *testing.T) {
 
 func TestGetJobs(t *testing.T) {
 	Convey("Given a test API instance and a mocked jobservice that returns multiple jobs", t, func() {
+		testSubmittedJob := &domain.Job{ID: "job1", State: domain.StateSubmitted}
+		testApprovedJob := &domain.Job{ID: "job2", State: domain.StateApproved}
+		testCompletedJob := &domain.Job{ID: "job3", State: domain.StateCompleted}
+
+		testJobs := []*domain.Job{
+			testSubmittedJob,
+			testApprovedJob,
+			testCompletedJob,
+		}
+
+		testSummaries := []domain.StateSummary{
+			{ID: domain.StateApproved, Label: "Approved", Count: 1},
+			{ID: domain.StateCompleted, Label: "Completed", Count: 1},
+			{ID: domain.StateSubmitted, Label: "Submitted", Count: 1},
+		}
+
 		mockService := applicationMock.JobServiceMock{
 			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
-				jobs := []*domain.Job{
-					{ID: "job1", State: domain.StateSubmitted},
-					{ID: "job2", State: domain.StateApproved},
-					{ID: "job3", State: domain.StateCompleted},
-				}
+				jobs := testJobs
 				return jobs, len(jobs), nil
+			},
+			GetJobStatesSummaryFunc: func(ctx context.Context) ([]domain.StateSummary, error) {
+				return testSummaries, nil
 			},
 		}
 
@@ -176,23 +203,32 @@ func TestGetJobs(t *testing.T) {
 			resp := httptest.NewRecorder()
 			api.Router.ServeHTTP(resp, req)
 
-			Convey("Then multiple jobs are returned", func() {
+			Convey("Then multiple jobs and state summaries are returned", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
 
 				bodyBytes, err := io.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 
-				var paginatedResponse struct {
-					Items []domain.Job `json:"items"`
-				}
-
-				err = json.Unmarshal(bodyBytes, &paginatedResponse)
+				var jobsResponse JobsListResponse
+				err = json.Unmarshal(bodyBytes, &jobsResponse)
 				So(err, ShouldBeNil)
-				So(len(paginatedResponse.Items), ShouldEqual, 3)
 
-				Convey("And the service is called with all states", func() {
+				expectedResponse := JobsListResponse{
+					Items:  testJobs,
+					States: testSummaries,
+					PaginationFields: PaginationFields{
+						Count:      len(testJobs),
+						Limit:      cfg.DefaultLimit,
+						Offset:     0,
+						TotalCount: len(testJobs),
+					},
+				}
+				So(jobsResponse, ShouldResemble, expectedResponse)
+
+				Convey("And both service methods are called", func() {
 					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
 					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.State{})
+					So(len(mockService.GetJobStatesSummaryCalls()), ShouldEqual, 1)
 				})
 			})
 		})
@@ -243,46 +279,121 @@ func TestGetJobs(t *testing.T) {
 		})
 
 		Convey("When a request is made with a single valid state", func() {
+			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+				jobs := []*domain.Job{testSubmittedJob}
+				return jobs, len(testJobs), nil
+			}
+
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?state=submitted", http.NoBody)
 			resp := httptest.NewRecorder()
 			api.Router.ServeHTTP(resp, req)
 
-			Convey("Then only jobs matching that state are returned", func() {
+			Convey("Then only jobs matching that state are returned and the state summary includes all states", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				bodyBytes, err := io.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+
+				var jobsResponse JobsListResponse
+				err = json.Unmarshal(bodyBytes, &jobsResponse)
+				So(err, ShouldBeNil)
+
+				expectedResponse := JobsListResponse{
+					Items:  []*domain.Job{testSubmittedJob},
+					States: testSummaries,
+					PaginationFields: PaginationFields{
+						Count:      1,
+						Limit:      cfg.DefaultLimit,
+						Offset:     0,
+						TotalCount: len(testJobs),
+					},
+				}
+				So(jobsResponse, ShouldResemble, expectedResponse)
 
 				Convey("And the service is called with the submitted state", func() {
 					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
 					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.State{domain.StateSubmitted})
+					So(len(mockService.GetJobStatesSummaryCalls()), ShouldEqual, 1)
 				})
 			})
 		})
 
 		Convey("When a request is made with multiple valid states, using repeated query param", func() {
+			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+				jobs := []*domain.Job{testSubmittedJob, testApprovedJob}
+				return jobs, len(testJobs), nil
+			}
+
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?state=submitted&state=approved", http.NoBody)
 			resp := httptest.NewRecorder()
 			api.Router.ServeHTTP(resp, req)
 
-			Convey("Then jobs matching any of the states are returned", func() {
+			Convey("Then jobs matching any of the states are returned and the state summary includes all states", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				bodyBytes, err := io.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+
+				var jobsResponse JobsListResponse
+				err = json.Unmarshal(bodyBytes, &jobsResponse)
+				So(err, ShouldBeNil)
+
+				expectedResponse := JobsListResponse{
+					Items:  []*domain.Job{testSubmittedJob, testApprovedJob},
+					States: testSummaries,
+					PaginationFields: PaginationFields{
+						Count:      2,
+						Limit:      cfg.DefaultLimit,
+						Offset:     0,
+						TotalCount: len(testJobs),
+					},
+				}
+				So(jobsResponse, ShouldResemble, expectedResponse)
 
 				Convey("And the service is called with both states", func() {
 					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
 					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.State{domain.StateSubmitted, domain.StateApproved})
+					So(len(mockService.GetJobStatesSummaryCalls()), ShouldEqual, 1)
 				})
 			})
 		})
 
 		Convey("When a request is made with multiple valid states, using comma-separated values", func() {
+			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+				jobs := []*domain.Job{testSubmittedJob, testApprovedJob}
+				return jobs, len(testJobs), nil
+			}
+
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?state=submitted,approved", http.NoBody)
 			resp := httptest.NewRecorder()
 			api.Router.ServeHTTP(resp, req)
 
-			Convey("Then jobs matching any of the states are returned", func() {
+			Convey("Then jobs matching any of the states are returned and the state summary includes all states", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				bodyBytes, err := io.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+
+				var jobsResponse JobsListResponse
+				err = json.Unmarshal(bodyBytes, &jobsResponse)
+				So(err, ShouldBeNil)
+
+				expectedResponse := JobsListResponse{
+					Items:  []*domain.Job{testSubmittedJob, testApprovedJob},
+					States: testSummaries,
+					PaginationFields: PaginationFields{
+						Count:      2,
+						Limit:      cfg.DefaultLimit,
+						Offset:     0,
+						TotalCount: len(testJobs),
+					},
+				}
+				So(jobsResponse, ShouldResemble, expectedResponse)
 
 				Convey("And the service is called with both states", func() {
 					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
 					So(mockService.GetJobsCalls()[0].States, ShouldResemble, []domain.State{domain.StateSubmitted, domain.StateApproved})
+					So(len(mockService.GetJobStatesSummaryCalls()), ShouldEqual, 1)
 				})
 			})
 		})
@@ -303,6 +414,9 @@ func TestGetJobs(t *testing.T) {
 		})
 
 		Convey("When a request is made with valid sort parameters", func() {
+			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+				return testJobs, len(testJobs), nil
+			}
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?sort=job_number:asc", http.NoBody)
 			resp := httptest.NewRecorder()
 			api.Router.ServeHTTP(resp, req)
@@ -310,10 +424,30 @@ func TestGetJobs(t *testing.T) {
 			Convey("Then the server should respond with status 200 OK", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
 
+				bodyBytes, err := io.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+
+				var jobsResponse JobsListResponse
+				err = json.Unmarshal(bodyBytes, &jobsResponse)
+				So(err, ShouldBeNil)
+
+				expectedResponse := JobsListResponse{
+					Items:  testJobs,
+					States: testSummaries,
+					PaginationFields: PaginationFields{
+						Count:      len(testJobs),
+						Limit:      cfg.DefaultLimit,
+						Offset:     0,
+						TotalCount: len(testJobs),
+					},
+				}
+				So(jobsResponse, ShouldResemble, expectedResponse)
+
 				Convey("And the service is called with the correct field and direction", func() {
 					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
 					So(mockService.GetJobsCalls()[0].Field, ShouldResemble, sort.SortParameterFieldJobNumber)
 					So(mockService.GetJobsCalls()[0].Direction, ShouldResemble, sort.SortParameterDirectionAsc)
+					So(len(mockService.GetJobStatesSummaryCalls()), ShouldEqual, 1)
 				})
 			})
 		})
@@ -354,6 +488,9 @@ func TestGetJobs(t *testing.T) {
 			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 				return []*domain.Job{}, 0, nil
 			},
+			GetJobStatesSummaryFunc: func(ctx context.Context) ([]domain.StateSummary, error) {
+				return []domain.StateSummary{}, nil
+			},
 		}
 
 		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
@@ -375,19 +512,102 @@ func TestGetJobs(t *testing.T) {
 			resp := httptest.NewRecorder()
 			api.Router.ServeHTTP(resp, req)
 
-			Convey("Then no jobs are returned", func() {
+			Convey("Then no jobs are returned and states is an empty array", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
 
 				bodyBytes, err := io.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 
-				var paginatedResponse struct {
-					Items []domain.Job `json:"items"`
-				}
-
-				err = json.Unmarshal(bodyBytes, &paginatedResponse)
+				var jobsResponse JobsListResponse
+				err = json.Unmarshal(bodyBytes, &jobsResponse)
 				So(err, ShouldBeNil)
-				So(len(paginatedResponse.Items), ShouldEqual, 0)
+
+				expectedResponse := JobsListResponse{
+					Items:  []*domain.Job{},
+					States: []domain.StateSummary{},
+					PaginationFields: PaginationFields{
+						Count:      0,
+						Limit:      cfg.DefaultLimit,
+						Offset:     0,
+						TotalCount: 0,
+					},
+				}
+				So(jobsResponse, ShouldResemble, expectedResponse)
+
+				Convey("And both service methods are called", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
+					So(len(mockService.GetJobStatesSummaryCalls()), ShouldEqual, 1)
+				})
+			})
+		})
+	})
+
+	Convey("Given a test API instance and a mocked jobservice that returns an error when calling GetJobs", t, func() {
+		mockService := applicationMock.JobServiceMock{
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+				return nil, 0, errors.New("database failure")
+			},
+		}
+
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
+		r := mux.NewRouter()
+		ctx := context.Background()
+		cfg := &config.Config{}
+		api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
+
+		Convey("When a valid request is made", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 500 Internal Server Error is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrInternalServerError.Error())
+			})
+		})
+	})
+
+	Convey("Given a test API instance and a mocked jobservice that returns an error when calling GetJobStatesSummary", t, func() {
+		mockService := applicationMock.JobServiceMock{
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+				jobs := []*domain.Job{{ID: "job1", State: domain.StateSubmitted}}
+				return jobs, len(jobs), nil
+			},
+			GetJobStatesSummaryFunc: func(ctx context.Context) ([]domain.StateSummary, error) {
+				return nil, errors.New("summary failure")
+			},
+		}
+
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+				return handlerFunc
+			},
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
+		r := mux.NewRouter()
+		ctx := context.Background()
+		cfg := &config.Config{}
+		api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
+
+		Convey("When a valid request is made", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 500 Internal Server Error is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrInternalServerError.Error())
 			})
 		})
 	})
@@ -569,6 +789,21 @@ func TestGetJobTasks(t *testing.T) {
 			So(total, ShouldEqual, 0)
 			So(err, ShouldNotBeNil)
 			So(err, ShouldEqual, appErrors.ErrJobNumberNotProvided)
+		})
+
+		Convey("invalid non-integer job number should return ErrJobNumberMustBeInt", func() {
+			mockService := applicationMock.JobServiceMock{}
+			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/invalid/tasks", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "invalid"})
+			rr := httptest.NewRecorder()
+
+			items, total, err := api.getJobTasks(rr, req, 10, 0)
+			So(items, ShouldBeNil)
+			So(total, ShouldEqual, 0)
+			So(err, ShouldNotBeNil)
+			So(err, ShouldEqual, appErrors.ErrJobNumberMustBeInt)
 		})
 
 		Convey("job not found should return ErrJobNotFound", func() {
@@ -792,6 +1027,26 @@ func TestGetJobEvents(t *testing.T) {
 					So(items, ShouldBeNil)
 					So(total, ShouldEqual, 0)
 					So(err, ShouldEqual, appErrors.ErrJobNumberNotProvided)
+				})
+			})
+		})
+
+		Convey("And the job number is not an integer", func() {
+			mockService := &applicationMock.JobServiceMock{}
+			api := Setup(ctx, cfg, r, mockService, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet,
+				"http://localhost:30100/v1/migration-jobs/invalid/events", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "invalid"})
+			rr := httptest.NewRecorder()
+
+			Convey("When getJobEvents is called", func() {
+				items, total, err := api.getJobEvents(rr, req, 10, 0)
+
+				Convey("Then it returns ErrJobNumberMustBeInt", func() {
+					So(items, ShouldBeNil)
+					So(total, ShouldEqual, 0)
+					So(err, ShouldEqual, appErrors.ErrJobNumberMustBeInt)
 				})
 			})
 		})

@@ -22,6 +22,14 @@ type StateChangeRequest struct {
 	State domain.State `json:"state"`
 }
 
+// JobsListResponse represents the response structure for a paginated list of
+// jobs.
+type JobsListResponse struct {
+	Items  []*domain.Job         `json:"items"`
+	States []domain.StateSummary `json:"states"`
+	PaginationFields
+}
+
 // getJob is an implementation for retrieving a migration job.
 func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -54,7 +62,15 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 }
 
 // getJobs is an implementation of PaginatedHandler for retrieving jobs.
-func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
+func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	limit, offset, errs := api.Paginator.getPaginationParameters(r)
+	if len(errs) > 0 {
+		handleError(ctx, w, r, errs...)
+		return
+	}
+
 	statesParam := r.URL.Query()["state"] // supports ?state=a&state=b and ?state=a,b
 	states := make([]domain.State, 0, len(statesParam))
 
@@ -62,7 +78,8 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, 
 		for _, p := range strings.Split(s, ",") {
 			state := domain.State(strings.TrimSpace(p))
 			if !domain.IsValidState(state) {
-				return nil, 0, appErrors.ErrJobStateInvalid
+				handleError(ctx, w, r, appErrors.ErrJobStateInvalid)
+				return
 			}
 			states = append(states, state)
 		}
@@ -71,10 +88,44 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, 
 	sortParam := r.URL.Query()[QueryParameterSort]
 	field, direction, err := sort.ParseSortParameters(sortParam)
 	if err != nil {
-		return nil, 0, err
+		handleError(ctx, w, r, err)
+		return
 	}
 
-	return api.JobService.GetJobs(r.Context(), field, direction, states, limit, offset)
+	jobs, totalCount, err := api.JobService.GetJobs(ctx, field, direction, states, limit, offset)
+	if err != nil {
+		handleError(ctx, w, r, err)
+		return
+	}
+
+	if len(jobs) == 0 {
+		jobs = []*domain.Job{}
+	}
+
+	stateSummaries, err := api.JobService.GetJobStatesSummary(ctx)
+	if err != nil {
+		handleError(ctx, w, r, err)
+		return
+	}
+
+	jobsListResponse := JobsListResponse{
+		Items:  jobs,
+		States: stateSummaries,
+		PaginationFields: PaginationFields{
+			Count:      len(jobs),
+			Limit:      limit,
+			Offset:     offset,
+			TotalCount: totalCount,
+		},
+	}
+
+	responseBytes, err := json.Marshal(jobsListResponse)
+	if err != nil {
+		handleError(ctx, w, r, err)
+		return
+	}
+
+	handleSuccess(ctx, w, r, http.StatusOK, responseBytes)
 }
 
 // getJobTasks is an implementation of PaginatedHandler for retrieving
@@ -89,9 +140,8 @@ func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, lim
 	}
 	jobNumber, err := strconv.Atoi(jobNumberStr)
 	if err != nil {
-		log.Error(ctx, "failed to get job -  job number must be an int", err)
-		handleError(ctx, w, r, err)
-		return &[]domain.Task{}, 0, err
+		log.Info(ctx, "failed to get job - job number must be an int")
+		return nil, 0, appErrors.ErrJobNumberMustBeInt
 	}
 
 	// Ensure job exists -> return 404 if not found
@@ -191,9 +241,8 @@ func (api *MigrationAPI) getJobEvents(w http.ResponseWriter, r *http.Request, li
 
 	jobNumber, err := strconv.Atoi(jobNumberStr)
 	if err != nil {
-		log.Error(ctx, "failed to get job -  job number must be an int", err)
-		handleError(ctx, w, r, err)
-		return
+		log.Info(ctx, "failed to get job - job number must be an int")
+		return nil, 0, appErrors.ErrJobNumberMustBeInt
 	}
 
 	// Ensure job exists -> return 404 if not found
@@ -240,7 +289,7 @@ func (api *MigrationAPI) updateJobState(
 
 	jobNumber, err := strconv.Atoi(jobNumberStr)
 	if err != nil {
-		log.Info(ctx, "failed to get job -  job number must be an int", logData)
+		log.Info(ctx, "failed to get job - job number must be an int", logData)
 		handleError(ctx, w, r, appErrors.ErrJobNumberMustBeInt)
 		return
 	}
