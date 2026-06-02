@@ -41,6 +41,21 @@ Feature: Get a Job
         }
         """
 
+    @InvalidInput
+    Scenario: Get a job with an invalid job number
+      When I GET "/v1/migration-jobs/invalid-job-number"
+      Then I should receive the following JSON response with status "400":
+        """
+        {
+          "errors": [
+            {
+              "code": 400,
+              "description": "job number must be an integer"
+            }
+          ]
+        }
+        """
+
     Scenario: Get a job which doesn't exist
       When I GET "/v1/migration-jobs/4000"
       Then I should receive the following JSON response with status "404":

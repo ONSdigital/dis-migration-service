@@ -179,6 +179,21 @@ Feature: Get list of job events
         }
         """
 
+    @InvalidInput
+    Scenario: Get a list of events with an invalid job number
+      When I GET "/v1/migration-jobs/invalid-job-number/events"
+      Then I should receive the following JSON response with status "400":
+        """
+        {
+          "errors": [
+            {
+              "code": 400,
+              "description": "job number must be an integer"
+            }
+          ]
+        }
+        """
+
     @Auth
     Rule: Users that are not authorised or authenticated
     Background:
