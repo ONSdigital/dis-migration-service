@@ -7,6 +7,7 @@ import (
 	"context"
 	sort "github.com/ONSdigital/dis-migration-service/api/sort"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"sync"
@@ -55,6 +56,9 @@ var _ store.MongoDB = &MongoDBMock{}
 //			},
 //			GetJobEventsFunc: func(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Event, int, error) {
 //				panic("mock out the GetJobEvents method")
+//			},
+//			GetJobStateCountsFunc: func(ctx context.Context) ([]mongo.StateCountResult, error) {
+//				panic("mock out the GetJobStateCounts method")
 //			},
 //			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit int, offset int) ([]*domain.Task, int, error) {
 //				panic("mock out the GetJobTasks method")
@@ -122,6 +126,9 @@ type MongoDBMock struct {
 
 	// GetJobEventsFunc mocks the GetJobEvents method.
 	GetJobEventsFunc func(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Event, int, error)
+
+	// GetJobStateCountsFunc mocks the GetJobStateCounts method.
+	GetJobStateCountsFunc func(ctx context.Context) ([]mongo.StateCountResult, error)
 
 	// GetJobTasksFunc mocks the GetJobTasks method.
 	GetJobTasksFunc func(ctx context.Context, states []domain.State, jobNumber int, limit int, offset int) ([]*domain.Task, int, error)
@@ -235,6 +242,11 @@ type MongoDBMock struct {
 			// Offset is the offset argument value.
 			Offset int
 		}
+		// GetJobStateCounts holds details about calls to the GetJobStateCounts method.
+		GetJobStateCounts []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
 		// GetJobTasks holds details about calls to the GetJobTasks method.
 		GetJobTasks []struct {
 			// Ctx is the ctx argument value.
@@ -338,6 +350,7 @@ type MongoDBMock struct {
 	lockCreateTask                      sync.RWMutex
 	lockGetJob                          sync.RWMutex
 	lockGetJobEvents                    sync.RWMutex
+	lockGetJobStateCounts               sync.RWMutex
 	lockGetJobTasks                     sync.RWMutex
 	lockGetJobs                         sync.RWMutex
 	lockGetJobsBySourceOrTargetAndState sync.RWMutex
@@ -754,6 +767,38 @@ func (mock *MongoDBMock) GetJobEventsCalls() []struct {
 	mock.lockGetJobEvents.RLock()
 	calls = mock.calls.GetJobEvents
 	mock.lockGetJobEvents.RUnlock()
+	return calls
+}
+
+// GetJobStateCounts calls GetJobStateCountsFunc.
+func (mock *MongoDBMock) GetJobStateCounts(ctx context.Context) ([]mongo.StateCountResult, error) {
+	if mock.GetJobStateCountsFunc == nil {
+		panic("MongoDBMock.GetJobStateCountsFunc: method is nil but MongoDB.GetJobStateCounts was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockGetJobStateCounts.Lock()
+	mock.calls.GetJobStateCounts = append(mock.calls.GetJobStateCounts, callInfo)
+	mock.lockGetJobStateCounts.Unlock()
+	return mock.GetJobStateCountsFunc(ctx)
+}
+
+// GetJobStateCountsCalls gets all the calls that were made to GetJobStateCounts.
+// Check the length with:
+//
+//	len(mockedMongoDB.GetJobStateCountsCalls())
+func (mock *MongoDBMock) GetJobStateCountsCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockGetJobStateCounts.RLock()
+	calls = mock.calls.GetJobStateCounts
+	mock.lockGetJobStateCounts.RUnlock()
 	return calls
 }
 

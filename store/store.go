@@ -6,6 +6,7 @@ import (
 
 	sort "github.com/ONSdigital/dis-migration-service/api/sort"
 	"github.com/ONSdigital/dis-migration-service/domain"
+	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
@@ -23,6 +24,7 @@ type dataMongoDB interface {
 	CreateJob(ctx context.Context, job *domain.Job) error
 	GetJob(ctx context.Context, jobNumber int) (*domain.Job, error)
 	GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
+	GetJobStateCounts(ctx context.Context) ([]mongo.StateCountResult, error)
 	ClaimJob(ctx context.Context, pendingState domain.State, activeState domain.State) (*domain.Job, error)
 	GetJobsBySourceOrTargetAndState(ctx context.Context, jc *domain.JobConfig, states []domain.State, limit, offset int) ([]*domain.Job, error)
 	GetNextJobNumberCounter(ctx context.Context) (*domain.Counter, error)
@@ -89,6 +91,12 @@ func (ds *Datastore) UpdateJob(ctx context.Context, job *domain.Job) error {
 // GetJobs retrieves a list of migration jobs with pagination.
 func (ds *Datastore) GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
 	return ds.Backend.GetJobs(ctx, field, direction, states, limit, offset)
+}
+
+// GetJobStateCounts retrieves a summary of job counts by state, sorted by count
+// descending.
+func (ds *Datastore) GetJobStateCounts(ctx context.Context) ([]mongo.StateCountResult, error) {
+	return ds.Backend.GetJobStateCounts(ctx)
 }
 
 // GetJobsBySourceOrTargetAndState retrieves jobs based on the provided

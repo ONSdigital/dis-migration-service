@@ -15,6 +15,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// StateCountResult represents the result of a MongoDB aggregation that counts
+// the number of jobs in each state.
+type StateCountResult struct {
+	State domain.State `bson:"_id"`
+	Count int          `bson:"count"`
+}
+
 // CreateJob creates a new migration job.
 func (m *Mongo) CreateJob(ctx context.Context, job *domain.Job) error {
 	_, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).InsertOne(ctx, job)
@@ -74,6 +81,34 @@ func (m *Mongo) GetJobs(ctx context.Context, field sort.SortParameterField, dire
 		)
 
 	return results, totalCount, err
+}
+
+// GetJobStateCounts retrieves a summary of job counts by state, sorted by count
+// descending.
+func (m *Mongo) GetJobStateCounts(ctx context.Context) ([]StateCountResult, error) {
+	var results []StateCountResult
+
+	pipeline := mongo.Pipeline{
+		{
+			{Key: "$group", Value: bson.D{
+				{Key: "_id", Value: "$state"},
+				{Key: "count", Value: bson.D{
+					{Key: "$sum", Value: 1},
+				}},
+			}},
+		},
+		{
+			{Key: "$sort", Value: bson.D{
+				{Key: "count", Value: -1}, // Sort by count descending
+				{Key: "_id", Value: 1},    // If counts are equal, sort by state ascending
+			}},
+		},
+	}
+
+	err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
+		Aggregate(ctx, pipeline, &results)
+
+	return results, err
 }
 
 // GetJobsBySourceOrTargetAndState retrieves jobs based on the provided
