@@ -589,6 +589,21 @@ Feature: Get list of job tasks
           ]
         }
         """
+    
+    @InvalidInput
+    Scenario: Get a list of tasks with an invalid job number
+      When I GET "/v1/migration-jobs/invalid-job-number/tasks"
+      Then I should receive the following JSON response with status "400":
+        """
+        {
+          "errors": [
+            {
+              "code": 400,
+              "description": "job number must be an integer"
+            }
+          ]
+        }
+        """
 
     @InvalidInput
     Scenario: Get a list of tasks with limit exceeding maximum allowed
