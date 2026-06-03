@@ -14,7 +14,6 @@ const (
 	GetAuthEntityDataErrorDescription = "failed to get auth entity data from request"
 	// EntityDataErrorDescription describes entity data parsing failures.
 	EntityDataErrorDescription = "unable to parse entity data from request context"
-
 	// GetAuthEntityDataError identifies auth entity data retrieval failures.
 	GetAuthEntityDataError = "GetAuthEntityDataError"
 )

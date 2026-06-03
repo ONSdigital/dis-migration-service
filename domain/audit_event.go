@@ -18,7 +18,6 @@ const (
 	ActionUpdate Action = "UPDATE"
 	// ActionDelete represents a delete action.
 	ActionDelete Action = "DELETE"
-
 	// OutcomeSuccess represents a successful outcome.
 	OutcomeSuccess Outcome = "success"
 	// OutcomeFailure represents a failed outcome.
