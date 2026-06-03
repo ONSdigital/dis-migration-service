@@ -7,6 +7,7 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
-func handleAuthEntityDataError(ctx context.Context, err error, logData log.Data) *errors.AuditEventError {
-	return errors.NewAuditEventError(ctx, err, errors.GetAuthEntityDataError, errors.GetAuthEntityDataErrorDescription, logData)
+func handleAuthEntityDataError(ctx context.Context, err error, logData log.Data) error {
+	errors.NewAuditEventError(ctx, err, errors.GetAuthEntityDataError, errors.GetAuthEntityDataErrorDescription, logData)
+	return errors.ErrFailedToParseAuthEntityData
 }

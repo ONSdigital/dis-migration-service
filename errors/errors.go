@@ -141,6 +141,8 @@ var (
 	ErrStateAlreadyAtTarget = errors.New("job is already in the target state")
 	ErrStateUnexpected      = errors.New("job is in an unexpected state")
 
+	ErrFailedToParseAuthEntityData = errors.New("failed to parse auth entity data")
+
 	StatusCodeMap = map[error]int{
 		ErrJobNotFound:                  http.StatusNotFound,
 		ErrTaskNotFound:                 http.StatusNotFound,
@@ -173,5 +175,6 @@ var (
 		ErrSortFieldInvalid:             http.StatusBadRequest,
 		ErrSortDirectionInvalid:         http.StatusBadRequest,
 		ErrUnauthorized:                 http.StatusUnauthorized,
+		ErrFailedToParseAuthEntityData:  http.StatusInternalServerError,
 	}
 )
