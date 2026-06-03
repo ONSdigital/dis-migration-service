@@ -3,6 +3,20 @@ package errors
 import (
 	"errors"
 	"net/http"
+
+	"context"
+
+	"github.com/ONSdigital/log.go/v2/log"
+)
+
+const (
+	// GetAuthEntityDataErrorDescription auth entity data retrieval failures.
+	GetAuthEntityDataErrorDescription = "failed to get auth entity data from request"
+	// EntityDataErrorDescription describes entity data parsing failures.
+	EntityDataErrorDescription = "unable to parse entity data from request context"
+
+	// GetAuthEntityDataError identifies auth entity data retrieval failures.
+	GetAuthEntityDataError = "GetAuthEntityDataError"
 )
 
 // ErrorList represents a list of errors.
@@ -14,6 +28,28 @@ type ErrorList struct {
 type Error struct {
 	Code        int    `json:"code"`
 	Description string `json:"description"`
+}
+
+// AuditEventError represents an audit event error with context.
+type AuditEventError struct {
+	Cause       error  `json:"-"`           // The underlying error, if available.
+	Code        string `json:"code"`        // Error code representing the type of error.
+	Description string `json:"description"` // Detailed description of the error.
+}
+
+// ErrorResponse represents a response containing one or more errors.
+type ErrorResponse struct {
+	Errors  []error           `json:"errors"`
+	Status  int               `json:"-"`
+	Headers map[string]string `json:"-"`
+}
+
+// Error returns the error message string for the custom Error type.
+func (e *AuditEventError) Error() string {
+	if e.Cause != nil {
+		return e.Cause.Error()
+	}
+	return e.Code + ": " + e.Description
 }
 
 // New creates a new redacted Error based on the provided error.
@@ -29,6 +65,38 @@ func New(err error) Error {
 		redactedError.Description = ErrInternalServerError.Error()
 	}
 	return redactedError
+}
+
+// NewErrorResponse a new ErrorResponse, status code, headers, and errors.
+func NewErrorResponse(statusCode int, headers map[string]string, errs ...error) *ErrorResponse {
+	return &ErrorResponse{
+		Errors:  errs,
+		Status:  statusCode,
+		Headers: headers,
+	}
+}
+
+// NewAuditEventError creates and logs a new audit event error.
+func NewAuditEventError(ctx context.Context, cause error, code, description string, logDatas ...log.Data) *AuditEventError {
+	err := &AuditEventError{
+		Cause:       cause,
+		Code:        code,
+		Description: description,
+	}
+
+	if len(logDatas) == 0 {
+		log.Error(ctx, description, err)
+		return err
+	}
+
+	merged := log.Data{}
+	for _, d := range logDatas {
+		for k, v := range d {
+			merged[k] = v
+		}
+	}
+	log.Error(ctx, description, err, merged)
+	return err
 }
 
 // Predefined errors

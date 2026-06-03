@@ -18,9 +18,7 @@ func TestSetup(t *testing.T) {
 	mockService := applicationMock.JobServiceMock{}
 
 	mockAuthMiddleware := &authorisationMock.MiddlewareMock{
-		RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
-			return handlerFunc
-		},
+		RequireFunc: requireWithAuthEntity,
 		CloseFunc: func(ctx context.Context) error {
 			return nil
 		},

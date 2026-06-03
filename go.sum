@@ -12,8 +12,8 @@ github.com/ONSdigital/dis-redirect-api v0.38.0 h1:aiQ5l8oa9mRAChL235f2KmwlPc8/SH
 github.com/ONSdigital/dis-redirect-api v0.38.0/go.mod h1:kb+NiCmnVUC6unuYNHKl9mfXihNCFc7ysp9mGYVdyB0=
 github.com/ONSdigital/dp-api-clients-go/v2 v2.281.0 h1:1Y2OEbbpFzNzGj6JYmT430zkGQNky4xE/X3XA12f/j4=
 github.com/ONSdigital/dp-api-clients-go/v2 v2.281.0/go.mod h1:dTOrseSPzH9WRV/qgNy/zu5BeZWbea02Qz4Z6lvHhFQ=
-github.com/ONSdigital/dp-authorisation/v2 v2.34.0 h1:Zc096gAh5S7PFG1LlbM/siZDvyzd7fU11dMK8X6m98k=
-github.com/ONSdigital/dp-authorisation/v2 v2.34.0/go.mod h1:y3zXIX/x8baEKucG05v/PL86GtL7MAz9Eb3HcwZmuvQ=
+github.com/ONSdigital/dp-authorisation/v2 v2.35.0 h1:1ieZcbJqXtPbU8nXj7NCUlX5c39bGJIf1d3fPKI7kcQ=
+github.com/ONSdigital/dp-authorisation/v2 v2.35.0/go.mod h1:5oYJyRP2t3FA/S5kcEoCNORptQMqDWnTMAkP3cQ5x6Y=
 github.com/ONSdigital/dp-cache v0.6.1 h1:wiYvxRIef9nu3Uk1//il5vNLTeKgajZ2kYacwkF4Xig=
 github.com/ONSdigital/dp-cache v0.6.1/go.mod h1:d95JP5gBSNE0L206aNvFDtI1m0oTEGWN9ZetmnN/7hk=
 github.com/ONSdigital/dp-component-test v1.4.4-alpha h1:efo71nub0AQZO5Bxp8X5As7xytBl60qSHC/FAm08DME=
