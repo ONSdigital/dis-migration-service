@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dis-migration-service
 
-go 1.26.2
+go 1.26.4
 
 require (
 	github.com/ONSdigital/dis-redirect-api v0.38.0
