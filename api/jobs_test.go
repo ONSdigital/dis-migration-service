@@ -18,6 +18,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
 	permsdk "github.com/ONSdigital/dp-permissions-api/sdk"
 
@@ -38,6 +39,32 @@ var (
 	testID = uuid.New().String()
 )
 
+const testAuthUserID = "test-user-123"
+
+// withAuthEntity returns r with AuthEntityData in its context, mirroring what
+// the authorisation middleware injects in production.
+func withAuthEntity(r *http.Request) *http.Request {
+	authData := &authorisation.AuthEntityData{
+		EntityData: &permsdk.EntityData{UserID: testAuthUserID},
+	}
+	return r.WithContext(authorisation.ContextWithAuthEntityData(r.Context(), authData))
+}
+
+// requireWithAuthEntity is a MiddlewareMock.RequireFunc that injects
+// AuthEntityData before delegating to the wrapped handler.
+func requireWithAuthEntity(_ string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		handlerFunc(w, withAuthEntity(r))
+	}
+}
+
+// requirePassthrough is a MiddlewareMock.RequireFunc that delegates to the
+// handler without injecting AuthEntityData, used to exercise the
+// missing-auth-entity-data path.
+func requirePassthrough(_ string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+	return handlerFunc
+}
+
 func TestGetJob(t *testing.T) {
 	Convey("Given a test API instance and a mocked jobservice that returns a job", t, func() {
 		mockService := applicationMock.JobServiceMock{
@@ -49,9 +76,7 @@ func TestGetJob(t *testing.T) {
 		}
 
 		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
-			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
-				return handlerFunc
-			},
+			RequireFunc: requireWithAuthEntity,
 			CloseFunc: func(ctx context.Context) error {
 				return nil
 			},
@@ -83,9 +108,7 @@ func TestGetJob(t *testing.T) {
 		}
 
 		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
-			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
-				return handlerFunc
-			},
+			RequireFunc: requireWithAuthEntity,
 			CloseFunc: func(ctx context.Context) error {
 				return nil
 			},
@@ -117,9 +140,7 @@ func TestGetJob(t *testing.T) {
 		}
 
 		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
-			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
-				return handlerFunc
-			},
+			RequireFunc: requireWithAuthEntity,
 			CloseFunc: func(ctx context.Context) error {
 				return nil
 			},
@@ -131,14 +152,46 @@ func TestGetJob(t *testing.T) {
 		api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
 
 		Convey("When a request is made and the service errors", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%s", testID), http.NoBody)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%d", testJobNumber), http.NoBody)
 			resp := httptest.NewRecorder()
 
 			api.Router.ServeHTTP(resp, req)
 
-			Convey("Then a 500 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusBadRequest)
-				// you can assert on the body if your handleError writes a specific message
+			Convey("Then a 500 is returned with the error masked", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrInternalServerError.Error())
+			})
+		})
+	})
+
+	Convey("Given a test API instance whose middleware does not set auth entity data", t, func() {
+		mockService := applicationMock.JobServiceMock{
+			GetJobFunc: func(ctx context.Context, jobNumber int) (*domain.Job, error) {
+				return &domain.Job{JobNumber: jobNumber}, nil
+			},
+		}
+
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: requirePassthrough,
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
+		r := mux.NewRouter()
+		ctx := context.Background()
+		cfg := &config.Config{}
+		api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
+
+		Convey("When a request is made without auth entity data in the context", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:30100/v1/migration-jobs/%d", testJobNumber), http.NoBody)
+			resp := httptest.NewRecorder()
+
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 500 is returned with the auth entity data error", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrFailedToParseAuthEntityData.Error())
 			})
 		})
 	})
@@ -158,9 +211,7 @@ func TestGetJobs(t *testing.T) {
 		}
 
 		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
-			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
-				return handlerFunc
-			},
+			RequireFunc: requireWithAuthEntity,
 			CloseFunc: func(ctx context.Context) error {
 				return nil
 			},
@@ -357,9 +408,7 @@ func TestGetJobs(t *testing.T) {
 		}
 
 		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
-			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
-				return handlerFunc
-			},
+			RequireFunc: requireWithAuthEntity,
 			CloseFunc: func(ctx context.Context) error {
 				return nil
 			},
@@ -388,6 +437,37 @@ func TestGetJobs(t *testing.T) {
 				err = json.Unmarshal(bodyBytes, &paginatedResponse)
 				So(err, ShouldBeNil)
 				So(len(paginatedResponse.Items), ShouldEqual, 0)
+			})
+		})
+	})
+
+	Convey("Given a test API instance whose middleware does not set auth entity data", t, func() {
+		mockService := applicationMock.JobServiceMock{}
+
+		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
+			RequireFunc: requirePassthrough,
+			CloseFunc: func(ctx context.Context) error {
+				return nil
+			},
+		}
+
+		r := mux.NewRouter()
+		ctx := context.Background()
+		cfg := &config.Config{}
+		api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
+
+		Convey("When a request is made without auth entity data in the context", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a 500 is returned with the auth entity data error", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				So(resp.Body.String(), ShouldContainSubstring, appErrors.ErrFailedToParseAuthEntityData.Error())
+
+				Convey("And the service is not called", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 0)
+				})
 			})
 		})
 	})
@@ -429,9 +509,7 @@ func TestCreateJob(t *testing.T) {
 		}
 
 		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
-			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
-				return handlerFunc
-			},
+			RequireFunc: requireWithAuthEntity,
 			CloseFunc: func(ctx context.Context) error {
 				return nil
 			},
@@ -543,9 +621,7 @@ func TestCreateJob(t *testing.T) {
 func TestGetJobTasks(t *testing.T) {
 	Convey("Given a test API instance and a mocked jobservice", t, func() {
 		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
-			RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
-				return handlerFunc
-			},
+			RequireFunc: requireWithAuthEntity,
 			CloseFunc: func(ctx context.Context) error {
 				return nil
 			},
@@ -555,6 +631,24 @@ func TestGetJobTasks(t *testing.T) {
 		ctx := context.Background()
 		cfg := &config.Config{}
 
+		Convey("missing auth entity data should return ErrFailedToParseAuthEntityData", func() {
+			mockService := applicationMock.JobServiceMock{}
+			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/123/tasks", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "123"})
+			rr := httptest.NewRecorder()
+
+			items, total, err := api.getJobTasks(rr, req, 10, 0)
+			So(items, ShouldBeNil)
+			So(total, ShouldEqual, 0)
+			So(err, ShouldEqual, appErrors.ErrFailedToParseAuthEntityData)
+
+			Convey("And the job service is not called", func() {
+				So(len(mockService.GetJobCalls()), ShouldEqual, 0)
+			})
+		})
+
 		Convey("missing job number should return ErrJobNumberNotProvided", func() {
 			mockService := applicationMock.JobServiceMock{}
 			api := Setup(ctx, cfg, r, &mockService, mockAuthMiddleware)
@@ -562,6 +656,7 @@ func TestGetJobTasks(t *testing.T) {
 			// Build request and set empty mux var to simulate missing job id
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs//tasks", http.NoBody)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: ""})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -581,6 +676,7 @@ func TestGetJobTasks(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/123/tasks", http.NoBody)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "123"})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -601,6 +697,7 @@ func TestGetJobTasks(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/123/tasks", http.NoBody)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "123"})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -629,6 +726,7 @@ func TestGetJobTasks(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/job-123/tasks", http.NoBody)
 			testJobNumberStr := strconv.Itoa(testJobNumber)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -657,6 +755,7 @@ func TestGetJobTasks(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs/123/tasks", http.NoBody)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "123"})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			items, total, err := api.getJobTasks(rr, req, 10, 0)
@@ -766,15 +865,37 @@ func TestGetJobTasks(t *testing.T) {
 func TestGetJobEvents(t *testing.T) {
 	Convey("Given the getJobEvents endpoint", t, func() {
 		mockAuthMiddleware := &authorisationMock.MiddlewareMock{
-			RequireFunc: func(permission string, handler http.HandlerFunc) http.HandlerFunc {
-				return handler
-			},
-			CloseFunc: func(ctx context.Context) error { return nil },
+			RequireFunc: requireWithAuthEntity,
+			CloseFunc:   func(ctx context.Context) error { return nil },
 		}
 
 		r := mux.NewRouter()
 		ctx := context.Background()
 		cfg := &config.Config{}
+
+		Convey("And auth entity data is missing from the context", func() {
+			mockService := &applicationMock.JobServiceMock{}
+			api := Setup(ctx, cfg, r, mockService, mockAuthMiddleware)
+
+			req := httptest.NewRequest(http.MethodGet,
+				"http://localhost:30100/v1/migration-jobs/123/events", http.NoBody)
+			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: "123"})
+			rr := httptest.NewRecorder()
+
+			Convey("When getJobEvents is called", func() {
+				items, total, err := api.getJobEvents(rr, req, 10, 0)
+
+				Convey("Then it returns ErrFailedToParseAuthEntityData", func() {
+					So(items, ShouldBeNil)
+					So(total, ShouldEqual, 0)
+					So(err, ShouldEqual, appErrors.ErrFailedToParseAuthEntityData)
+
+					Convey("And the job service is not called", func() {
+						So(len(mockService.GetJobCalls()), ShouldEqual, 0)
+					})
+				})
+			})
+		})
 
 		Convey("And jobID is missing from the request", func() {
 			mockService := &applicationMock.JobServiceMock{}
@@ -783,6 +904,7 @@ func TestGetJobEvents(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet,
 				"http://localhost:30100/v1/migration-jobs//events", http.NoBody)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: ""})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -808,6 +930,7 @@ func TestGetJobEvents(t *testing.T) {
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
 			testJobNumberStr := strconv.Itoa(testJobNumber)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -834,6 +957,7 @@ func TestGetJobEvents(t *testing.T) {
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
 			testJobNumberStr := strconv.Itoa(testJobNumber)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -885,6 +1009,7 @@ func TestGetJobEvents(t *testing.T) {
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
 			testJobNumberStr := strconv.Itoa(testJobNumber)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -921,6 +1046,7 @@ func TestGetJobEvents(t *testing.T) {
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
 			testJobNumberStr := strconv.Itoa(testJobNumber)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -961,6 +1087,7 @@ func TestGetJobEvents(t *testing.T) {
 				http.NoBody)
 			testJobNumberStr := strconv.Itoa(testJobNumber)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called with limit 1 and offset 1", func() {
@@ -993,6 +1120,7 @@ func TestGetJobEvents(t *testing.T) {
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
 			testJobNumberStr := strconv.Itoa(testJobNumber)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -1044,6 +1172,7 @@ func TestGetJobEvents(t *testing.T) {
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
 			testJobNumberStr := strconv.Itoa(testJobNumber)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
@@ -1098,6 +1227,7 @@ func TestGetJobEvents(t *testing.T) {
 				"http://localhost:30100/v1/migration-jobs/job-123/events", http.NoBody)
 			testJobNumberStr := strconv.Itoa(testJobNumber)
 			req = mux.SetURLVars(req, map[string]string{PathParameterJobNumber: testJobNumberStr})
+			req = withAuthEntity(req)
 			rr := httptest.NewRecorder()
 
 			Convey("When getJobEvents is called", func() {
