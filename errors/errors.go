@@ -77,7 +77,7 @@ func NewErrorResponse(statusCode int, headers map[string]string, errs ...error) 
 }
 
 // NewAuditEventError creates and logs a new audit event error.
-func NewAuditEventError(ctx context.Context, cause error, code, description string, logDatas ...log.Data) *AuditEventError {
+func NewAuditEventError(ctx context.Context, cause error, code, description string, logDatas ...log.Data) {
 	err := &AuditEventError{
 		Cause:       cause,
 		Code:        code,
@@ -86,7 +86,7 @@ func NewAuditEventError(ctx context.Context, cause error, code, description stri
 
 	if len(logDatas) == 0 {
 		log.Error(ctx, description, err)
-		return err
+		return
 	}
 
 	merged := log.Data{}
@@ -96,7 +96,6 @@ func NewAuditEventError(ctx context.Context, cause error, code, description stri
 		}
 	}
 	log.Error(ctx, description, err, merged)
-	return err
 }
 
 // Predefined errors
