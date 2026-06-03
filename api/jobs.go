@@ -71,6 +71,7 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request, limit, 
 	authEntityData, ok := authorisation.AuthEntityDataFromContext(r.Context())
 	if !ok {
 		log.Error(ctx, "getJobs endpoint: failed to parse auth entity data", errors.New(appErrors.EntityDataErrorDescription))
+		handleError(ctx, w, r, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil))
 		return nil, 0, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil)
 	}
 
@@ -101,6 +102,7 @@ func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, lim
 	authEntityData, ok := authorisation.AuthEntityDataFromContext(r.Context())
 	if !ok {
 		log.Error(ctx, "getJobTasks endpoint: failed to parse auth entity data", errors.New(appErrors.EntityDataErrorDescription))
+		handleError(ctx, w, r, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil))
 		return nil, 0, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil)
 	}
 	vars := mux.Vars(r)
@@ -149,6 +151,7 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	authEntityData, ok := authorisation.AuthEntityDataFromContext(r.Context())
 	if !ok {
 		log.Error(ctx, "createJob endpoint: failed to parse auth entity data", errors.New(appErrors.EntityDataErrorDescription))
+		handleError(ctx, w, r, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil))
 		return
 	}
 
@@ -214,6 +217,7 @@ func (api *MigrationAPI) getJobEvents(w http.ResponseWriter, r *http.Request, li
 	authEntityData, ok := authorisation.AuthEntityDataFromContext(r.Context())
 	if !ok {
 		log.Error(ctx, "getJobEvents endpoint: failed to parse auth entity data", errors.New(appErrors.EntityDataErrorDescription))
+		handleError(ctx, w, r, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil))
 		return nil, 0, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil)
 	}
 	vars := mux.Vars(r)
