@@ -339,7 +339,7 @@ func TestGetJobs(t *testing.T) {
 			resp := httptest.NewRecorder()
 			api.Router.ServeHTTP(resp, req)
 
-			Convey("Then only jobs matching that state are returned and the state summary includes all states", func() {
+			Convey("Then only jobs matching that state are returned and the state summary includes all stored states", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
 
 				bodyBytes, err := io.ReadAll(resp.Body)

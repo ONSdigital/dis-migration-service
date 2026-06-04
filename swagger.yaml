@@ -560,7 +560,7 @@ definitions:
               $ref: "#/definitions/MigrationJob"
           states:
             type: array
-            description: An array of states found in the full result set
+            description: An array of summaries of the states found in the full result set.
             items:
               $ref: "#/definitions/StateSummary"
 
@@ -646,7 +646,7 @@ definitions:
         example: In review
       count:
         type: integer
-        description: The number of results of this state type within the full set of results.
+        description: The number of results with this state within the full set of results.
         example: 1
 
   MigrationState:
