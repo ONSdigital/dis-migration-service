@@ -12,6 +12,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dis-migration-service/statemachine"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	dprequest "github.com/ONSdigital/dp-net/v3/request"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
@@ -33,6 +34,13 @@ type JobsListResponse struct {
 // getJob is an implementation for retrieving a migration job.
 func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	authEntityData, ok := authorisation.AuthEntityDataFromContext(r.Context())
+	if !ok {
+		log.Error(ctx, "getJob endpoint: failed to parse auth entity data", errors.New(appErrors.EntityDataErrorDescription))
+		handleError(ctx, w, r, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil))
+		return
+	}
+
 	vars := mux.Vars(r)
 	jobNumberStr := vars[PathParameterJobNumber]
 	jobNumber, err := strconv.Atoi(jobNumberStr)
@@ -58,12 +66,20 @@ func (api *MigrationAPI) getJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logAuditEvent(ctx, "successfully retrieved job", authEntityData, domain.ActionRead, r.URL.Path, domain.OutcomeSuccess, "", nil)
 	handleSuccess(ctx, w, r, http.StatusOK, bytes)
 }
 
 // getJobs is an implementation of PaginatedHandler for retrieving jobs.
 func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	authEntityData, ok := authorisation.AuthEntityDataFromContext(ctx)
+	if !ok {
+		log.Error(ctx, "getJobs endpoint: failed to parse auth entity data", errors.New(appErrors.EntityDataErrorDescription))
+		handleError(ctx, w, r, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil))
+		return
+	}
 
 	limit, offset, errs := api.Paginator.getPaginationParameters(r)
 	if len(errs) > 0 {
@@ -125,6 +141,7 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logAuditEvent(ctx, "successfully retrieved jobs", authEntityData, domain.ActionRead, r.URL.Path, domain.OutcomeSuccess, "", nil)
 	handleSuccess(ctx, w, r, http.StatusOK, responseBytes)
 }
 
@@ -132,6 +149,12 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request) {
 // job tasks.
 func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
 	ctx := r.Context()
+	authEntityData, ok := authorisation.AuthEntityDataFromContext(r.Context())
+	if !ok {
+		log.Error(ctx, "getJobTasks endpoint: failed to parse auth entity data", errors.New(appErrors.EntityDataErrorDescription))
+		handleError(ctx, w, r, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil))
+		return nil, 0, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil)
+	}
 	vars := mux.Vars(r)
 	jobNumberStr := vars[PathParameterJobNumber]
 
@@ -168,11 +191,18 @@ func (api *MigrationAPI) getJobTasks(w http.ResponseWriter, r *http.Request, lim
 		return nil, 0, err
 	}
 
+	logAuditEvent(ctx, "successfully retrieved job tasks", authEntityData, domain.ActionRead, r.URL.Path, domain.OutcomeSuccess, "", nil)
 	return tasks, totalCount, nil
 }
 
 func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	authEntityData, ok := authorisation.AuthEntityDataFromContext(r.Context())
+	if !ok {
+		log.Error(ctx, "createJob endpoint: failed to parse auth entity data", errors.New(appErrors.EntityDataErrorDescription))
+		handleError(ctx, w, r, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil))
+		return
+	}
 
 	userAuthToken, err := dprequest.GetAuthToken(r)
 	if err != nil {
@@ -226,12 +256,19 @@ func (api *MigrationAPI) createJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logAuditEvent(ctx, "successfully created job", authEntityData, domain.ActionCreate, r.URL.Path, domain.OutcomeSuccess, "", nil)
 	handleSuccess(ctx, w, r, http.StatusAccepted, bytes)
 }
 
 // getJobEvents is an implementation for retrieving job events.
 func (api *MigrationAPI) getJobEvents(w http.ResponseWriter, r *http.Request, limit, offset int) (items interface{}, totalCount int, err error) {
 	ctx := r.Context()
+	authEntityData, ok := authorisation.AuthEntityDataFromContext(r.Context())
+	if !ok {
+		log.Error(ctx, "getJobEvents endpoint: failed to parse auth entity data", errors.New(appErrors.EntityDataErrorDescription))
+		handleError(ctx, w, r, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil))
+		return nil, 0, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil)
+	}
 	vars := mux.Vars(r)
 	jobNumberStr := vars[PathParameterJobNumber]
 
@@ -256,6 +293,7 @@ func (api *MigrationAPI) getJobEvents(w http.ResponseWriter, r *http.Request, li
 		return nil, 0, err
 	}
 
+	logAuditEvent(ctx, "successfully retrieved job events", authEntityData, domain.ActionRead, r.URL.Path, domain.OutcomeSuccess, "", nil)
 	return events, totalCount, nil
 }
 
@@ -267,6 +305,13 @@ func (api *MigrationAPI) updateJobState(
 	ctx := r.Context()
 	vars := mux.Vars(r)
 	jobNumberStr := vars[PathParameterJobNumber]
+
+	authEntityData, ok := authorisation.AuthEntityDataFromContext(r.Context())
+	if !ok {
+		log.Error(ctx, "updateJobState endpoint: failed to parse auth entity data", errors.New(appErrors.EntityDataErrorDescription))
+		handleError(ctx, w, r, handleAuthEntityDataError(ctx, errors.New(appErrors.EntityDataErrorDescription), nil))
+		return
+	}
 
 	if jobNumberStr == "" {
 		handleError(ctx, w, r, appErrors.ErrJobNumberNotProvided)
@@ -354,6 +399,7 @@ func (api *MigrationAPI) updateJobState(
 		return
 	}
 
+	logAuditEvent(ctx, "successfully updated job state", authEntityData, domain.ActionUpdate, r.URL.Path, domain.OutcomeSuccess, "", nil)
 	log.Info(ctx, "job state updated successfully", logData)
 	w.WriteHeader(http.StatusNoContent)
 }
