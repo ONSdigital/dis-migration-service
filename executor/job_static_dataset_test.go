@@ -151,21 +151,11 @@ func TestJobStaticDataset(t *testing.T) {
 					So(mockZebedeeClient.PublishCollectionCalls()[0].CollectionID, ShouldEqual, testCollectionID)
 
 					Convey("And all tasks are updated to post-publishing then completed", func() {
-						So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 4)
+						So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 2)
 						So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, "task-1")
-						So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StatePostPublishing)
+						So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StatePendingPostPublish)
 						So(mockJobService.UpdateTaskStateCalls()[1].TaskID, ShouldEqual, "task-2")
-						So(mockJobService.UpdateTaskStateCalls()[1].NewState, ShouldEqual, domain.StatePostPublishing)
-						So(mockJobService.UpdateTaskStateCalls()[2].TaskID, ShouldEqual, "task-1")
-						So(mockJobService.UpdateTaskStateCalls()[2].NewState, ShouldEqual, domain.StateCompleted)
-						So(mockJobService.UpdateTaskStateCalls()[3].TaskID, ShouldEqual, "task-2")
-						So(mockJobService.UpdateTaskStateCalls()[3].NewState, ShouldEqual, domain.StateCompleted)
-
-						Convey("And the job state is updated to completed", func() {
-							So(mockJobService.UpdateJobStateCalls(), ShouldHaveLength, 1)
-							So(mockJobService.UpdateJobStateCalls()[0].JobNumber, ShouldEqual, testJobNumber)
-							So(mockJobService.UpdateJobStateCalls()[0].NewState, ShouldEqual, domain.StateCompleted)
-						})
+						So(mockJobService.UpdateTaskStateCalls()[1].NewState, ShouldEqual, domain.StatePendingPostPublish)
 					})
 				})
 			})
@@ -488,7 +478,7 @@ func TestJobStaticDataset(t *testing.T) {
 		Convey("When post-publish is called for a job", func() {
 			job := &domain.Job{
 				JobNumber: testJobNumber,
-				State:     domain.StatePostPublishing,
+				State:     domain.StatePendingPostPublish,
 				Config: &domain.JobConfig{
 					CollectionID: testCollectionID,
 				},
@@ -601,54 +591,6 @@ func TestJobStaticDataset(t *testing.T) {
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldEqual, errTest)
-			})
-		})
-	})
-
-	Convey("Given a static dataset job executor and a job service that errors when updating job state", t, func() {
-		mockJobService := &applicationMocks.JobServiceMock{
-			CountTasksByJobNumberFunc: func(ctx context.Context, jobNumber int) (int, error) {
-				return 2, nil
-			},
-			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber, limit, offset int) ([]*domain.Task, int, error) {
-				return []*domain.Task{
-					{ID: "task-1", State: domain.StatePublished},
-					{ID: "task-2", State: domain.StatePublished},
-				}, 2, nil
-			},
-			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
-				return nil
-			},
-			UpdateJobStateFunc: func(ctx context.Context, jobNumber int, state domain.State, userID string) error {
-				return errTest
-			},
-		}
-		mockClientList := &clients.ClientList{
-			Zebedee: &clientMocks.ZebedeeClientMock{
-				PublishCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
-					return nil
-				},
-			},
-		}
-
-		ctx := context.Background()
-		executor := NewStaticDatasetJobExecutor(mockJobService, mockClientList, "faketoken")
-
-		Convey("When post-publish is called for a job", func() {
-			job := &domain.Job{
-				JobNumber: testJobNumber,
-				State:     domain.StatePostPublishing,
-				Config: &domain.JobConfig{
-					CollectionID: testCollectionID,
-				},
-			}
-
-			err := executor.PostPublish(ctx, job)
-
-			Convey("Then an error is returned", func() {
-				So(err, ShouldEqual, errTest)
-				So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 4)
-				So(mockJobService.UpdateJobStateCalls(), ShouldHaveLength, 1)
 			})
 		})
 	})

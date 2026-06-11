@@ -293,6 +293,7 @@ parameters:
       # Running states
       - migrating
       - publishing
+      - pending_post_publish
       - post_publishing
       - reverting
       # Failed states

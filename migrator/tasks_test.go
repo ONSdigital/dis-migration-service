@@ -88,6 +88,27 @@ func TestMigratorExecuteTask(t *testing.T) {
 			})
 		})
 
+		Convey("When a task in state post_publishing is executed", func() {
+			mockTestExecutor.PostPublishFunc = func(ctx context.Context, task *domain.Task) error {
+				return nil
+			}
+
+			task := &domain.Task{
+				ID:        fakeTaskID,
+				JobNumber: 101,
+				Type:      fakeTaskType,
+				State:     domain.StatePostPublishing,
+			}
+
+			mig.executeTask(context.Background(), task)
+			mig.wg.Wait()
+
+			Convey("Then the executor is called to post-publish", func() {
+				So(len(mockTestExecutor.PostPublishCalls()), ShouldEqual, 1)
+				So(mockTestExecutor.PostPublishCalls()[0].Task.Type, ShouldEqual, fakeTaskType)
+			})
+		})
+
 		Convey("When a task in state reverting is executed", func() {
 			task := &domain.Task{
 				ID:        fakeTaskID,
@@ -290,6 +311,22 @@ func TestMigratorFailTask(t *testing.T) {
 			Convey("Then the job service is not called to update the task", func() {
 				So(err, ShouldNotBeNil)
 				So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 0)
+			})
+		})
+
+		Convey("When failTask is called for a task in post_publishing state", func() {
+			task := &domain.Task{
+				ID:    fakeTaskID,
+				State: domain.StatePostPublishing,
+			}
+
+			err := mig.failTask(ctx, task, errors.New("test error"), failureReasonExecutionFailed)
+
+			Convey("Then the task is transitioned to failed_post_publish", func() {
+				So(err, ShouldBeNil)
+				So(len(mockJobService.UpdateTaskStateCalls()), ShouldEqual, 1)
+				So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, fakeTaskID)
+				So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateFailedPostPublish)
 			})
 		})
 	})

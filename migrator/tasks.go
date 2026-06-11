@@ -97,6 +97,8 @@ func (mig *migrator) executeTask(ctx context.Context, task *domain.Task) {
 			err = taskExecutor.Migrate(ctx, task)
 		case domain.StatePublishing:
 			err = taskExecutor.Publish(ctx, task)
+		case domain.StatePostPublishing:
+			err = taskExecutor.PostPublish(ctx, task)
 		case domain.StateReverting:
 			err = taskExecutor.Revert(ctx, task)
 		default:

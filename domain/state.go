@@ -25,6 +25,8 @@ const (
 	StateMigrating State = "migrating"
 	// StatePublishing indicates a job or task is currently publishing
 	StatePublishing State = "publishing"
+	// StatePendingPostPublish indicates a task is pending post-publishing steps
+	StatePendingPostPublish State = "pending_post_publish"
 	// StatePostPublishing indicates a job or task is in post-publishing phase
 	StatePostPublishing State = "post_publishing"
 	// StateReverting indicates a job or task is being reverted
@@ -47,7 +49,7 @@ const (
 func IsValidState(state State) bool {
 	switch state {
 	case StateSubmitted, StateInReview, StateApproved, StateRejected, StatePublished,
-		StateCompleted, StateMigrating, StatePublishing, StatePostPublishing,
+		StateCompleted, StateMigrating, StatePublishing, StatePendingPostPublish, StatePostPublishing,
 		StateReverting, StateFailedMigration, StateFailedPostPublish, StateFailedPublish, StateFailedReversion,
 		StateCancelled:
 		return true
@@ -61,7 +63,7 @@ func IsValidState(state State) bool {
 func GetNonCancelledStates() []State {
 	return []State{
 		StateSubmitted, StateInReview, StateApproved, StateRejected, StatePublished,
-		StateCompleted, StateMigrating, StatePublishing, StatePostPublishing,
+		StateCompleted, StateMigrating, StatePublishing, StatePendingPostPublish, StatePostPublishing,
 		StateReverting, StateFailedMigration, StateFailedPostPublish, StateFailedPublish, StateFailedReversion,
 	}
 }
@@ -95,6 +97,8 @@ func GetStateLabel(state State) (string, error) {
 		return "Migrating", nil
 	case StatePublishing:
 		return "Publishing", nil
+	case StatePendingPostPublish:
+		return "Pending post-publish", nil
 	case StatePostPublishing:
 		return "Post-publishing", nil
 	case StateReverting:

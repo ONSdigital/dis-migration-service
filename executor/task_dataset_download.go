@@ -151,6 +151,15 @@ func (e *DatasetDownloadTaskExecutor) Publish(ctx context.Context, task *domain.
 // PostPublish handles the post-publish operations for a dataset download task.
 func (e *DatasetDownloadTaskExecutor) PostPublish(ctx context.Context, task *domain.Task) error {
 	// Implementation of post-publish for dataset download
+	logData := log.Data{"task_id": task.ID, "job_number": task.JobNumber}
+	log.Info(ctx, "updating task state to completed", logData)
+
+	err := e.jobService.UpdateTaskState(ctx, task.ID, domain.StateCompleted)
+	if err != nil {
+		log.Error(ctx, "failed to update task state to completed", err, logData)
+		return err
+	}
+	log.Info(ctx, "successfully updated task state to completed", logData)
 	return nil
 }
 

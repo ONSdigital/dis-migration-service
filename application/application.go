@@ -291,6 +291,7 @@ func (js *jobService) ClaimTask(ctx context.Context) (*domain.Task, error) {
 	}{
 		{from: domain.StateSubmitted, to: domain.StateMigrating},
 		{from: domain.StateApproved, to: domain.StatePublishing},
+		{from: domain.StatePendingPostPublish, to: domain.StatePostPublishing},
 		{from: domain.StateRejected, to: domain.StateReverting},
 	}
 

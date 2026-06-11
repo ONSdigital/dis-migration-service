@@ -154,6 +154,20 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("When post-publish is called for a task", func() {
+			err := executor.PostPublish(ctx, testSeriesTask)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And the task state is updated to completed", func() {
+					So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 1)
+					So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, testSeriesTask.ID)
+					So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateCompleted)
+				})
+			})
+		})
 	})
 
 	Convey("Given a dataset series task executor with a zebedee client mock errors", t, func() {

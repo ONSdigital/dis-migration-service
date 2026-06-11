@@ -71,7 +71,7 @@ Feature: Publish a static dataset job
       """
     Then the HTTP status code should be "204"
     # Post-publish runs automatically once job reaches published state
-    And I wait 2 seconds for the job processor to process tasks and jobs
+    And I wait 5 seconds for the job processor to process tasks and jobs
     When I GET "/v1/migration-jobs/30"
     Then I should receive the following JSON response with status "200":
       """

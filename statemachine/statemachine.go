@@ -20,13 +20,16 @@ func (e *TransitionError) Error() string {
 // allowedTransitions encodes the state machine from the design docs.
 var allowedTransitions = map[domain.State][]domain.State{
 	// happy path
-	domain.StateSubmitted:      {domain.StateMigrating, domain.StateCancelled},
-	domain.StateMigrating:      {domain.StateInReview, domain.StateFailedMigration},
-	domain.StateInReview:       {domain.StateApproved, domain.StateRejected},
-	domain.StateApproved:       {domain.StatePublishing},
-	domain.StatePublishing:     {domain.StatePublished, domain.StateFailedPublish},
-	domain.StatePublished:      {domain.StatePostPublishing},
-	domain.StatePostPublishing: {domain.StateCompleted, domain.StateFailedPostPublish},
+	domain.StateSubmitted:  {domain.StateMigrating, domain.StateCancelled},
+	domain.StateMigrating:  {domain.StateInReview, domain.StateFailedMigration},
+	domain.StateInReview:   {domain.StateApproved, domain.StateRejected},
+	domain.StateApproved:   {domain.StatePublishing},
+	domain.StatePublishing: {domain.StatePublished, domain.StateFailedPublish},
+	// StatePendingPostPublish is a state only for tasks,
+	// and it is used to trigger the PostPublish steps for all tasks.
+	domain.StatePublished:          {domain.StatePendingPostPublish, domain.StatePostPublishing},
+	domain.StatePendingPostPublish: {domain.StatePostPublishing},
+	domain.StatePostPublishing:     {domain.StateCompleted, domain.StateFailedPostPublish},
 
 	// rejection and revert paths
 	domain.StateRejected:  {domain.StateReverting},

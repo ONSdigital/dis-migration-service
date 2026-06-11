@@ -931,3 +931,50 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 		})
 	})
 }
+
+func TestDatasetVersionTaskExecutorPostPublish(t *testing.T) {
+	Convey("Given a job service that does not error", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
+				return nil
+			},
+		}
+
+		ctx := context.Background()
+		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{}, testServiceAuthToken)
+
+		Convey("When post-publish is called for a task", func() {
+			err := executor.PostPublish(ctx, testVersionTask)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And the task state is updated to completed", func() {
+					So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 1)
+					So(mockJobService.UpdateTaskStateCalls()[0].TaskID, ShouldEqual, testVersionTask.ID)
+					So(mockJobService.UpdateTaskStateCalls()[0].NewState, ShouldEqual, domain.StateCompleted)
+				})
+			})
+		})
+	})
+
+	Convey("Given a job service that errors when updating task state", t, func() {
+		mockJobService := &applicationMocks.JobServiceMock{
+			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error {
+				return errTest
+			},
+		}
+
+		ctx := context.Background()
+		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{}, testServiceAuthToken)
+
+		Convey("When post-publish is called for a task", func() {
+			err := executor.PostPublish(ctx, testVersionTask)
+
+			Convey("Then an error is returned", func() {
+				So(err, ShouldEqual, errTest)
+				So(mockJobService.UpdateTaskStateCalls(), ShouldHaveLength, 1)
+			})
+		})
+	})
+}

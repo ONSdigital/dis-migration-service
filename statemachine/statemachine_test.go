@@ -70,8 +70,20 @@ func TestCanTransition(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "published to pending_post_publish is valid",
+			from:     domain.StatePublished,
+			to:       domain.StatePendingPostPublish,
+			expected: true,
+		},
+		{
 			name:     "published to post_publishing is valid",
 			from:     domain.StatePublished,
+			to:       domain.StatePostPublishing,
+			expected: true,
+		},
+		{
+			name:     "pending_post_publish to post_publishing is valid",
+			from:     domain.StatePendingPostPublish,
 			to:       domain.StatePostPublishing,
 			expected: true,
 		},
@@ -328,6 +340,11 @@ func TestIsTerminalState(t *testing.T) {
 			expected: false,
 		},
 		{
+			name:     "pending_post_publish is not terminal",
+			state:    domain.StatePendingPostPublish,
+			expected: false,
+		},
+		{
 			name:     "post_publishing is not terminal",
 			state:    domain.StatePostPublishing,
 			expected: false,
@@ -379,6 +396,21 @@ func TestGetNextStates(t *testing.T) {
 			name:     "approved has one next state",
 			state:    domain.StateApproved,
 			expected: []domain.State{domain.StatePublishing},
+		},
+		{
+			name:     "published has two next states",
+			state:    domain.StatePublished,
+			expected: []domain.State{domain.StatePendingPostPublish, domain.StatePostPublishing},
+		},
+		{
+			name:     "pending_post_publish has one next state",
+			state:    domain.StatePendingPostPublish,
+			expected: []domain.State{domain.StatePostPublishing},
+		},
+		{
+			name:     "post_publishing has two next states",
+			state:    domain.StatePostPublishing,
+			expected: []domain.State{domain.StateCompleted, domain.StateFailedPostPublish},
 		},
 		{
 			name:     "completed has no next states",
