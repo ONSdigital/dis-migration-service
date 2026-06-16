@@ -97,8 +97,8 @@ func (tc *TopicCache) GetTopicCacheKey() string {
 	return TopicCacheKey
 }
 
-// GetTopic retrieves a topic from the cache by slug
-func (tc *TopicCache) GetTopic(ctx context.Context, slug string) (*Subtopic, error) {
+// GetTopicBySlug retrieves a topic from the cache by slug
+func (tc *TopicCache) GetTopicBySlug(ctx context.Context, slug string) (*Subtopic, error) {
 	topicCache, err := tc.GetData(ctx, TopicCacheKey)
 	if err != nil {
 		logData := log.Data{
@@ -119,6 +119,31 @@ func (tc *TopicCache) GetTopic(ctx context.Context, slug string) (*Subtopic, err
 	}
 
 	return &topicCacheItem, nil
+}
+
+// GetTopicById retrieves a topic from the cache by ID
+func (tc *TopicCache) GetTopicById(ctx context.Context, id string) (*Subtopic, error) {
+	topicCache, err := tc.GetData(ctx, TopicCacheKey)
+	if err != nil {
+		logData := log.Data{
+			"key": TopicCacheKey,
+		}
+		log.Error(ctx, "failed to get the topic cache", err, logData)
+		return nil, err
+	}
+
+	// Iterate through the subtopics to find the one with the matching ID
+	for _, subtopic := range topicCache.List.GetSubtopics() {
+		if subtopic.ID == id {
+			return &subtopic, nil
+		}
+	}
+
+	err = errors.New("requested topic ID does not exist in cache")
+	log.Info(ctx, "topic ID not found in cache", log.Data{
+		"id": id,
+	})
+	return nil, err
 }
 
 // GetEmptyTopic returns an empty topic cache e.g in an event where

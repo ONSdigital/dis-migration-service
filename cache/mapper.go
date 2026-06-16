@@ -31,7 +31,7 @@ func ExtractTopicIDFromURI(ctx context.Context, uri string, topicCache *TopicCac
 			continue
 		}
 
-		topic, err := topicCache.GetTopic(ctx, uriSegments[i-1])
+		topic, err := topicCache.GetTopicBySlug(ctx, uriSegments[i-1])
 		if err != nil {
 			log.Info(ctx, "topic slug not found in cache, skipping", log.Data{
 				"slug": uriSegments[i-1],

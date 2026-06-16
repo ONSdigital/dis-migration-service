@@ -175,7 +175,7 @@ func TestGetEmptyTopic(t *testing.T) {
 	})
 }
 
-func TestTopicCacheGetTopic(t *testing.T) {
+func TestTopicCacheGetTopicBySlug(t *testing.T) {
 	Convey("Given a topic cache with subtopics", t, func() {
 		ctx := context.Background()
 		topicCache, _ := NewTopicCache(ctx, nil)
@@ -200,7 +200,7 @@ func TestTopicCacheGetTopic(t *testing.T) {
 		topicCache.Set(TopicCacheKey, testTopic)
 
 		Convey("When getting an existing topic by slug", func() {
-			retrieved, err := topicCache.GetTopic(ctx, "economy")
+			retrieved, err := topicCache.GetTopicBySlug(ctx, "economy")
 
 			Convey("Then it should return the topic", func() {
 				So(err, ShouldBeNil)
@@ -211,7 +211,53 @@ func TestTopicCacheGetTopic(t *testing.T) {
 		})
 
 		Convey("When getting a non-existent topic by slug", func() {
-			retrieved, err := topicCache.GetTopic(ctx, "non-existent")
+			retrieved, err := topicCache.GetTopicBySlug(ctx, "non-existent")
+
+			Convey("Then it should return an error", func() {
+				So(err, ShouldNotBeNil)
+				So(retrieved, ShouldBeNil)
+			})
+		})
+	})
+}
+
+func TestTopicCacheGetTopicById(t *testing.T) {
+	Convey("Given a topic cache with subtopics", t, func() {
+		ctx := context.Background()
+		topicCache, _ := NewTopicCache(ctx, nil)
+
+		// Create topic with subtopics
+		subtopicsMap := NewSubTopicsMap()
+		subtopicsMap.AppendSubtopicID("economy", Subtopic{
+			ID:         "economy-id",
+			Slug:       "economy",
+			ParentSlug: "",
+		})
+		subtopicsMap.AppendSubtopicID("inflation", Subtopic{
+			ID:         "inflation-id",
+			Slug:       "inflation",
+			ParentSlug: "economy",
+		})
+
+		testTopic := &Topic{
+			ID:   TopicCacheKey,
+			List: subtopicsMap,
+		}
+		topicCache.Set(TopicCacheKey, testTopic)
+
+		Convey("When getting an existing topic by ID", func() {
+			retrieved, err := topicCache.GetTopicById(ctx, "economy-id")
+
+			Convey("Then it should return the topic", func() {
+				So(err, ShouldBeNil)
+				So(retrieved, ShouldNotBeNil)
+				So(retrieved.ID, ShouldEqual, "economy-id")
+				So(retrieved.Slug, ShouldEqual, "economy")
+			})
+		})
+
+		Convey("When getting a non-existent topic by ID", func() {
+			retrieved, err := topicCache.GetTopicById(ctx, "non-existent-id")
 
 			Convey("Then it should return an error", func() {
 				So(err, ShouldNotBeNil)
@@ -254,7 +300,7 @@ func TestNewMockTopicCache(t *testing.T) {
 			})
 
 			Convey("And it should contain the mock topic", func() {
-				mockTopic, err := mockCache.GetTopic(ctx, "mock-topic")
+				mockTopic, err := mockCache.GetTopicBySlug(ctx, "mock-topic")
 				So(err, ShouldBeNil)
 				So(mockTopic, ShouldNotBeNil)
 				So(mockTopic.ID, ShouldEqual, "0000")
