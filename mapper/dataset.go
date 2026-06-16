@@ -34,7 +34,7 @@ func MapDatasetLandingPageToDatasetAPI(ctx context.Context, datasetID string, pa
 		}
 	} else {
 		// When mock cache is disabled, add the mock-topic topic ID
-		topic, err := topicCache.GetTopic(ctx, "mock-topic")
+		topic, err := topicCache.GetTopicBySlug(ctx, "mock-topic")
 		if err != nil {
 			return nil, errors.New("mock topic not found in topic cache - if topic cache is disabled, mock topic should exist")
 		}
@@ -88,7 +88,7 @@ func getQMILink(methodologyLinks []zebedee.Link) *datasetModels.GeneralDetails {
 // CreateDatasetLink creates a link to the dataset in the new location,
 // which is added to the migration link field in the source dataset
 // landing page.
-func CreateDatasetLink(dataset *datasetModels.Dataset) string {
-	//TODO: add topics in here
-	return fmt.Sprintf("/datasets/%s", dataset.ID)
+func CreateDatasetLink(datasetTopicSlug string, dataset *datasetModels.Dataset) string {
+	datasetLink := fmt.Sprintf("/%s/datasets/%s", datasetTopicSlug, dataset.ID)
+	return datasetLink
 }

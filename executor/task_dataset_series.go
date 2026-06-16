@@ -73,7 +73,10 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 		return err
 	}
 
-	sourceData.Description.MigrationLink = mapper.CreateDatasetLink(targetData)
+	datasetTopicSlug := cache.ExtractSingleTopicSlugFromURI(ctx, sourceData.URI, e.topicCache)
+
+	datasetLink := mapper.CreateDatasetLink(datasetTopicSlug, targetData)
+	sourceData.Description.MigrationLink = datasetLink
 	err = e.clientList.Zebedee.SaveContentToCollection(
 		ctx,
 		e.serviceAuthToken,

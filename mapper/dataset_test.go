@@ -284,14 +284,16 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 func TestCreateDatasetLink(t *testing.T) {
 	Convey("Given a dataset with an ID", t, func() {
 		dataset := &datasetModels.Dataset{
-			ID: "test-dataset-id",
+			ID:     "test-dataset-id",
+			Topics: []string{"1234"},
 		}
+		testTopicSlug := "mock-topic"
 
 		Convey("When CreateDatasetLink is called", func() {
-			link := CreateDatasetLink(dataset)
+			link := CreateDatasetLink(testTopicSlug, dataset)
 
 			Convey("Then the link is created in the expected format", func() {
-				So(link, ShouldEqual, "/datasets/test-dataset-id")
+				So(link, ShouldEqual, "/mock-topic/datasets/test-dataset-id")
 			})
 		})
 	})
