@@ -7,6 +7,81 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func TestExtractSingleTopicSlugFromURI(t *testing.T) {
+	Convey("Given a topic cache with test topics", t, func() {
+		ctx := context.Background()
+		topicCache, _ := NewTopicCache(ctx, nil)
+
+		// Setup test topics
+		subtopicsMap := NewSubTopicsMap()
+		subtopicsMap.AppendSubtopicID("economy", Subtopic{
+			ID:         "economy-id",
+			Slug:       "economy",
+			ParentSlug: "",
+		})
+		subtopicsMap.AppendSubtopicID("investmentspensionsandtrusts", Subtopic{
+			ID:         "investments-id",
+			Slug:       "investmentspensionsandtrusts",
+			ParentSlug: "economy",
+		})
+		subtopicsMap.AppendSubtopicID("datasets", Subtopic{
+			ID:         "datasets-id",
+			Slug:       "datasets",
+			ParentSlug: "investmentspensionsandtrusts",
+		})
+
+		testTopic := &Topic{
+			ID:   TopicCacheKey,
+			List: subtopicsMap,
+		}
+
+		// Set test topic in cache
+		topicCache.Set(TopicCacheKey, testTopic)
+
+		Convey("When the URI contains a topic slug before datasets", func() {
+			uri := "https://www.ons.gov.uk/economy/investmentspensionsandtrusts/datasets/example"
+
+			slug := ExtractSingleTopicSlugFromURI(ctx, uri, topicCache)
+
+			Convey("Then it should return the slug immediately before datasets", func() {
+				So(slug, ShouldEqual, "investmentspensionsandtrusts")
+			})
+		})
+
+		Convey("When the URI is path-only with a topic slug before datasets", func() {
+			slug := ExtractSingleTopicSlugFromURI(ctx, "/economy/investmentspensionsandtrusts/datasets", topicCache)
+
+			Convey("Then it should return the slug immediately before datasets", func() {
+				So(slug, ShouldEqual, "investmentspensionsandtrusts")
+			})
+		})
+
+		Convey("When datasets is the first segment in the URI", func() {
+			slug := ExtractSingleTopicSlugFromURI(ctx, "/datasets/example", topicCache)
+
+			Convey("Then it should return an empty string", func() {
+				So(slug, ShouldEqual, "")
+			})
+		})
+
+		Convey("When the URI does not contain a datasets segment", func() {
+			slug := ExtractSingleTopicSlugFromURI(ctx, "/economy/investmentspensionsandtrusts", topicCache)
+
+			Convey("Then it should return an empty string", func() {
+				So(slug, ShouldEqual, "")
+			})
+		})
+
+		Convey("When the URI is empty", func() {
+			slug := ExtractSingleTopicSlugFromURI(ctx, "", topicCache)
+
+			Convey("Then it should return an empty string", func() {
+				So(slug, ShouldEqual, "")
+			})
+		})
+	})
+}
+
 func TestExtractTopicIDsFromURI(t *testing.T) {
 	const testEconomyURI = "/economy/inflationandpriceindices/datasets"
 
