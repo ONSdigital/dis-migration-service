@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	applicationMocks "github.com/ONSdigital/dis-migration-service/application/mock"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/domain"
@@ -89,7 +90,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 			ctx := context.Background()
 
-			executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+			topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+			executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 			Convey("When migrate is called for a task", func() {
 				err := executor.Migrate(ctx, testVersionTask)
@@ -160,7 +162,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 			ctx := context.Background()
 
-			executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+			topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+			executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 			Convey("When migrate is called for a task", func() {
 				err := executor.Migrate(ctx, testVersionTask)
@@ -232,7 +235,9 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+			topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+			executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 			Convey("When migrate is called for a task", func() {
 				err := executor.Migrate(ctx, testVersionTask)
@@ -283,7 +288,9 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+
+			topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+			executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 			Convey("When migrate is called for a task", func() {
 				err := executor.Migrate(ctx, testVersionTask)
@@ -314,7 +321,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			task := testVersionTask
@@ -356,7 +364,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			task := testVersionTask
@@ -404,6 +413,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 			GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
 				return zebedee.Dataset{
 					Type: zebedee.PageTypeDataset,
+					URI:  testEditionURI,
 				}, nil
 			},
 			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
@@ -422,7 +432,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testVersionTask)
@@ -460,6 +471,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 			GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
 				return zebedee.Dataset{
 					Type: zebedee.PageTypeDataset,
+					URI:  testEditionURI,
 				}, nil
 			},
 			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
@@ -481,7 +493,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testVersionTask)
@@ -520,6 +533,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 			GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
 				return zebedee.Dataset{
 					Type: zebedee.PageTypeDataset,
+					URI:  testEditionURI,
 				}, nil
 			},
 			SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
@@ -544,7 +558,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			err := executor.Migrate(ctx, testVersionTask)
@@ -592,6 +607,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 				GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
 					return zebedee.Dataset{
 						Type: zebedee.PageTypeDataset,
+						URI:  testEditionURI,
 					}, nil
 				},
 				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
@@ -608,7 +624,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			task := testVersionTask
@@ -667,6 +684,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 				GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
 					return zebedee.Dataset{
 						Type: zebedee.PageTypeDataset,
+						URI:  testEditionURI,
 					}, nil
 				},
 				SaveContentToCollectionFunc: func(ctx context.Context, userAuthToken, collectionID, path string, content interface{}) error {
@@ -683,7 +701,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			task := testVersionTask
@@ -726,6 +745,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 				GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
 					return zebedee.Dataset{
 						Type: zebedee.PageTypeDataset,
+						URI:  testEditionURI,
 						Downloads: []zebedee.Download{
 							{
 								File: generateFileName(1),
@@ -747,7 +767,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		ctx := context.Background()
 
-		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetVersionTaskExecutor(mockJobService, mockClientList, testServiceAuthToken, topicCache)
 
 		Convey("When migrate is called for a task", func() {
 			task := testVersionTask
@@ -782,9 +803,10 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 
 		ctx := context.Background()
 
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
 		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
 			DatasetAPI: mockDatasetClient,
-		}, testServiceAuthToken)
+		}, testServiceAuthToken, topicCache)
 
 		err := executor.Publish(ctx, testVersionTask)
 
@@ -820,9 +842,10 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 
 		ctx := context.Background()
 
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
 		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
 			DatasetAPI: mockDatasetClient,
-		}, testServiceAuthToken)
+		}, testServiceAuthToken, topicCache)
 
 		err := executor.Publish(ctx, testVersionTask)
 
@@ -843,9 +866,10 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 
 		ctx := context.Background()
 
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
 		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
 			DatasetAPI: mockDatasetClient,
-		}, testServiceAuthToken)
+		}, testServiceAuthToken, topicCache)
 
 		err := executor.Publish(ctx, testVersionTask)
 
@@ -866,9 +890,10 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 
 		ctx := context.Background()
 
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
 		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
 			DatasetAPI: mockDatasetClient,
-		}, testServiceAuthToken)
+		}, testServiceAuthToken, topicCache)
 
 		err := executor.Publish(ctx, testVersionTask)
 
@@ -891,10 +916,10 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 		}
 
 		ctx := context.Background()
-
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
 		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
 			DatasetAPI: mockDatasetClient,
-		}, testServiceAuthToken)
+		}, testServiceAuthToken, topicCache)
 
 		err := executor.Publish(ctx, testVersionTask)
 
@@ -919,9 +944,10 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 
 		ctx := context.Background()
 
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
 		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{
 			DatasetAPI: mockDatasetClient,
-		}, testServiceAuthToken)
+		}, testServiceAuthToken, topicCache)
 
 		err := executor.Publish(ctx, testVersionTask)
 
@@ -941,7 +967,8 @@ func TestDatasetVersionTaskExecutorPostPublish(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{}, testServiceAuthToken)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{}, testServiceAuthToken, topicCache)
 
 		Convey("When post-publish is called for a task", func() {
 			err := executor.PostPublish(ctx, testVersionTask)
@@ -966,7 +993,8 @@ func TestDatasetVersionTaskExecutorPostPublish(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{}, testServiceAuthToken)
+		topicCache, _ := cache.NewPopulatedTopicCacheForTest(ctx)
+		executor := NewDatasetVersionTaskExecutor(mockJobService, &clients.ClientList{}, testServiceAuthToken, topicCache)
 
 		Convey("When post-publish is called for a task", func() {
 			err := executor.PostPublish(ctx, testVersionTask)

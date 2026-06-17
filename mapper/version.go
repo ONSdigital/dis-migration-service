@@ -11,7 +11,7 @@ import (
 
 // MapDatasetVersionToDatasetAPI maps a Zebedee dataset version to a
 // Dataset API dataset model.
-func MapDatasetVersionToDatasetAPI(editionID string, pageData zebedee.Dataset, seriesData zebedee.DatasetLandingPage, editionData zebedee.Dataset) (*datasetModels.Version, error) {
+func MapDatasetVersionToDatasetAPI(editionID, datasetID string, pageData zebedee.Dataset, seriesData zebedee.DatasetLandingPage, editionData zebedee.Dataset) (*datasetModels.Version, error) {
 	if pageData.Type != zebedee.PageTypeDataset {
 		return nil, errors.New("invalid page type for dataset version page")
 	}
@@ -27,6 +27,7 @@ func MapDatasetVersionToDatasetAPI(editionID string, pageData zebedee.Dataset, s
 	}
 
 	version := &datasetModels.Version{
+		DatasetID:     datasetID,
 		Distributions: &distributions,
 		Edition:       editionID,
 		EditionTitle:  editionTitle,
@@ -105,7 +106,7 @@ func getCorrectionNotice(editionData zebedee.Dataset, version int) string {
 // CreateDatasetVersionLink creates a link to the dataset version in
 // the new location, which is added to the migration link field in the
 // source dataset landing page.
-func CreateDatasetVersionLink(version *datasetModels.Version) string {
-	//TODO: add topics in here
-	return fmt.Sprintf("/datasets/%s/editions/%s/versions/%d", version.DatasetID, version.Edition, version.Version)
+func CreateDatasetVersionLink(datasetTopicSlug string, version *datasetModels.Version) string {
+	datasetVersionLink := fmt.Sprintf("/%s/datasets/%s/editions/%s/versions/%d", datasetTopicSlug, version.DatasetID, version.Edition, version.Version)
+	return datasetVersionLink
 }

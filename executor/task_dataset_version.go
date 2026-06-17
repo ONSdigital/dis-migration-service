@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dis-migration-service/application"
+	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/mapper"
@@ -26,14 +27,16 @@ type DatasetVersionTaskExecutor struct {
 	jobService       application.JobService
 	clientList       *clients.ClientList
 	serviceAuthToken string
+	topicCache       *cache.TopicCache
 }
 
 // NewDatasetVersionTaskExecutor creates a new DatasetVersionTaskExecutor
-func NewDatasetVersionTaskExecutor(jobService application.JobService, clientList *clients.ClientList, serviceAuthToken string) *DatasetVersionTaskExecutor {
+func NewDatasetVersionTaskExecutor(jobService application.JobService, clientList *clients.ClientList, serviceAuthToken string, topicCache *cache.TopicCache) *DatasetVersionTaskExecutor {
 	return &DatasetVersionTaskExecutor{
 		jobService:       jobService,
 		clientList:       clientList,
 		serviceAuthToken: serviceAuthToken,
+		topicCache:       topicCache,
 	}
 }
 
@@ -65,7 +68,7 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		return err
 	}
 
-	datasetVersion, err := mapper.MapDatasetVersionToDatasetAPI(task.Target.EditionID, sourceData, seriesData, editionData)
+	datasetVersion, err := mapper.MapDatasetVersionToDatasetAPI(task.Target.EditionID, task.Target.DatasetID, sourceData, seriesData, editionData)
 	if err != nil {
 		log.Error(ctx, "failed to map dataset version to dataset API model", err, logData)
 		return err
@@ -97,7 +100,10 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 
 	logData["collection_id"] = job.Config.CollectionID
 
-	sourceData.Description.MigrationLink = mapper.CreateDatasetVersionLink(datasetVersion)
+	datasetTopicSlug := cache.ExtractSingleTopicSlugFromURI(ctx, sourceData.URI, e.topicCache)
+	datasetVersionLink := mapper.CreateDatasetVersionLink(datasetTopicSlug, datasetVersion)
+
+	sourceData.Description.MigrationLink = datasetVersionLink
 	err = e.clientList.Zebedee.SaveContentToCollection(
 		ctx,
 		e.serviceAuthToken,

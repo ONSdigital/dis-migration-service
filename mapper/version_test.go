@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	testDatasetID         = "test-dataset-id"
 	testEditionID         = "test-edition-id"
 	testEditionCurrent    = "Current"
 	testEditionHistorical = "Historical"
@@ -21,7 +22,7 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 		editionData := getTestDatasetEditionPage()
 
 		Convey("When it is mapped to a Dataset API version", func() {
-			version, err := MapDatasetVersionToDatasetAPI(testEditionID, pageData, seriesData, editionData)
+			version, err := MapDatasetVersionToDatasetAPI(testEditionID, testDatasetID, pageData, seriesData, editionData)
 
 			Convey("Then no error is returned", func() {
 				So(err, ShouldBeNil)
@@ -48,7 +49,7 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 		pageData.Description.NationalStatistic = true
 
 		Convey("When it is mapped to a Dataset API version", func() {
-			version, err := MapDatasetVersionToDatasetAPI(testEditionID, pageData, seriesData, editionData)
+			version, err := MapDatasetVersionToDatasetAPI(testEditionID, testDatasetID, pageData, seriesData, editionData)
 
 			Convey("Then no error is returned", func() {
 				So(err, ShouldBeNil)
@@ -73,7 +74,7 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 		}
 
 		Convey("When it is mapped to a Dataset API version", func() {
-			version, err := MapDatasetVersionToDatasetAPI(testEditionID, pageData, seriesData, editionData)
+			version, err := MapDatasetVersionToDatasetAPI(testEditionID, testDatasetID, pageData, seriesData, editionData)
 
 			Convey("Then no error is returned", func() {
 				So(err, ShouldBeNil)
@@ -98,7 +99,7 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 		editionData := getTestDatasetEditionPage()
 
 		Convey("When it is mapped to a Dataset API dataset", func() {
-			version, err := MapDatasetVersionToDatasetAPI(testEditionID, pageData, seriesData, editionData)
+			version, err := MapDatasetVersionToDatasetAPI(testEditionID, testDatasetID, pageData, seriesData, editionData)
 
 			Convey("Then an error is returned", func() {
 				So(err, ShouldNotBeNil)
@@ -118,7 +119,7 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 		pageData.Description.Edition = testEditionCurrent
 
 		Convey("When it is mapped to a Dataset API version", func() {
-			version, err := MapDatasetVersionToDatasetAPI(testEditionID, pageData, seriesData, editionData)
+			version, err := MapDatasetVersionToDatasetAPI(testEditionID, testDatasetID, pageData, seriesData, editionData)
 
 			Convey("Then no error is returned", func() {
 				So(err, ShouldBeNil)
@@ -138,12 +139,13 @@ func TestCreateDatasetVersionLink(t *testing.T) {
 			Edition:   "test-edition-id",
 			Version:   3,
 		}
+		testTopicSlug := "economy"
 
 		Convey("When a dataset version link is created", func() {
-			link := CreateDatasetVersionLink(version)
+			link := CreateDatasetVersionLink(testTopicSlug, version)
 
 			Convey("Then the link is in the expected format", func() {
-				So(link, ShouldEqual, "/datasets/test-dataset-id/editions/test-edition-id/versions/3")
+				So(link, ShouldEqual, "/economy/datasets/test-dataset-id/editions/test-edition-id/versions/3")
 			})
 		})
 	})

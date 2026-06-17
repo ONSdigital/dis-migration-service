@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	testEditionURI    = "/source-dataset-id/source-edition-id"
+	testEditionURI    = "/economy/datasets/source-dataset-id/source-edition-id"
 	testEditionID     = "source-edition-id"
 	testEditionTaskID = "task-1"
 )
