@@ -22,11 +22,11 @@ We use `dis-vulncheck` to do auditing, which you will [need to install](https://
 
 ### Component testing
 
-To run the component tests, we use testcontainers via our dp-component-test library.
+To run the component tests, we use [testcontainers](https://golang.testcontainers.org/) via our dp-component-test library.
 
-To get setup, follow our guidance on using testcontainers
+To get setup, follow our guidance on [using testcontainers](https://github.com/ONSdigital/dp-component-test/blob/main/README.md#using-testcontainers)
 
-If you're already setup, you will just need to ensure a docker daemon is running, for example via colima start.
+If you're already setup, you will just need to ensure a docker daemon is running, for example via `colima start`.
 
 #### Linting
 
