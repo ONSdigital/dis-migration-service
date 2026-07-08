@@ -62,7 +62,6 @@ func TestConfig(t *testing.T) {
 							},
 						},
 					},
-					RedirectAPIURL:           "http://localhost:29900",
 					ServiceAuthToken:         "migrationservicetestauthtoken",
 					SlackConfig:              &slack.Config{},
 					TopicAPIURL:              "http://localhost:25300",

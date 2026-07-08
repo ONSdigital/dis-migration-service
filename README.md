@@ -72,7 +72,6 @@ npm install -g @redocly/cli
 | OTEL_SERVICE_NAME                         | dis-migration-service | Label of service for OpenTelemetry service                                                                         |
 | OTEL_BATCH_TIMEOUT                        | 5s                    | Timeout for OpenTelemetry                                                                                          |
 | OTEL_ENABLED                              | false                 | Feature flag to enable OpenTelemetry                                                                               |
-| REDIRECT_API_URL                          | localhost:29900       | Address for the Redirect API                                                                                       |
 | SLACK_ENABLED                             | false                 | Feature flag to enable Slack notifications                                                                         |
 | SLACK_API_TOKEN                           |                       | Slack bot token for authentication                                                                                 |
 | SLACK_PUBLISH_CHANNEL                     |                       | Slack channel for informational notifications                                                                      |

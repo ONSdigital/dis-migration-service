@@ -33,7 +33,6 @@ type Config struct {
 	OTExporterOTLPEndpoint          string        `envconfig:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 	OTServiceName                   string        `envconfig:"OTEL_SERVICE_NAME"`
 	OtelEnabled                     bool          `envconfig:"OTEL_ENABLED"`
-	RedirectAPIURL                  string        `envconfig:"REDIRECT_API_URL"`
 	ServiceAuthToken                string        `envconfig:"SERVICE_AUTH_TOKEN" json:"-"`
 	TopicAPIURL                     string        `envconfig:"TOPIC_API_URL"`
 	TopicCacheUpdateInterval        time.Duration `envconfig:"TOPIC_CACHE_UPDATE_INTERVAL"`
@@ -119,7 +118,6 @@ func Get() (*Config, error) {
 		AuthConfig:               authorisation.NewDefaultConfig(),
 		SlackConfig:              &slack.Config{},
 		ServiceAuthToken:         "migrationservicetestauthtoken",
-		RedirectAPIURL:           "http://localhost:29900",
 		TopicAPIURL:              "http://localhost:25300",
 		TopicCacheUpdateInterval: 10 * time.Minute,
 		EnableTopicCache:         false,

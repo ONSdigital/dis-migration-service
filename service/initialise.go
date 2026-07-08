@@ -15,7 +15,6 @@ import (
 	"github.com/ONSdigital/dis-migration-service/mongo"
 	"github.com/ONSdigital/dis-migration-service/slack"
 	"github.com/ONSdigital/dis-migration-service/store"
-	redirectAPI "github.com/ONSdigital/dis-redirect-api/sdk/go"
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
@@ -259,7 +258,6 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 				},
 			},
 			FilesAPI:      &filesAPIMocks.ClienterMock{},
-			RedirectAPI:   &clientMocks.RedirectAPIClientMock{},
 			TopicAPI:      nil, // Mock topic API client can be added if needed
 			UploadService: &uploadSDKMocks.ClienterMock{},
 			Zebedee: &clientMocks.ZebedeeClientMock{
@@ -312,7 +310,6 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 	return &clients.ClientList{
 		DatasetAPI:    datasetAPI.New(cfg.DatasetAPIURL),
 		FilesAPI:      filesAPI.New(cfg.FilesAPIURL),
-		RedirectAPI:   redirectAPI.NewClient(cfg.RedirectAPIURL),
 		TopicAPI:      topicAPIClient,
 		UploadService: uploadSDK.NewWithHealthClient(uploadServiceHC),
 		Zebedee:       zebedee.New(cfg.ZebedeeURL),

@@ -11,7 +11,6 @@ import (
 type ClientList struct {
 	DatasetAPI    datasetAPI.Clienter
 	FilesAPI      filesAPI.Clienter
-	RedirectAPI   RedirectAPIClient
 	TopicAPI      topicAPI.Clienter
 	UploadService uploadService.Clienter
 	Zebedee       ZebedeeClient

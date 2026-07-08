@@ -3,7 +3,6 @@ module github.com/ONSdigital/dis-migration-service
 go 1.26.4
 
 require (
-	github.com/ONSdigital/dis-redirect-api v0.38.0
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.281.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.35.0
 	github.com/ONSdigital/dp-cache v0.6.1
