@@ -8,6 +8,8 @@ helm:
       - values/dis-sandbox-internal.yaml
     staging:
       - values/dis-staging-internal.yaml
+    production:
+      - values/dis-production-internal.yaml
 aws:
   ecr:
     application: dis-migration-service
