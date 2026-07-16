@@ -32,7 +32,7 @@ func NewStaticDatasetJobExecutor(jobService application.JobService, clientList *
 // Migrate handles the migration operations for a static dataset job.
 func (e *StaticDatasetJobExecutor) Migrate(ctx context.Context, job *domain.Job) error {
 	logData := log.Data{"job_number": job.JobNumber}
-	log.Info(ctx, "starting migration for job", logData)
+	log.Info(ctx, "starting migration for static dataset job", logData)
 
 	datasetSeriesTask := domain.NewTask(job.JobNumber)
 
@@ -72,6 +72,7 @@ func (e *StaticDatasetJobExecutor) Migrate(ctx context.Context, job *domain.Job)
 		return err
 	}
 
+	log.Info(ctx, "completed migration for static dataset job", logData)
 	return nil
 }
 
@@ -79,7 +80,7 @@ func (e *StaticDatasetJobExecutor) Migrate(ctx context.Context, job *domain.Job)
 func (e *StaticDatasetJobExecutor) Publish(ctx context.Context, job *domain.Job) error {
 	// Implementation of publish for static dataset
 	logData := log.Data{"job_number": job.JobNumber}
-	log.Info(ctx, "starting publishing for job", logData)
+	log.Info(ctx, "starting publishing for static dataset job", logData)
 
 	// approving zebedee collection
 	log.Info(ctx, "starting zebedee collection approval for job", logData)
@@ -125,7 +126,7 @@ func (e *StaticDatasetJobExecutor) Publish(ctx context.Context, job *domain.Job)
 			return err
 		}
 	}
-	log.Info(ctx, "successfully updated all job tasks state to approved", logData)
+	log.Info(ctx, "successfully updated all job tasks state to approved, completed publishing for static dataset job", logData)
 
 	return nil
 }
@@ -165,7 +166,7 @@ func (e *StaticDatasetJobExecutor) PostPublish(ctx context.Context, job *domain.
 			return err
 		}
 	}
-	log.Info(ctx, "successfully updated all job tasks state to pending post-publish", logData)
+	log.Info(ctx, "successfully updated all job tasks state to pending post-publish, completed post-publishing for job", logData)
 
 	return nil
 }
