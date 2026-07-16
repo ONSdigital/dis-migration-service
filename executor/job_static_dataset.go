@@ -72,7 +72,7 @@ func (e *StaticDatasetJobExecutor) Migrate(ctx context.Context, job *domain.Job)
 		return err
 	}
 
-	log.Info(ctx, "completed migration for static dataset job", logData)
+	log.Info(ctx, "migration task created successfully", logData)
 	return nil
 }
 
@@ -126,7 +126,7 @@ func (e *StaticDatasetJobExecutor) Publish(ctx context.Context, job *domain.Job)
 			return err
 		}
 	}
-	log.Info(ctx, "successfully updated all job tasks state to approved, completed publishing for static dataset job", logData)
+	log.Info(ctx, "successfully updated all job tasks state to approved", logData)
 
 	return nil
 }
@@ -166,7 +166,7 @@ func (e *StaticDatasetJobExecutor) PostPublish(ctx context.Context, job *domain.
 			return err
 		}
 	}
-	log.Info(ctx, "successfully updated all job tasks state to pending post-publish, completed post-publishing for job", logData)
+	log.Info(ctx, "successfully updated all job tasks state to pending post-publish", logData)
 
 	return nil
 }

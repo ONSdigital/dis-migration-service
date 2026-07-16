@@ -149,11 +149,7 @@ func (mig *migrator) transitionJobFailure(ctx context.Context, job *domain.Job, 
 }
 
 func (mig *migrator) transitionJobSuccess(ctx context.Context, job *domain.Job, rule StateTransitionRule) error {
-	log.Info(ctx, "transitioning job to next state", log.Data{
-		"job_number":    job.JobNumber,
-		"job_old_state": job.State,
-		"job_new_state": rule.TargetState,
-	})
+	log.Info(ctx, "attempting to transition job to next state")
 
 	transitioned, err := mig.transitionJob(ctx, job, rule.TargetState)
 	if err != nil {
@@ -179,6 +175,7 @@ func (mig *migrator) transitionJobSuccess(ctx context.Context, job *domain.Job, 
 }
 
 func (mig *migrator) transitionJob(ctx context.Context, job *domain.Job, targetState domain.State) (bool, error) {
+	var oldJobState = job.State
 	err := mig.jobService.UpdateJobState(ctx, job.JobNumber, targetState, "")
 	if errors.Is(err, appErrors.ErrStateAlreadyAtTarget) {
 		log.Info(ctx, "transitionJob: job is already in the target state, no transition needed", log.Data{
@@ -202,6 +199,11 @@ func (mig *migrator) transitionJob(ctx context.Context, job *domain.Job, targetS
 		}
 		return false, err
 	}
+	log.Info(ctx, "transitioned job to next state", log.Data{
+		"job_number":    job.JobNumber,
+		"job_old_state": oldJobState,
+		"job_new_state": job.State,
+	})
 	return true, nil
 }
 
