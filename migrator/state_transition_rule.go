@@ -177,7 +177,6 @@ func (mig *migrator) transitionJobSuccess(ctx context.Context, job *domain.Job, 
 }
 
 func (mig *migrator) transitionJob(ctx context.Context, job *domain.Job, targetState domain.State) (bool, error) {
-	var oldJobState = job.State
 	err := mig.jobService.UpdateJobState(ctx, job.JobNumber, targetState, "")
 	if errors.Is(err, appErrors.ErrStateAlreadyAtTarget) {
 		log.Info(ctx, "transitionJob: job is already in the target state, no transition needed", log.Data{
@@ -203,8 +202,8 @@ func (mig *migrator) transitionJob(ctx context.Context, job *domain.Job, targetS
 	}
 	log.Info(ctx, "transitioned job to next state", log.Data{
 		"job_number":    job.JobNumber,
-		"job_old_state": oldJobState,
-		"job_new_state": job.State,
+		"job_old_state": job.State, // the state of this Job object will still be the old state, but the job in Mongo will now have the new state
+		"job_new_state": targetState,
 	})
 	return true, nil
 }
