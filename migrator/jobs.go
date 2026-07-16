@@ -85,7 +85,7 @@ func (mig *migrator) monitorJobs(ctx context.Context) {
 func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 	requestID := dpRequest.NewRequestID(RequestIDLength)
 	ctx = dpRequest.WithRequestId(ctx, requestID)
-	log.Info(ctx, "started executing job", log.Data{"job_id": job.ID, "job_state": job.State})
+	log.Info(ctx, "executing job", log.Data{"job_id": job.ID, "job_state": job.State})
 	mig.wg.Add(1)
 	go func() {
 		defer mig.wg.Done()
@@ -125,7 +125,6 @@ func (mig *migrator) executeJob(ctx context.Context, job *domain.Job) {
 			_ = mig.failJob(ctx, job, err, failureReasonExecutionFailed)
 		}
 	}()
-	log.Info(ctx, "finished executing job", log.Data{"job_id": job.ID, "job_state": job.State})
 }
 
 func (mig *migrator) failJob(ctx context.Context, job *domain.Job, originalErr error, failureReason string) error {

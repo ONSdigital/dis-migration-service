@@ -149,6 +149,12 @@ func (mig *migrator) transitionJobFailure(ctx context.Context, job *domain.Job, 
 }
 
 func (mig *migrator) transitionJobSuccess(ctx context.Context, job *domain.Job, rule StateTransitionRule) error {
+	log.Info(ctx, "transitioning job to next state", log.Data{
+		"job_number":    job.JobNumber,
+		"job_old_state": job.State,
+		"job_new_state": rule.TargetState,
+	})
+
 	transitioned, err := mig.transitionJob(ctx, job, rule.TargetState)
 	if err != nil {
 		log.Error(ctx, "failed to update job state", err)
