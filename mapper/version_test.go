@@ -31,6 +31,7 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 					So(version.Edition, ShouldEqual, testEditionID)
 					So(version.EditionTitle, ShouldEqual, "Test Edition Title")
 					So(version.Version, ShouldEqual, 1)
+					So(*version.IsMigration, ShouldEqual, true)
 					So(version.ReleaseDate, ShouldEqual, "2024-01-01")
 					So(version.UsageNotes, ShouldNotBeNil)
 					So(len(*version.UsageNotes), ShouldEqual, 1)

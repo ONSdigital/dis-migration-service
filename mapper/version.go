@@ -7,6 +7,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
+	"github.com/aws/smithy-go/ptr"
 )
 
 // MapDatasetVersionToDatasetAPI maps a Zebedee dataset version to a
@@ -31,6 +32,7 @@ func MapDatasetVersionToDatasetAPI(editionID, datasetID string, pageData zebedee
 		Distributions: &distributions,
 		Edition:       editionID,
 		EditionTitle:  editionTitle,
+		IsMigration:   ptr.Bool(true),
 		Version:       getVersion(pageData.Versions),
 		ReleaseDate:   pageData.Description.ReleaseDate,
 		Type:          clients.DatasetVersionTypeStatic,
