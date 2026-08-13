@@ -38,6 +38,8 @@ func TestMapDatasetLandingPageToDatasetAPI(t *testing.T) {
 				So(dataset.QMI.Title, ShouldEqual, "Test QMI Title")
 				So(dataset.QMI.Description, ShouldEqual, "This is a summary of the test QMI.")
 				So(dataset.License, ShouldEqual, "Open Government Licence v3.0")
+				So(dataset.IsMigration, ShouldNotBeNil)
+				So(*dataset.IsMigration, ShouldEqual, true)
 			})
 		})
 	})

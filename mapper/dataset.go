@@ -10,6 +10,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
+	"github.com/aws/smithy-go/ptr"
 )
 
 // MapDatasetLandingPageToDatasetAPI maps a Zebedee dataset landing page
@@ -58,9 +59,10 @@ func MapDatasetLandingPageToDatasetAPI(ctx context.Context, datasetID string, pa
 				Telephone: pageData.Description.Contact.Telephone,
 			},
 		},
-		ID:       datasetID,
-		Keywords: pageData.Description.Keywords,
-		License:  domain.OpenGovernmentLicence,
+		ID:          datasetID,
+		IsMigration: ptr.Bool(true),
+		Keywords:    pageData.Description.Keywords,
+		License:     domain.OpenGovernmentLicence,
 		// Warning: NextRelease is a string in both Zebedee and Dataset API.
 		NextRelease: nextRelease,
 		QMI:         getQMILink(pageData.RelatedMethodology),
