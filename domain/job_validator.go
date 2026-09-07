@@ -51,7 +51,7 @@ func (v *StaticDatasetValidator) ValidateSourceID(sourceID string) error {
 }
 
 // ValidateSourceIDWithExternal validates if the given source ID exists in
-// Zebedee and is of the correct type
+// Zebedee, is of the correct type, and is not already in an existing collection
 func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Context, sourceID string, appClients *clients.ClientList, userAuthToken string) (string, error) {
 	data, err := checkZebedeeURIExists(ctx, appClients.Zebedee, sourceID, userAuthToken)
 	if err != nil {
@@ -61,6 +61,12 @@ func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Contex
 	if data.Type != zebedee.PageTypeDatasetLandingPage {
 		log.Error(ctx, data.Type, appErrors.ErrSourceDataTypeInvalid)
 		return "", appErrors.ErrSourceDataTypeInvalid
+	}
+
+	// Validate URI is not already in an existing collection
+	err = checkSourceIDExistsInCollections(ctx, appClients.Zebedee, sourceID, userAuthToken)
+	if err != nil {
+		return "", err
 	}
 
 	// Extract and validate title
@@ -109,6 +115,18 @@ func checkDatasetIDDoesNotExist(ctx context.Context, client datasetSDK.Clienter,
 	}
 
 	return appErrors.ErrTargetAlreadyExists
+}
+
+func checkSourceIDExistsInCollections(ctx context.Context, client clients.ZebedeeClient, uri, userAuthToken string) error {
+	_, exists, err := client.CheckCollectionsForURI(ctx, userAuthToken, uri)
+	if err != nil {
+		log.Error(ctx, "failed to validate zebedee URI in existing collection", err)
+		return appErrors.ErrSourceIDValidation
+	}
+	if exists {
+		return appErrors.ErrSourceExistsInCollection
+	}
+	return nil
 }
 
 // ValidateZebedeeURI validates if the given path is a valid URI

@@ -109,6 +109,7 @@ var (
 	ErrJobTypeNotProvided           = errors.New("job type not provided")
 	ErrSourceTitleNotFound          = errors.New("source title not found or empty")
 	ErrSourceDoesNotExist           = errors.New("source ID does not exist")
+	ErrSourceExistsInCollection     = errors.New("source ID exists in a collection")
 	ErrTargetAlreadyExists          = errors.New("target ID already exists")
 	ErrJobTypeInvalid               = errors.New("job type is invalid")
 	ErrInternalServerError          = errors.New("an unexpected error occurred")
@@ -153,6 +154,7 @@ var (
 		ErrInternalServerError:          http.StatusInternalServerError,
 		ErrSourceTitleNotFound:          http.StatusInternalServerError,
 		ErrSourceIDValidation:           http.StatusInternalServerError,
+		ErrSourceExistsInCollection:     http.StatusBadRequest,
 		ErrTargetIDValidation:           http.StatusInternalServerError,
 		ErrJobNumberCounterNotFound:     http.StatusInternalServerError,
 		ErrJobAlreadyRunning:            http.StatusConflict,

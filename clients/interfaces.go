@@ -14,6 +14,7 @@ import (
 type ZebedeeClient interface {
 	ApproveCollection(ctx context.Context, authToken, collectionID string) error
 	ApproveCollectionContent(ctx context.Context, authToken, collectionID, lang, pagePath string) error
+	CheckCollectionsForURI(ctx context.Context, authToken, uri string) (string, bool, error)
 	CompleteCollectionContent(ctx context.Context, authToken, collectionID, lang, pagePath string) error
 	CreateCollection(ctx context.Context, authToken string, collection zebedee.Collection) (zebedee.Collection, error)
 	DeleteCollection(ctx context.Context, userAuthToken, collectionID string) error

@@ -27,6 +27,9 @@ var _ clients.ZebedeeClient = &ZebedeeClientMock{}
 //			ApproveCollectionContentFunc: func(ctx context.Context, authToken string, collectionID string, lang string, pagePath string) error {
 //				panic("mock out the ApproveCollectionContent method")
 //			},
+//			CheckCollectionsForURIFunc: func(ctx context.Context, authToken string, uri string) (string, bool, error) {
+//				panic("mock out the CheckCollectionsForURI method")
+//			},
 //			CompleteCollectionContentFunc: func(ctx context.Context, authToken string, collectionID string, lang string, pagePath string) error {
 //				panic("mock out the CompleteCollectionContent method")
 //			},
@@ -75,6 +78,9 @@ type ZebedeeClientMock struct {
 
 	// ApproveCollectionContentFunc mocks the ApproveCollectionContent method.
 	ApproveCollectionContentFunc func(ctx context.Context, authToken string, collectionID string, lang string, pagePath string) error
+
+	// CheckCollectionsForURIFunc mocks the CheckCollectionsForURI method.
+	CheckCollectionsForURIFunc func(ctx context.Context, authToken string, uri string) (string, bool, error)
 
 	// CompleteCollectionContentFunc mocks the CompleteCollectionContent method.
 	CompleteCollectionContentFunc func(ctx context.Context, authToken string, collectionID string, lang string, pagePath string) error
@@ -135,6 +141,15 @@ type ZebedeeClientMock struct {
 			Lang string
 			// PagePath is the pagePath argument value.
 			PagePath string
+		}
+		// CheckCollectionsForURI holds details about calls to the CheckCollectionsForURI method.
+		CheckCollectionsForURI []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// AuthToken is the authToken argument value.
+			AuthToken string
+			// URI is the uri argument value.
+			URI string
 		}
 		// CompleteCollectionContent holds details about calls to the CompleteCollectionContent method.
 		CompleteCollectionContent []struct {
@@ -277,6 +292,7 @@ type ZebedeeClientMock struct {
 	}
 	lockApproveCollection         sync.RWMutex
 	lockApproveCollectionContent  sync.RWMutex
+	lockCheckCollectionsForURI    sync.RWMutex
 	lockCompleteCollectionContent sync.RWMutex
 	lockCreateCollection          sync.RWMutex
 	lockDeleteCollection          sync.RWMutex
@@ -376,6 +392,46 @@ func (mock *ZebedeeClientMock) ApproveCollectionContentCalls() []struct {
 	mock.lockApproveCollectionContent.RLock()
 	calls = mock.calls.ApproveCollectionContent
 	mock.lockApproveCollectionContent.RUnlock()
+	return calls
+}
+
+// CheckCollectionsForURI calls CheckCollectionsForURIFunc.
+func (mock *ZebedeeClientMock) CheckCollectionsForURI(ctx context.Context, authToken string, uri string) (string, bool, error) {
+	if mock.CheckCollectionsForURIFunc == nil {
+		panic("ZebedeeClientMock.CheckCollectionsForURIFunc: method is nil but ZebedeeClient.CheckCollectionsForURI was just called")
+	}
+	callInfo := struct {
+		Ctx       context.Context
+		AuthToken string
+		URI       string
+	}{
+		Ctx:       ctx,
+		AuthToken: authToken,
+		URI:       uri,
+	}
+	mock.lockCheckCollectionsForURI.Lock()
+	mock.calls.CheckCollectionsForURI = append(mock.calls.CheckCollectionsForURI, callInfo)
+	mock.lockCheckCollectionsForURI.Unlock()
+	return mock.CheckCollectionsForURIFunc(ctx, authToken, uri)
+}
+
+// CheckCollectionsForURICalls gets all the calls that were made to CheckCollectionsForURI.
+// Check the length with:
+//
+//	len(mockedZebedeeClient.CheckCollectionsForURICalls())
+func (mock *ZebedeeClientMock) CheckCollectionsForURICalls() []struct {
+	Ctx       context.Context
+	AuthToken string
+	URI       string
+} {
+	var calls []struct {
+		Ctx       context.Context
+		AuthToken string
+		URI       string
+	}
+	mock.lockCheckCollectionsForURI.RLock()
+	calls = mock.calls.CheckCollectionsForURI
+	mock.lockCheckCollectionsForURI.RUnlock()
 	return calls
 }
 

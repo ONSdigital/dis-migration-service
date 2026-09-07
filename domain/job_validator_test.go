@@ -22,11 +22,13 @@ import (
 const (
 	testTitle = "Test Dataset Title"
 
-	zebedeeErrorPath      = "/error"
-	zebedeeNotFoundPath   = "/not-found"
-	zebedeeWrongType      = "/wrong-type"
-	zebedeeValidPath      = "/found"
-	zebedeeEmptyTitlePath = "/empty-title"
+	zebedeeErrorPath        = "/error"
+	zebedeeNotFoundPath     = "/not-found"
+	zebedeeWrongType        = "/wrong-type"
+	zebedeeValidPath        = "/found"
+	zebedeeEmptyTitlePath   = "/empty-title"
+	zebedeeExistingCollPath = "/economy/existing-collection"
+	zebedeeCheckErrorPath   = "/economy/check-error"
 
 	datasetErrorID    = "error"
 	datasetNotFoundID = "not-found"
@@ -66,8 +68,33 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 						Title: "",
 					},
 				}, nil
+			case zebedeeExistingCollPath:
+				return zebedee.PageData{
+					Type: zebedee.PageTypeDatasetLandingPage,
+					Description: zebedee.Description{
+						Title: testTitle,
+					},
+				}, nil
+			case zebedeeCheckErrorPath:
+				return zebedee.PageData{
+					Type: zebedee.PageTypeDatasetLandingPage,
+					Description: zebedee.Description{
+						Title: testTitle,
+					},
+				}, nil
 			}
 			return zebedee.PageData{}, errors.New("unexpected mock path")
+		},
+		CheckCollectionsForURIFunc: func(ctx context.Context, authToken, uri string) (string, bool, error) {
+			switch uri {
+			case zebedeeValidPath:
+				return "", false, nil // URI not in any collection
+			case zebedeeExistingCollPath:
+				return "Migration Collection", true, nil // URI already in a collection
+			case zebedeeCheckErrorPath:
+				return "", false, errTest // Error checking collections
+			}
+			return "", false, nil
 		},
 	}
 
@@ -168,6 +195,40 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
 				So(err, ShouldEqual, appErrors.ErrSourceDataTypeInvalid)
+
+				Convey("And the title should be empty", func() {
+					So(title, ShouldEqual, "")
+				})
+			})
+		})
+	})
+
+	Convey("Given a valid zebedee source ID that is already in an existing collection", t, func() {
+		validator := domain.StaticDatasetValidator{}
+
+		Convey("When the source is validated", func() {
+			title, err := validator.ValidateSourceIDWithExternal(ctx, zebedeeExistingCollPath, &mockClientlist, testUserAuthToken)
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrSourceExistsInCollection)
+
+				Convey("And the title should be empty", func() {
+					So(title, ShouldEqual, "")
+				})
+			})
+		})
+	})
+
+	Convey("Given a zebedee client that fails to check collections for a URI", t, func() {
+		validator := domain.StaticDatasetValidator{}
+
+		Convey("When the source is validated", func() {
+			title, err := validator.ValidateSourceIDWithExternal(ctx, zebedeeCheckErrorPath, &mockClientlist, testUserAuthToken)
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrSourceIDValidation)
 
 				Convey("And the title should be empty", func() {
 					So(title, ShouldEqual, "")

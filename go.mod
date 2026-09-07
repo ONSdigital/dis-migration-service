@@ -3,7 +3,7 @@ module github.com/ONSdigital/dis-migration-service
 go 1.26.4
 
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.282.0
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.284.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.36.0
 	github.com/ONSdigital/dp-cache v0.6.1
 	github.com/ONSdigital/dp-component-test v1.4.8
