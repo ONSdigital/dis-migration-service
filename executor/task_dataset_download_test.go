@@ -9,9 +9,9 @@ import (
 
 	applicationMocks "github.com/ONSdigital/dis-migration-service/application/mock"
 	"github.com/ONSdigital/dis-migration-service/clients"
-	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	zebedeeMock "github.com/ONSdigital/dp-api-clients-go/v2/zebedee/mocks"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	"github.com/ONSdigital/dp-dataset-api/sdk"
 	datasetSDKMock "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
@@ -96,7 +96,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 		Convey("And a zebedee client that returns a file stream and size", func() {
 			mockClientList := &clients.ClientList{
 				DatasetAPI: mockDatasetClient,
-				Zebedee: &clientMocks.ZebedeeClientMock{
+				Zebedee: &zebedeeMock.ClienterMock{
 					GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
 						return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
 					},
@@ -187,7 +187,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 			mockDatasetClient := &datasetSDKMock.ClienterMock{}
 			mockClientList := &clients.ClientList{
 				DatasetAPI: mockDatasetClient,
-				Zebedee: &clientMocks.ZebedeeClientMock{
+				Zebedee: &zebedeeMock.ClienterMock{
 					GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
 						return nil, errors.New("failed to get resource stream")
 					},
@@ -232,7 +232,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 
 			mockClientList := &clients.ClientList{
 				DatasetAPI: mockDatasetClient,
-				Zebedee: &clientMocks.ZebedeeClientMock{
+				Zebedee: &zebedeeMock.ClienterMock{
 					GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
 						return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
 					},
@@ -268,7 +268,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 			}
 			mockUploadClient := &uploadSDKMock.ClienterMock{}
 			mockDatasetClient := &datasetSDKMock.ClienterMock{}
-			mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+			mockZebedeeClient := &zebedeeMock.ClienterMock{
 				GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
 					return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
 				},
@@ -325,7 +325,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 					return nil
 				},
 			},
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
 					return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
 				},
@@ -378,7 +378,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 					return nil
 				},
 			},
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
 					return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
 				},
@@ -427,7 +427,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 					return nil
 				},
 			},
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
 					return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
 				},
@@ -476,7 +476,7 @@ func TestDatasetDownloadTaskExecutor(t *testing.T) {
 					return nil
 				},
 			},
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				GetResourceStreamFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (io.ReadCloser, error) {
 					return io.NopCloser(bytes.NewReader([]byte(testFileData))), nil
 				},

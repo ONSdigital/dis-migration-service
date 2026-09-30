@@ -7,9 +7,9 @@ import (
 
 	applicationMocks "github.com/ONSdigital/dis-migration-service/application/mock"
 	"github.com/ONSdigital/dis-migration-service/clients"
-	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	zebedeeMock "github.com/ONSdigital/dp-api-clients-go/v2/zebedee/mocks"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -48,7 +48,7 @@ func TestJobStaticDataset(t *testing.T) {
 				return nil
 			},
 		}
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
 				return nil
 			},
@@ -174,7 +174,7 @@ func TestJobStaticDataset(t *testing.T) {
 				return nil
 			},
 		}
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			CreateCollectionFunc: func(ctx context.Context, userAuthToken string, collection zebedee.Collection) (zebedee.Collection, error) {
 				return collection, nil
 			},
@@ -214,7 +214,7 @@ func TestJobStaticDataset(t *testing.T) {
 				return nil
 			},
 		}
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			CreateCollectionFunc: func(ctx context.Context, userAuthToken string, collection zebedee.Collection) (zebedee.Collection, error) {
 				return zebedee.Collection{}, errTest
 			},
@@ -247,7 +247,7 @@ func TestJobStaticDataset(t *testing.T) {
 	})
 
 	Convey("Given a static dataset job executor and a zebedee client that errors when getting collection status", t, func() {
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
 				return nil
 			},
@@ -280,7 +280,7 @@ func TestJobStaticDataset(t *testing.T) {
 	})
 
 	Convey("Given a static dataset job executor and a zebedee client that returns an error collection status", t, func() {
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
 				return nil
 			},
@@ -327,7 +327,7 @@ func TestJobStaticDataset(t *testing.T) {
 				return nil
 			},
 		}
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
 				return nil
 			},
@@ -375,7 +375,7 @@ func TestJobStaticDataset(t *testing.T) {
 			},
 		}
 		mockClientList := &clients.ClientList{
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
 					return nil
 				},
@@ -442,7 +442,7 @@ func TestJobStaticDataset(t *testing.T) {
 			},
 		}
 		mockClientList := &clients.ClientList{
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
 					return nil
 				},
@@ -500,7 +500,7 @@ func TestJobStaticDataset(t *testing.T) {
 			},
 		}
 		mockClientList := &clients.ClientList{
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				ApproveCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
 					return nil
 				},
@@ -566,7 +566,7 @@ func TestJobStaticDataset(t *testing.T) {
 				return nil
 			},
 		}
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			PublishCollectionFunc: func(ctx context.Context, userAuthToken string, collectionID string) error {
 				return errTest
 			},
@@ -674,7 +674,7 @@ func TestJobStaticDataset(t *testing.T) {
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			DeleteCollectionContentFunc: func(ctx context.Context, userAuthToken, collectionID, path string) error {
 				return errors.New("404 not found")
 			},
@@ -705,9 +705,9 @@ func TestJobStaticDataset(t *testing.T) {
 				So(jobTaskCalls, ShouldEqual, 3)
 				So(len(mockZebedeeClient.DeleteCollectionContentCalls()), ShouldEqual, 2)
 				So(mockZebedeeClient.DeleteCollectionContentCalls()[0].CollectionID, ShouldEqual, testCollectionID)
-				So(mockZebedeeClient.DeleteCollectionContentCalls()[0].Path, ShouldEqual, "/datasets/my-dataset")
+				So(mockZebedeeClient.DeleteCollectionContentCalls()[0].PagePath, ShouldEqual, "/datasets/my-dataset")
 				So(mockZebedeeClient.DeleteCollectionContentCalls()[1].CollectionID, ShouldEqual, testCollectionID)
-				So(mockZebedeeClient.DeleteCollectionContentCalls()[1].Path, ShouldEqual, "/datasets/my-dataset/editions/time-series/versions/1")
+				So(mockZebedeeClient.DeleteCollectionContentCalls()[1].PagePath, ShouldEqual, "/datasets/my-dataset/editions/time-series/versions/1")
 				So(len(mockZebedeeClient.DeleteCollectionCalls()), ShouldEqual, 1)
 				So(mockZebedeeClient.DeleteCollectionCalls()[0].CollectionID, ShouldEqual, testCollectionID)
 			})

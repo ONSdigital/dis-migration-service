@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetAPI "github.com/ONSdigital/dp-dataset-api/sdk"
 	filesAPI "github.com/ONSdigital/dp-files-api/sdk"
 	topicAPI "github.com/ONSdigital/dp-topic-api/sdk"
@@ -13,5 +14,5 @@ type ClientList struct {
 	FilesAPI      filesAPI.Clienter
 	TopicAPI      topicAPI.Clienter
 	UploadService uploadService.Clienter
-	Zebedee       ZebedeeClient
+	Zebedee       zebedee.Clienter
 }

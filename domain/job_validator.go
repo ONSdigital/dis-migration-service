@@ -89,7 +89,7 @@ func (v *StaticDatasetValidator) ValidateTargetIDWithExternal(ctx context.Contex
 	return checkDatasetIDDoesNotExist(ctx, appClients.DatasetAPI, targetID, userAuthToken)
 }
 
-func checkZebedeeURIExists(ctx context.Context, client clients.ZebedeeClient, uri, userAuthToken string) (zebedee.PageData, error) {
+func checkZebedeeURIExists(ctx context.Context, client zebedee.Clienter, uri, userAuthToken string) (zebedee.PageData, error) {
 	var e zebedee.ErrInvalidZebedeeResponse
 	zebedeeData, err := client.GetPageData(ctx, userAuthToken, "", "en", uri)
 	if err != nil {
@@ -117,7 +117,7 @@ func checkDatasetIDDoesNotExist(ctx context.Context, client datasetSDK.Clienter,
 	return appErrors.ErrTargetAlreadyExists
 }
 
-func checkSourceIDExistsInCollections(ctx context.Context, client clients.ZebedeeClient, uri, userAuthToken string) error {
+func checkSourceIDExistsInCollections(ctx context.Context, client zebedee.Clienter, uri, userAuthToken string) error {
 	_, exists, err := client.CheckCollectionsForURI(ctx, userAuthToken, uri)
 	if err != nil {
 		log.Error(ctx, "failed to validate zebedee URI in existing collection", err)

@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/ONSdigital/dis-migration-service/clients"
-	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	zebedeeMock "github.com/ONSdigital/dp-api-clients-go/v2/zebedee/mocks"
 	datasetError "github.com/ONSdigital/dp-dataset-api/apierrors"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk"
@@ -40,7 +40,7 @@ var (
 )
 
 func TestStaticDatasetValidatorWithExternal(t *testing.T) {
-	zebedeeMock := &clientMocks.ZebedeeClientMock{
+	zebedeeMockClient := &zebedeeMock.ClienterMock{
 		GetPageDataFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (zebedee.PageData, error) {
 			switch path {
 			case zebedeeErrorPath:
@@ -113,7 +113,7 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 	}
 
 	mockClientlist := clients.ClientList{
-		Zebedee:    zebedeeMock,
+		Zebedee:    zebedeeMockClient,
 		DatasetAPI: datasetAPIMock,
 	}
 

@@ -9,7 +9,6 @@ import (
 	"github.com/ONSdigital/dis-migration-service/application"
 	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
-	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/config"
 	"github.com/ONSdigital/dis-migration-service/migrator"
 	"github.com/ONSdigital/dis-migration-service/mongo"
@@ -17,6 +16,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/store"
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	zebedeeMock "github.com/ONSdigital/dp-api-clients-go/v2/zebedee/mocks"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	datasetErrors "github.com/ONSdigital/dp-dataset-api/apierrors"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
@@ -260,7 +260,7 @@ func (e *Init) DoGetAppClients(ctx context.Context, cfg *config.Config) *clients
 			FilesAPI:      &filesAPIMocks.ClienterMock{},
 			TopicAPI:      nil, // Mock topic API client can be added if needed
 			UploadService: &uploadSDKMocks.ClienterMock{},
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				GetPageDataFunc: func(ctx context.Context, userAuthToken, collectionID, lang, path string) (zebedee.PageData, error) {
 					return zebedee.PageData{
 						Type: "dataset_landing_page",

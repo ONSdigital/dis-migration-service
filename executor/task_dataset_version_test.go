@@ -8,9 +8,9 @@ import (
 	applicationMocks "github.com/ONSdigital/dis-migration-service/application/mock"
 	"github.com/ONSdigital/dis-migration-service/cache"
 	"github.com/ONSdigital/dis-migration-service/clients"
-	clientMocks "github.com/ONSdigital/dis-migration-service/clients/mock"
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
+	zebedeeMock "github.com/ONSdigital/dp-api-clients-go/v2/zebedee/mocks"
 	"github.com/ONSdigital/dp-dataset-api/models"
 	"github.com/ONSdigital/dp-dataset-api/sdk"
 	datasetSDKMock "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
@@ -63,7 +63,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		Convey("And a zebedee client that returns a dataset version with no files and no previous versions", func() {
 			mockClientList := &clients.ClientList{
 				DatasetAPI: mockDatasetClient,
-				Zebedee: &clientMocks.ZebedeeClientMock{
+				Zebedee: &zebedeeMock.ClienterMock{
 					GetDatasetFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.Dataset, error) {
 						return zebedee.Dataset{
 							Type:     zebedee.PageTypeDataset,
@@ -108,9 +108,9 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 						So(mockDatasetClient.PostVersionCalls()[0].IsLatest, ShouldBeFalse)
 
 						Convey("And the zebedee client is called to complete and approve the collection content", func() {
-							So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).SaveContentToCollectionCalls()), ShouldEqual, 1)
-							So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).CompleteCollectionContentCalls()), ShouldEqual, 1)
-							So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).ApproveCollectionContentCalls()), ShouldEqual, 1)
+							So(len(mockClientList.Zebedee.(*zebedeeMock.ClienterMock).SaveContentToCollectionCalls()), ShouldEqual, 1)
+							So(len(mockClientList.Zebedee.(*zebedeeMock.ClienterMock).CompleteCollectionContentCalls()), ShouldEqual, 1)
+							So(len(mockClientList.Zebedee.(*zebedeeMock.ClienterMock).ApproveCollectionContentCalls()), ShouldEqual, 1)
 							Convey("And no download tasks are created", func() {
 								So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 0)
 
@@ -128,7 +128,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		Convey("And a zebedee client that returns a dataset with multiple download files", func() {
 			mockClientList := &clients.ClientList{
 				DatasetAPI: mockDatasetClient,
-				Zebedee: &clientMocks.ZebedeeClientMock{
+				Zebedee: &zebedeeMock.ClienterMock{
 					GetDatasetFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.Dataset, error) {
 						return zebedee.Dataset{
 							Type: zebedee.PageTypeDataset,
@@ -173,8 +173,8 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 					Convey("And version tasks are created", func() {
 						So(len(mockJobService.CreateTaskCalls()), ShouldEqual, 2)
-						So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).CompleteCollectionContentCalls()), ShouldEqual, 1)
-						So(len(mockClientList.Zebedee.(*clientMocks.ZebedeeClientMock).ApproveCollectionContentCalls()), ShouldEqual, 1)
+						So(len(mockClientList.Zebedee.(*zebedeeMock.ClienterMock).CompleteCollectionContentCalls()), ShouldEqual, 1)
+						So(len(mockClientList.Zebedee.(*zebedeeMock.ClienterMock).ApproveCollectionContentCalls()), ShouldEqual, 1)
 						So(mockJobService.CreateTaskCalls()[0].Task.Type, ShouldEqual, domain.TaskTypeDatasetDownload)
 						So(mockJobService.CreateTaskCalls()[0].Task.Source.ID, ShouldEqual, testEditionURI+"/"+generateFileName(1))
 						So(mockJobService.CreateTaskCalls()[0].Task.Target.DatasetID, ShouldEqual, testDatasetSeriesID)
@@ -203,7 +203,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		Convey("And a zebedee client that returns a dataset where the current version is the latest version", func() {
 			mockClientList := &clients.ClientList{
 				DatasetAPI: mockDatasetClient,
-				Zebedee: &clientMocks.ZebedeeClientMock{
+				Zebedee: &zebedeeMock.ClienterMock{
 					GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
 						return zebedee.Dataset{
 							Type: zebedee.PageTypeDataset,
@@ -256,7 +256,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		Convey("And a zebedee client that returns a dataset where the current version is not the latest version", func() {
 			mockClientList := &clients.ClientList{
 				DatasetAPI: mockDatasetClient,
-				Zebedee: &clientMocks.ZebedeeClientMock{
+				Zebedee: &zebedeeMock.ClienterMock{
 					GetDatasetFunc: func(ctx context.Context, userAccessToken, collectionID, lang, path string) (zebedee.Dataset, error) {
 						return zebedee.Dataset{
 							Type: zebedee.PageTypeDataset,
@@ -312,7 +312,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		mockDatasetClient := &datasetSDKMock.ClienterMock{}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: mockDatasetClient,
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				GetDatasetFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.Dataset, error) {
 					return zebedee.Dataset{}, errTest
 				},
@@ -348,7 +348,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		mockDatasetClient := &datasetSDKMock.ClienterMock{}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: mockDatasetClient,
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				GetDatasetFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.Dataset, error) {
 					return zebedee.Dataset{
 						Type: "not_a_dataset_page",
@@ -399,7 +399,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 			},
 		}
 
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 				return zebedee.DatasetLandingPage{
 					Type: "dataset_landing_page",
@@ -462,7 +462,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 			},
 		}
 
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 				return zebedee.DatasetLandingPage{
 					Type: zebedee.PageTypeDatasetLandingPage,
@@ -524,7 +524,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 			},
 		}
 
-		mockZebedeeClient := &clientMocks.ZebedeeClientMock{
+		mockZebedeeClient := &zebedeeMock.ClienterMock{
 			GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 				return zebedee.DatasetLandingPage{
 					Type: zebedee.PageTypeDatasetLandingPage,
@@ -593,7 +593,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 					return &models.Version{}, errTest
 				},
 			},
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 					return zebedee.DatasetLandingPage{
 						Type: zebedee.PageTypeDatasetLandingPage,
@@ -670,7 +670,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 					return &models.Version{}, nil
 				},
 			},
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 					return zebedee.DatasetLandingPage{
 						Type: "dataset_landing_page",
@@ -736,7 +736,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 					return &models.Version{}, nil
 				},
 			},
-			Zebedee: &clientMocks.ZebedeeClientMock{
+			Zebedee: &zebedeeMock.ClienterMock{
 				GetDatasetLandingPageFunc: func(ctx context.Context, collectionID, edition, lang, datasetID string) (zebedee.DatasetLandingPage, error) {
 					return zebedee.DatasetLandingPage{
 						Type: zebedee.PageTypeDataset,
