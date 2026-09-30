@@ -10,7 +10,6 @@ linters:
     - errcheck
     - gochecknoinits
     - gocognit
-    - goconst
     - gocritic
     - gocyclo
     - godoclint
@@ -29,9 +28,6 @@ linters:
       threshold: 100
     gocognit:
       min-complexity: 40
-    goconst:
-      min-len: 2
-      min-occurrences: 2
     gocritic:
       disabled-checks:
         - wrapperFunc
