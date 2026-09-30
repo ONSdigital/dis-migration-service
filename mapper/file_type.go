@@ -21,6 +21,8 @@ const (
 	ExtensionXLS = ".xls"
 	// ExtensionXLSX is the file extension for Microsoft Excel XLSX files.
 	ExtensionXLSX = ".xlsx"
+	// ExtensionZIP is the file extension for ZIP files.
+	ExtensionZIP = ".zip"
 	// MimeTypeCSDB is the MIME type for CSDB files.
 	MimeTypeCSDB = "application/csdb"
 	// MimeTypeCSV is the MIME type for CSV files.
@@ -35,6 +37,8 @@ const (
 	MimeTypeXLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 	// MimeTypeOctetStream is the generic MIME type for binary data.
 	MimeTypeOctetStream = "application/octet-stream"
+	// MimeTypeZIP is the MIME type for ZIP files.
+	MimeTypeZIP = "application/zip"
 )
 
 // MapMimeTypeToDistributionFormat maps a MIME type string to a
@@ -54,6 +58,7 @@ var extensionToMimeType = map[string]string{
 	ExtensionXLSX: MimeTypeXLSX,
 	ExtensionCSDB: MimeTypeCSDB,
 	ExtensionCSVW: MimeTypeCSVW,
+	ExtensionZIP:  MimeTypeZIP,
 }
 
 var mimeTypeToDistributionFormat map[string]datasetModels.DistributionFormat = map[string]datasetModels.DistributionFormat{
@@ -63,6 +68,7 @@ var mimeTypeToDistributionFormat map[string]datasetModels.DistributionFormat = m
 	MimeTypeXLSX: datasetModels.DistributionFormatXLSX,
 	MimeTypeCSDB: datasetModels.DistributionFormatCSDB,
 	MimeTypeCSVW: datasetModels.DistributionFormatCSVWMeta,
+	MimeTypeZIP:  datasetModels.DistributionFormatZIP,
 }
 
 // DeriveMimeTypeFromFilename returns the MIME type for a given file name.

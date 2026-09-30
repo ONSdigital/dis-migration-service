@@ -21,6 +21,7 @@ func TestDeriveMimeType(t *testing.T) {
 			{"file.sdmx", MimeTypeSDMX},
 			{"file.csdb", MimeTypeCSDB},
 			{"file.csvw", MimeTypeCSVW},
+			{"file.zip", MimeTypeZIP},
 		}
 		for _, c := range cases {
 			Convey(fmt.Sprintf("When the file name is %s", c.input), func() {
@@ -56,6 +57,7 @@ func TestMapMimeTypeToDistributionFormat(t *testing.T) {
 			{MimeTypeSDMX, datasetModels.DistributionFormatSDMX},
 			{MimeTypeCSDB, datasetModels.DistributionFormatCSDB},
 			{MimeTypeCSVW, datasetModels.DistributionFormatCSVWMeta},
+			{MimeTypeZIP, datasetModels.DistributionFormatZIP},
 		}
 		for _, c := range cases {
 			Convey(fmt.Sprintf("When the mime type is %s", c.input), func() {
