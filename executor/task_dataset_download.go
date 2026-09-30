@@ -17,7 +17,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/mapper"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
-	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk"
+	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk/go"
 	uploadSDK "github.com/ONSdigital/dp-upload-service/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 )

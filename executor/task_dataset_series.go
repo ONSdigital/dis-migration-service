@@ -10,7 +10,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/domain"
 	"github.com/ONSdigital/dis-migration-service/mapper"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
-	"github.com/ONSdigital/dp-dataset-api/sdk"
+	datasetAPI "github.com/ONSdigital/dp-dataset-api/sdk/go"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -57,7 +57,7 @@ func (e *DatasetSeriesTaskExecutor) Migrate(ctx context.Context, task *domain.Ta
 		return err
 	}
 
-	headers := sdk.Headers{
+	headers := datasetAPI.Headers{
 		AccessToken: e.serviceAuthToken,
 	}
 
@@ -193,7 +193,7 @@ func (e *DatasetSeriesTaskExecutor) Revert(ctx context.Context, task *domain.Tas
 }
 
 func (e *DatasetSeriesTaskExecutor) deleteDatasetFromAPI(ctx context.Context, task *domain.Task) error {
-	headers := sdk.Headers{
+	headers := datasetAPI.Headers{
 		AccessToken: e.serviceAuthToken,
 	}
 

@@ -11,7 +11,7 @@ import (
 	appErrors "github.com/ONSdigital/dis-migration-service/errors"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetErrors "github.com/ONSdigital/dp-dataset-api/apierrors"
-	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk"
+	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk/go"
 
 	"github.com/ONSdigital/log.go/v2/log"
 )

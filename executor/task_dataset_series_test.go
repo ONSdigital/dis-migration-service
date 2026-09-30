@@ -12,8 +12,8 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	zebedeeMock "github.com/ONSdigital/dp-api-clients-go/v2/zebedee/mocks"
 	"github.com/ONSdigital/dp-dataset-api/models"
-	"github.com/ONSdigital/dp-dataset-api/sdk"
-	datasetSDKMock "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
+	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk/go"
+	datasetSDKMock "github.com/ONSdigital/dp-dataset-api/sdk/go/mocks"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -57,7 +57,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+			CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 				return models.DatasetUpdate{}, nil
 			},
 		}
@@ -270,7 +270,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 					return models.DatasetUpdate{}, nil
 				},
 			},
@@ -328,7 +328,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 					return models.DatasetUpdate{}, nil
 				},
 			},
@@ -390,7 +390,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 					return models.DatasetUpdate{}, nil
 				},
 			},
@@ -419,7 +419,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 		mockJobService := &applicationMocks.JobServiceMock{}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 					return models.DatasetUpdate{}, errTest
 				},
 			},
@@ -474,7 +474,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 					return models.DatasetUpdate{}, nil
 				},
 			},
@@ -532,7 +532,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 					return models.DatasetUpdate{}, nil
 				},
 			},
@@ -602,7 +602,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+			CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 				// Verify topics are set
 				So(dataset.Topics, ShouldNotBeNil)
 				return models.DatasetUpdate{}, nil
@@ -681,7 +681,7 @@ func TestDatasetSeriesTaskExecutor(t *testing.T) {
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return nil },
 		}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+			CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 				return models.DatasetUpdate{}, nil
 			},
 		}
@@ -729,7 +729,7 @@ func TestDatasetSeriesTaskExecutor_Revert(t *testing.T) {
 		}
 
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			DeleteDatasetFunc: func(ctx context.Context, headers sdk.Headers, datasetID string) error {
+			DeleteDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID string) error {
 				return nil
 			},
 		}
@@ -770,7 +770,7 @@ func TestDatasetSeriesTaskExecutor_Revert(t *testing.T) {
 		}
 
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			DeleteDatasetFunc: func(ctx context.Context, headers sdk.Headers, datasetID string) error {
+			DeleteDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID string) error {
 				return errTest
 			},
 		}
@@ -808,7 +808,7 @@ func TestDatasetSeriesTaskExecutor_Revert(t *testing.T) {
 		}
 
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			DeleteDatasetFunc: func(ctx context.Context, headers sdk.Headers, datasetID string) error {
+			DeleteDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID string) error {
 				return nil
 			},
 		}

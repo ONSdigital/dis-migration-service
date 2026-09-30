@@ -13,8 +13,8 @@ import (
 	zebedeeMock "github.com/ONSdigital/dp-api-clients-go/v2/zebedee/mocks"
 	datasetError "github.com/ONSdigital/dp-dataset-api/apierrors"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
-	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk"
-	datasetMocks "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
+	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk/go"
+	datasetMocks "github.com/ONSdigital/dp-dataset-api/sdk/go/mocks"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

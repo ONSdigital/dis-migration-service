@@ -12,7 +12,7 @@ import (
 	"github.com/ONSdigital/dis-migration-service/mapper"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
-	"github.com/ONSdigital/dp-dataset-api/sdk"
+	datasetAPI "github.com/ONSdigital/dp-dataset-api/sdk/go"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -140,7 +140,7 @@ func (e *DatasetVersionTaskExecutor) Migrate(ctx context.Context, task *domain.T
 		return err
 	}
 
-	headers := sdk.Headers{
+	headers := datasetAPI.Headers{
 		AccessToken: e.serviceAuthToken,
 	}
 
@@ -196,7 +196,7 @@ func (e *DatasetVersionTaskExecutor) Publish(ctx context.Context, task *domain.T
 
 	log.Info(ctx, "starting publish for dataset version task", logData)
 
-	headers := sdk.Headers{
+	headers := datasetAPI.Headers{
 		AccessToken: e.serviceAuthToken,
 	}
 

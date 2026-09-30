@@ -12,8 +12,8 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	zebedeeMock "github.com/ONSdigital/dp-api-clients-go/v2/zebedee/mocks"
 	"github.com/ONSdigital/dp-dataset-api/models"
-	"github.com/ONSdigital/dp-dataset-api/sdk"
-	datasetSDKMock "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
+	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk/go"
+	datasetSDKMock "github.com/ONSdigital/dp-dataset-api/sdk/go/mocks"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -261,7 +261,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 					return models.DatasetUpdate{}, nil
 				},
 			},
@@ -299,7 +299,7 @@ func TestDatasetEditionTaskExecutor(t *testing.T) {
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 					return models.DatasetUpdate{}, nil
 				},
 			},

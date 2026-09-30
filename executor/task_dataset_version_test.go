@@ -12,8 +12,8 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	zebedeeMock "github.com/ONSdigital/dp-api-clients-go/v2/zebedee/mocks"
 	"github.com/ONSdigital/dp-dataset-api/models"
-	"github.com/ONSdigital/dp-dataset-api/sdk"
-	datasetSDKMock "github.com/ONSdigital/dp-dataset-api/sdk/mocks"
+	datasetSDK "github.com/ONSdigital/dp-dataset-api/sdk/go"
+	datasetSDKMock "github.com/ONSdigital/dp-dataset-api/sdk/go/mocks"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -55,7 +55,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		}
 
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
+			PostVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 				return &models.Version{}, nil
 			},
 		}
@@ -423,7 +423,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				CreateDatasetFunc: func(ctx context.Context, headers sdk.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
+				CreateDatasetFunc: func(ctx context.Context, headers datasetSDK.Headers, dataset models.Dataset) (models.DatasetUpdate, error) {
 					return models.DatasetUpdate{}, nil
 				},
 			},
@@ -484,7 +484,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
+				PostVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 					return &models.Version{}, nil
 				},
 			},
@@ -549,7 +549,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
+				PostVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 					return &models.Version{}, nil
 				},
 			},
@@ -589,7 +589,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
+				PostVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 					return &models.Version{}, errTest
 				},
 			},
@@ -666,7 +666,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
+				PostVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 					return &models.Version{}, nil
 				},
 			},
@@ -732,7 +732,7 @@ func TestDatasetVersionTaskExecutorMigrate(t *testing.T) {
 		}
 		mockClientList := &clients.ClientList{
 			DatasetAPI: &datasetSDKMock.ClienterMock{
-				PostVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
+				PostVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string, version models.Version, isLatest bool) (*models.Version, error) {
 					return &models.Version{}, nil
 				},
 			},
@@ -793,10 +793,10 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 		}
 
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+			PutVersionStateFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID, state string) error {
 				return nil
 			},
-			GetVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string) (models.Version, error) {
+			GetVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string) (models.Version, error) {
 				return models.Version{State: models.PublishedState}, nil
 			},
 		}
@@ -828,10 +828,10 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 
 		callCount := 0
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+			PutVersionStateFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID, state string) error {
 				return nil
 			},
-			GetVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string) (models.Version, error) {
+			GetVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string) (models.Version, error) {
 				callCount++
 				if callCount < 3 {
 					return models.Version{State: models.ApprovedState}, nil
@@ -859,7 +859,7 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 	Convey("Given a dataset version task executor and a dataset API client that fails to set approved state", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+			PutVersionStateFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID, state string) error {
 				return errTest
 			},
 		}
@@ -883,7 +883,7 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 	Convey("Given a dataset version task executor and a dataset API client that fails to set published state", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+			PutVersionStateFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID, state string) error {
 				return errTest
 			},
 		}
@@ -907,10 +907,10 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 	Convey("Given a dataset version task executor and a dataset API client that fails to get version", t, func() {
 		mockJobService := &applicationMocks.JobServiceMock{}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+			PutVersionStateFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID, state string) error {
 				return nil
 			},
-			GetVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string) (models.Version, error) {
+			GetVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string) (models.Version, error) {
 				return models.Version{}, errTest
 			},
 		}
@@ -934,10 +934,10 @@ func TestDatasetVersionTaskExecutorPublish(t *testing.T) {
 			UpdateTaskStateFunc: func(ctx context.Context, taskID string, state domain.State) error { return errTest },
 		}
 		mockDatasetClient := &datasetSDKMock.ClienterMock{
-			PutVersionStateFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID, state string) error {
+			PutVersionStateFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID, state string) error {
 				return nil
 			},
-			GetVersionFunc: func(ctx context.Context, headers sdk.Headers, datasetID, editionID, versionID string) (models.Version, error) {
+			GetVersionFunc: func(ctx context.Context, headers datasetSDK.Headers, datasetID, editionID, versionID string) (models.Version, error) {
 				return models.Version{State: models.PublishedState}, nil
 			},
 		}
