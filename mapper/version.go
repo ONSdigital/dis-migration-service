@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ONSdigital/dis-migration-service/clients"
 	"github.com/ONSdigital/dp-api-clients-go/v2/zebedee"
 	datasetModels "github.com/ONSdigital/dp-dataset-api/models"
 	"github.com/aws/smithy-go/ptr"
@@ -35,7 +34,7 @@ func MapDatasetVersionToDatasetAPI(editionID, datasetID string, pageData zebedee
 		IsMigration:   ptr.Bool(true),
 		Version:       getVersion(pageData.Versions),
 		ReleaseDate:   pageData.Description.ReleaseDate,
-		Type:          clients.DatasetVersionTypeStatic,
+		Type:          datasetModels.Static.String(),
 	}
 
 	if pageData.Description.NationalStatistic {

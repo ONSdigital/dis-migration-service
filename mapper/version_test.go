@@ -37,6 +37,7 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 					So(len(*version.UsageNotes), ShouldEqual, 1)
 					So((*version.UsageNotes)[0].Title, ShouldEqual, "Usage Notes")
 					So((*version.UsageNotes)[0].Note, ShouldEqual, "These are the usage notes for the dataset.")
+					So(version.Type, ShouldEqual, "static")
 				})
 			})
 		})
