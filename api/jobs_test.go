@@ -228,11 +228,11 @@ func TestGetJobs(t *testing.T) {
 		}
 
 		mockService := applicationMock.JobServiceMock{
-			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error) {
 				jobs := testJobs
 				return jobs, len(jobs), nil
 			},
-			GetJobStatesSummaryFunc: func(ctx context.Context) ([]domain.StateSummary, error) {
+			GetJobStatesSummaryFunc: func(ctx context.Context, labelQuery string) ([]domain.StateSummary, error) {
 				return testSummaries, nil
 			},
 		}
@@ -284,6 +284,41 @@ func TestGetJobs(t *testing.T) {
 			})
 		})
 
+		Convey("When a valid request is made with a label filter", func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?label=test", http.NoBody)
+			resp := httptest.NewRecorder()
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then multiple jobs and state summaries are returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				bodyBytes, err := io.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+
+				var jobsResponse JobsListResponse
+				err = json.Unmarshal(bodyBytes, &jobsResponse)
+				So(err, ShouldBeNil)
+
+				expectedResponse := JobsListResponse{
+					Items:  testJobs,
+					States: testSummaries,
+					PaginationFields: PaginationFields{
+						Count:      len(testJobs),
+						Limit:      cfg.DefaultLimit,
+						Offset:     0,
+						TotalCount: len(testJobs),
+					},
+				}
+				So(jobsResponse, ShouldResemble, expectedResponse)
+
+				Convey("And both service methods are called", func() {
+					So(len(mockService.GetJobsCalls()), ShouldEqual, 1)
+					So(mockService.GetJobsCalls()[0].LabelQuery, ShouldResemble, "test")
+					So(len(mockService.GetJobStatesSummaryCalls()), ShouldEqual, 1)
+				})
+			})
+		})
+
 		Convey("When an invalid request is made with a non-integer limit", func() {
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?limit=invalid", http.NoBody)
 			resp := httptest.NewRecorder()
@@ -330,7 +365,7 @@ func TestGetJobs(t *testing.T) {
 		})
 
 		Convey("When a request is made with a single valid state", func() {
-			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error) {
 				jobs := []*domain.Job{testSubmittedJob}
 				return jobs, len(testJobs), nil
 			}
@@ -370,7 +405,7 @@ func TestGetJobs(t *testing.T) {
 		})
 
 		Convey("When a request is made with multiple valid states, using repeated query param", func() {
-			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error) {
 				jobs := []*domain.Job{testSubmittedJob, testApprovedJob}
 				return jobs, len(testJobs), nil
 			}
@@ -410,7 +445,7 @@ func TestGetJobs(t *testing.T) {
 		})
 
 		Convey("When a request is made with multiple valid states, using comma-separated values", func() {
-			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error) {
 				jobs := []*domain.Job{testSubmittedJob, testApprovedJob}
 				return jobs, len(testJobs), nil
 			}
@@ -465,7 +500,7 @@ func TestGetJobs(t *testing.T) {
 		})
 
 		Convey("When a request is made with valid sort parameters", func() {
-			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			mockService.GetJobsFunc = func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error) {
 				return testJobs, len(testJobs), nil
 			}
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:30100/v1/migration-jobs?sort=job_number:asc", http.NoBody)
@@ -536,10 +571,10 @@ func TestGetJobs(t *testing.T) {
 
 	Convey("Given a test API instance and a mocked jobservice that returns no jobs", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error) {
 				return []*domain.Job{}, 0, nil
 			},
-			GetJobStatesSummaryFunc: func(ctx context.Context) ([]domain.StateSummary, error) {
+			GetJobStatesSummaryFunc: func(ctx context.Context, labelQuery string) ([]domain.StateSummary, error) {
 				return []domain.StateSummary{}, nil
 			},
 		}
@@ -593,7 +628,7 @@ func TestGetJobs(t *testing.T) {
 
 	Convey("Given a test API instance and a mocked jobservice that returns an error when calling GetJobs", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error) {
 				return nil, 0, errors.New("database failure")
 			},
 		}
@@ -624,11 +659,11 @@ func TestGetJobs(t *testing.T) {
 
 	Convey("Given a test API instance and a mocked jobservice that returns an error when calling GetJobStatesSummary", t, func() {
 		mockService := applicationMock.JobServiceMock{
-			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error) {
 				jobs := []*domain.Job{{ID: "job1", State: domain.StateSubmitted}}
 				return jobs, len(jobs), nil
 			},
-			GetJobStatesSummaryFunc: func(ctx context.Context) ([]domain.StateSummary, error) {
+			GetJobStatesSummaryFunc: func(ctx context.Context, labelQuery string) ([]domain.StateSummary, error) {
 				return nil, errors.New("summary failure")
 			},
 		}

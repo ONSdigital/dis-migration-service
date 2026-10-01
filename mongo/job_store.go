@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+	"regexp"
 	"time"
 
 	sort "github.com/ONSdigital/dis-migration-service/api/sort"
@@ -46,12 +47,19 @@ func (m *Mongo) GetJob(ctx context.Context, jobNumber int) (*domain.Job, error) 
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (m *Mongo) GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, stateFilter []domain.State, limit, offset int) ([]*domain.Job, int, error) {
+func (m *Mongo) GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, stateFilter []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error) {
 	var results []*domain.Job
 
 	filter := bson.M{}
 	if len(stateFilter) > 0 {
 		filter["state"] = bson.M{"$in": stateFilter}
+	}
+
+	if labelQuery != "" {
+		filter["label"] = bson.M{
+			"$regex":   regexp.QuoteMeta(labelQuery),
+			"$options": "i",
+		}
 	}
 
 	// default to descending
@@ -85,10 +93,23 @@ func (m *Mongo) GetJobs(ctx context.Context, field sort.SortParameterField, dire
 
 // GetJobStateCounts retrieves a summary of job counts by state, sorted by count
 // descending.
-func (m *Mongo) GetJobStateCounts(ctx context.Context) ([]StateCountResult, error) {
+func (m *Mongo) GetJobStateCounts(ctx context.Context, labelQuery string) ([]StateCountResult, error) {
 	var results []StateCountResult
 
-	pipeline := mongo.Pipeline{
+	pipeline := mongo.Pipeline{}
+
+	if labelQuery != "" {
+		pipeline = append(pipeline, bson.D{
+			{Key: "$match", Value: bson.M{
+				"label": bson.M{
+					"$regex":   regexp.QuoteMeta(labelQuery),
+					"$options": "i",
+				},
+			}},
+		})
+	}
+
+	pipeline = append(pipeline, mongo.Pipeline{
 		{
 			{Key: "$group", Value: bson.D{
 				{Key: "_id", Value: "$state"},
@@ -103,7 +124,7 @@ func (m *Mongo) GetJobStateCounts(ctx context.Context) ([]StateCountResult, erro
 				{Key: "_id", Value: 1},    // If counts are equal, sort by state ascending
 			}},
 		},
-	}
+	}...)
 
 	err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollectionTitle)).
 		Aggregate(ctx, pipeline, &results)

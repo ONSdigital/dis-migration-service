@@ -28,6 +28,7 @@ paths:
         - $ref: "#/parameters/offset"
         - $ref: "#/parameters/state"
         - $ref: "#/parameters/sort"
+        - $ref: "#/parameters/label"
       responses:
         200:
           description: "Successful response"
@@ -259,6 +260,12 @@ parameters:
     description: "Unique human-readable identifier for a migration job"
     type: integer
     required: true
+  label:
+    in: query
+    name: label
+    description: "Filter jobs by label"
+    type: string
+    required: false
   limit:
     name: limit
     in: query

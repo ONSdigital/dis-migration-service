@@ -24,8 +24,8 @@ type JobService interface {
 	ClaimJob(ctx context.Context) (*domain.Job, error)
 	UpdateJobState(ctx context.Context, jobNumber int, newState domain.State, userID string) error
 	UpdateJobCollectionID(ctx context.Context, jobNumber int, collectionID string) error
-	GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error)
-	GetJobStatesSummary(ctx context.Context) ([]domain.StateSummary, error)
+	GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error)
+	GetJobStatesSummary(ctx context.Context, labelQuery string) ([]domain.StateSummary, error)
 	GetJobTasks(ctx context.Context, states []domain.State, jobNumber int, limit, offset int) ([]*domain.Task, int, error)
 	CreateTask(ctx context.Context, jobNumber int, task *domain.Task) (*domain.Task, error)
 	UpdateTask(ctx context.Context, task *domain.Task) error
@@ -173,13 +173,13 @@ func (js *jobService) UpdateJobState(ctx context.Context, jobNumber int, newStat
 }
 
 // GetJobs retrieves a list of migration jobs with pagination.
-func (js *jobService) GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit, offset int) ([]*domain.Job, int, error) {
-	return js.store.GetJobs(ctx, field, direction, states, limit, offset)
+func (js *jobService) GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit, offset int) ([]*domain.Job, int, error) {
+	return js.store.GetJobs(ctx, field, direction, states, labelQuery, limit, offset)
 }
 
 // GetJobStatesSummary retrieves a summary of job counts by state.
-func (js *jobService) GetJobStatesSummary(ctx context.Context) ([]domain.StateSummary, error) {
-	jobStateCounts, err := js.store.GetJobStateCounts(ctx)
+func (js *jobService) GetJobStatesSummary(ctx context.Context, labelQuery string) ([]domain.StateSummary, error) {
+	jobStateCounts, err := js.store.GetJobStateCounts(ctx, labelQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get job state counts: %w", err)
 	}

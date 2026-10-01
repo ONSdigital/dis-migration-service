@@ -48,13 +48,13 @@ var _ application.JobService = &JobServiceMock{}
 //			GetJobEventsFunc: func(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Event, int, error) {
 //				panic("mock out the GetJobEvents method")
 //			},
-//			GetJobStatesSummaryFunc: func(ctx context.Context) ([]domain.StateSummary, error) {
+//			GetJobStatesSummaryFunc: func(ctx context.Context, labelQuery string) ([]domain.StateSummary, error) {
 //				panic("mock out the GetJobStatesSummary method")
 //			},
 //			GetJobTasksFunc: func(ctx context.Context, states []domain.State, jobNumber int, limit int, offset int) ([]*domain.Task, int, error) {
 //				panic("mock out the GetJobTasks method")
 //			},
-//			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit int, offset int) ([]*domain.Job, int, error) {
+//			GetJobsFunc: func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit int, offset int) ([]*domain.Job, int, error) {
 //				panic("mock out the GetJobs method")
 //			},
 //			GetNextJobNumberFunc: func(ctx context.Context) (*domain.Counter, error) {
@@ -107,13 +107,13 @@ type JobServiceMock struct {
 	GetJobEventsFunc func(ctx context.Context, jobNumber int, limit int, offset int) ([]*domain.Event, int, error)
 
 	// GetJobStatesSummaryFunc mocks the GetJobStatesSummary method.
-	GetJobStatesSummaryFunc func(ctx context.Context) ([]domain.StateSummary, error)
+	GetJobStatesSummaryFunc func(ctx context.Context, labelQuery string) ([]domain.StateSummary, error)
 
 	// GetJobTasksFunc mocks the GetJobTasks method.
 	GetJobTasksFunc func(ctx context.Context, states []domain.State, jobNumber int, limit int, offset int) ([]*domain.Task, int, error)
 
 	// GetJobsFunc mocks the GetJobs method.
-	GetJobsFunc func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit int, offset int) ([]*domain.Job, int, error)
+	GetJobsFunc func(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit int, offset int) ([]*domain.Job, int, error)
 
 	// GetNextJobNumberFunc mocks the GetNextJobNumber method.
 	GetNextJobNumberFunc func(ctx context.Context) (*domain.Counter, error)
@@ -207,6 +207,8 @@ type JobServiceMock struct {
 		GetJobStatesSummary []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// LabelQuery is the labelQuery argument value.
+			LabelQuery string
 		}
 		// GetJobTasks holds details about calls to the GetJobTasks method.
 		GetJobTasks []struct {
@@ -231,6 +233,8 @@ type JobServiceMock struct {
 			Direction sort.SortParameterDirection
 			// States is the states argument value.
 			States []domain.State
+			// LabelQuery is the labelQuery argument value.
+			LabelQuery string
 			// Limit is the limit argument value.
 			Limit int
 			// Offset is the offset argument value.
@@ -638,19 +642,21 @@ func (mock *JobServiceMock) GetJobEventsCalls() []struct {
 }
 
 // GetJobStatesSummary calls GetJobStatesSummaryFunc.
-func (mock *JobServiceMock) GetJobStatesSummary(ctx context.Context) ([]domain.StateSummary, error) {
+func (mock *JobServiceMock) GetJobStatesSummary(ctx context.Context, labelQuery string) ([]domain.StateSummary, error) {
 	if mock.GetJobStatesSummaryFunc == nil {
 		panic("JobServiceMock.GetJobStatesSummaryFunc: method is nil but JobService.GetJobStatesSummary was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
+		Ctx        context.Context
+		LabelQuery string
 	}{
-		Ctx: ctx,
+		Ctx:        ctx,
+		LabelQuery: labelQuery,
 	}
 	mock.lockGetJobStatesSummary.Lock()
 	mock.calls.GetJobStatesSummary = append(mock.calls.GetJobStatesSummary, callInfo)
 	mock.lockGetJobStatesSummary.Unlock()
-	return mock.GetJobStatesSummaryFunc(ctx)
+	return mock.GetJobStatesSummaryFunc(ctx, labelQuery)
 }
 
 // GetJobStatesSummaryCalls gets all the calls that were made to GetJobStatesSummary.
@@ -658,10 +664,12 @@ func (mock *JobServiceMock) GetJobStatesSummary(ctx context.Context) ([]domain.S
 //
 //	len(mockedJobService.GetJobStatesSummaryCalls())
 func (mock *JobServiceMock) GetJobStatesSummaryCalls() []struct {
-	Ctx context.Context
+	Ctx        context.Context
+	LabelQuery string
 } {
 	var calls []struct {
-		Ctx context.Context
+		Ctx        context.Context
+		LabelQuery string
 	}
 	mock.lockGetJobStatesSummary.RLock()
 	calls = mock.calls.GetJobStatesSummary
@@ -718,29 +726,31 @@ func (mock *JobServiceMock) GetJobTasksCalls() []struct {
 }
 
 // GetJobs calls GetJobsFunc.
-func (mock *JobServiceMock) GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, limit int, offset int) ([]*domain.Job, int, error) {
+func (mock *JobServiceMock) GetJobs(ctx context.Context, field sort.SortParameterField, direction sort.SortParameterDirection, states []domain.State, labelQuery string, limit int, offset int) ([]*domain.Job, int, error) {
 	if mock.GetJobsFunc == nil {
 		panic("JobServiceMock.GetJobsFunc: method is nil but JobService.GetJobs was just called")
 	}
 	callInfo := struct {
-		Ctx       context.Context
-		Field     sort.SortParameterField
-		Direction sort.SortParameterDirection
-		States    []domain.State
-		Limit     int
-		Offset    int
+		Ctx        context.Context
+		Field      sort.SortParameterField
+		Direction  sort.SortParameterDirection
+		States     []domain.State
+		LabelQuery string
+		Limit      int
+		Offset     int
 	}{
-		Ctx:       ctx,
-		Field:     field,
-		Direction: direction,
-		States:    states,
-		Limit:     limit,
-		Offset:    offset,
+		Ctx:        ctx,
+		Field:      field,
+		Direction:  direction,
+		States:     states,
+		LabelQuery: labelQuery,
+		Limit:      limit,
+		Offset:     offset,
 	}
 	mock.lockGetJobs.Lock()
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
 	mock.lockGetJobs.Unlock()
-	return mock.GetJobsFunc(ctx, field, direction, states, limit, offset)
+	return mock.GetJobsFunc(ctx, field, direction, states, labelQuery, limit, offset)
 }
 
 // GetJobsCalls gets all the calls that were made to GetJobs.
@@ -748,20 +758,22 @@ func (mock *JobServiceMock) GetJobs(ctx context.Context, field sort.SortParamete
 //
 //	len(mockedJobService.GetJobsCalls())
 func (mock *JobServiceMock) GetJobsCalls() []struct {
-	Ctx       context.Context
-	Field     sort.SortParameterField
-	Direction sort.SortParameterDirection
-	States    []domain.State
-	Limit     int
-	Offset    int
+	Ctx        context.Context
+	Field      sort.SortParameterField
+	Direction  sort.SortParameterDirection
+	States     []domain.State
+	LabelQuery string
+	Limit      int
+	Offset     int
 } {
 	var calls []struct {
-		Ctx       context.Context
-		Field     sort.SortParameterField
-		Direction sort.SortParameterDirection
-		States    []domain.State
-		Limit     int
-		Offset    int
+		Ctx        context.Context
+		Field      sort.SortParameterField
+		Direction  sort.SortParameterDirection
+		States     []domain.State
+		LabelQuery string
+		Limit      int
+		Offset     int
 	}
 	mock.lockGetJobs.RLock()
 	calls = mock.calls.GetJobs

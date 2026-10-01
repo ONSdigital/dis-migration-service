@@ -248,6 +248,84 @@ Feature: Get list of jobs
         }
         """
 
+    Scenario: Get a list of 2 jobs using label to filter
+      Given the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 3,
+          "label": "Labour Market statistics",
+          "last_updated": "2025-11-19T13:28:00Z",
+          "links": {
+            "self": {
+              "href": "/v1/migration-jobs/3"
+            }
+          },
+          "state": "migrating",
+          "config": {
+            "source_id": "test-source-id",
+            "target_id": "test-target-id",
+            "type": "test-type"
+          }
+        }
+        """
+      And the following document exists in the "jobs" collection:
+        """
+        {
+          "_id": "4874ee9e-1cec-44f8-9b6d-998cf2062791",
+          "job_number": 33,
+          "label": "Retail Sales Index",
+          "last_updated": "2025-11-20T10:15:00Z",
+          "links": {
+            "self": {
+              "href": "/v1/migration-jobs/33"
+            }
+          },
+          "state": "publishing",
+          "config": {
+            "source_id": "another-source-id",
+            "target_id": "another-target-id",
+            "type": "another-type"
+          }
+        }
+        """
+      When I GET "/v1/migration-jobs?label=market"
+      Then I should receive the following JSON response with status "200":
+        """
+        {
+          "count": 1,
+          "items": [
+            {
+              "id": "2874ee9e-1cec-44f8-9b6d-998cf2062791",
+              "job_number": 3,
+              "label": "Labour Market statistics",
+              "last_updated": "2025-11-19T13:28:00Z",
+              "links": {
+                "self": {
+                  "href": "/v1/migration-jobs/3"
+                }
+              },
+              "state": "migrating",
+              "config": {
+                "source_id": "test-source-id",
+                "target_id": "test-target-id",
+                "type": "test-type"
+              }
+            }
+          ],
+          "states": [
+            {
+              "id": "migrating",
+              "label": "Migrating",
+              "count": 1
+            }
+          ],
+          "limit": 10,
+          "offset": 0,
+          "total_count": 1
+        }
+        """
+
     Scenario: Get a list of jobs filtered by a single state
       Given the following document exists in the "jobs" collection:
         """

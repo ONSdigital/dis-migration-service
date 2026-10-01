@@ -108,7 +108,9 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jobs, totalCount, err := api.JobService.GetJobs(ctx, field, direction, states, limit, offset)
+	labelQuery := r.URL.Query().Get(QueryParameterLabel)
+
+	jobs, totalCount, err := api.JobService.GetJobs(ctx, field, direction, states, labelQuery, limit, offset)
 	if err != nil {
 		handleError(ctx, w, r, err)
 		return
@@ -118,7 +120,7 @@ func (api *MigrationAPI) getJobs(w http.ResponseWriter, r *http.Request) {
 		jobs = []*domain.Job{}
 	}
 
-	stateSummaries, err := api.JobService.GetJobStatesSummary(ctx)
+	stateSummaries, err := api.JobService.GetJobStatesSummary(ctx, labelQuery)
 	if err != nil {
 		handleError(ctx, w, r, err)
 		return
