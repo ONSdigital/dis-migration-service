@@ -82,10 +82,6 @@ linters:
         path: _test.go
         text: dot-imports
         source: github.com/smartystreets/goconvey/convey
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
 issues:
   new: false
 formatters:
@@ -97,7 +93,3 @@ formatters:
       simplify: false
   exclusions:
     generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
