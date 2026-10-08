@@ -127,6 +127,7 @@ var (
 	ErrUnauthorized                 = errors.New("unauthorized")
 	ErrSortFieldInvalid             = errors.New("field is invalid in sort parameter")
 	ErrSortDirectionInvalid         = errors.New("direction is invalid in sort parameter")
+	ErrDatasetMigrated              = errors.New("this dataset series has already been migrated")
 
 	ErrSourceIDZebedeeURIInvalid = errors.New("source ID URI path must start with '/', not end with '/', not contain query strings or hashbangs")
 	ErrTargetIDDatasetIDInvalid  = errors.New("target id must be lowercase alphanumeric with optional hyphen separators")
@@ -176,5 +177,6 @@ var (
 		ErrSortDirectionInvalid:         http.StatusBadRequest,
 		ErrUnauthorized:                 http.StatusUnauthorized,
 		ErrFailedToParseAuthEntityData:  http.StatusInternalServerError,
+		ErrDatasetMigrated:              http.StatusBadRequest,
 	}
 )

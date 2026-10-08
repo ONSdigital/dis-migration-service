@@ -69,6 +69,10 @@ func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Contex
 		return "", err
 	}
 
+	if data.Description.MigrationLink != "" {
+		return "", appErrors.ErrDatasetMigrated
+	}
+
 	// Extract and validate title
 	title := strings.TrimSpace(data.Description.Title)
 	if title == "" {

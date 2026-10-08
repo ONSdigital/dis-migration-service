@@ -29,6 +29,7 @@ const (
 	zebedeeEmptyTitlePath   = "/empty-title"
 	zebedeeExistingCollPath = "/economy/existing-collection"
 	zebedeeCheckErrorPath   = "/economy/check-error"
+	zebedeeMigratedPath     = "/economy/migrated"
 
 	datasetErrorID    = "error"
 	datasetNotFoundID = "not-found"
@@ -80,6 +81,14 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 					Type: zebedee.PageTypeDatasetLandingPage,
 					Description: zebedee.Description{
 						Title: testTitle,
+					},
+				}, nil
+			case zebedeeMigratedPath:
+				return zebedee.PageData{
+					Type: zebedee.PageTypeDatasetLandingPage,
+					Description: zebedee.Description{
+						Title:         testTitle,
+						MigrationLink: "/some/migration/link",
 					},
 				}, nil
 			}
@@ -212,6 +221,23 @@ func TestStaticDatasetValidatorWithExternal(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
 				So(err, ShouldEqual, appErrors.ErrSourceExistsInCollection)
+
+				Convey("And the title should be empty", func() {
+					So(title, ShouldEqual, "")
+				})
+			})
+		})
+	})
+
+	Convey("Given a valid zebedee source ID that has already been migrated", t, func() {
+		validator := domain.StaticDatasetValidator{}
+
+		Convey("When the source is validated", func() {
+			title, err := validator.ValidateSourceIDWithExternal(ctx, zebedeeMigratedPath, &mockClientlist, testUserAuthToken)
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err, ShouldEqual, appErrors.ErrDatasetMigrated)
 
 				Convey("And the title should be empty", func() {
 					So(title, ShouldEqual, "")
