@@ -70,6 +70,7 @@ func (v *StaticDatasetValidator) ValidateSourceIDWithExternal(ctx context.Contex
 	}
 
 	if data.Description.MigrationLink != "" {
+		log.Error(ctx, "source dataset already has a migration link", appErrors.ErrDatasetMigrated)
 		return "", appErrors.ErrDatasetMigrated
 	}
 
