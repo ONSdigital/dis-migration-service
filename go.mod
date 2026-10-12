@@ -1,12 +1,12 @@
 module github.com/ONSdigital/dis-migration-service
 
-go 1.26.8
+go 1.27.2
 
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.287.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.36.0
 	github.com/ONSdigital/dp-cache v0.6.1
-	github.com/ONSdigital/dp-component-test v1.4.8
+	github.com/ONSdigital/dp-component-test v1.5.1
 	github.com/ONSdigital/dp-dataset-api v1.125.0
 	github.com/ONSdigital/dp-files-api v1.29.0
 	github.com/ONSdigital/dp-healthcheck v1.6.4
@@ -172,12 +172,12 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
-	golang.org/x/mod v0.38.0 // indirect
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/crypto v0.58.0 // indirect
+	golang.org/x/mod v0.41.0 // indirect
+	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/text v0.43.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688 // indirect
 	google.golang.org/grpc v1.84.0 // indirect
