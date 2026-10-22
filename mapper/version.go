@@ -26,14 +26,25 @@ func MapDatasetVersionToDatasetAPI(editionID, datasetID string, pageData zebedee
 		editionTitle = "Historical"
 	}
 
+	versionNum := getVersion(pageData.Versions)
+	var releaseDate string
+	if versionNum == 1 {
+		releaseDate = pageData.Description.ReleaseDate // If this is version 1 then use the release date from the current release.
+	} else {
+		// If this is not version 1 then use the superseded date from the list of previous versions.
+		// 'ReleaseDate' in this example is actually the date the version was superseded - i.e. the
+		// release date of the *next* version
+		// NB. the version at position 0 will be version 1, then 2, etc.
+		releaseDate = pageData.Versions[versionNum-2].ReleaseDate
+	}
 	version := &datasetModels.Version{
 		DatasetID:     datasetID,
 		Distributions: &distributions,
 		Edition:       editionID,
 		EditionTitle:  editionTitle,
 		IsMigration:   ptr.Bool(true),
-		Version:       getVersion(pageData.Versions),
-		ReleaseDate:   pageData.Description.ReleaseDate,
+		Version:       versionNum,
+		ReleaseDate:   releaseDate,
 		Type:          datasetModels.Static.String(),
 	}
 
