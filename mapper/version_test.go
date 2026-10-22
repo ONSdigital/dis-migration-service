@@ -17,11 +17,12 @@ const (
 
 func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 	Convey("Given a Zebedee dataset version page with edition and series data", t, func() {
-		pageData := getTestDatasetVersionPage()
+		pageData := getTestDatasetVersion1Page()
+		updatedPageData := getTestDatasetVersion2Page()
 		seriesData := getTestDatasetLandingPage()
 		editionData := getTestDatasetEditionPage()
 
-		Convey("When it is mapped to a Dataset API version", func() {
+		Convey("When it is mapped to a Dataset API version 1", func() {
 			version, err := MapDatasetVersionToDatasetAPI(testEditionID, testDatasetID, pageData, seriesData, editionData)
 
 			Convey("Then no error is returned", func() {
@@ -41,10 +42,30 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 				})
 			})
 		})
+		Convey("When it is mapped to a Dataset API version 2", func() {
+			version, err := MapDatasetVersionToDatasetAPI(testEditionID, testDatasetID, updatedPageData, seriesData, editionData)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And the dataset fields are mapped correctly", func() {
+					So(version.Edition, ShouldEqual, testEditionID)
+					So(version.EditionTitle, ShouldEqual, "Test Edition Title")
+					So(version.Version, ShouldEqual, 2)
+					So(*version.IsMigration, ShouldEqual, true)
+					So(version.ReleaseDate, ShouldEqual, "2025-02-02")
+					So(version.UsageNotes, ShouldNotBeNil)
+					So(len(*version.UsageNotes), ShouldEqual, 1)
+					So((*version.UsageNotes)[0].Title, ShouldEqual, "Usage Notes")
+					So((*version.UsageNotes)[0].Note, ShouldEqual, "These are the usage notes for the dataset.")
+					So(version.Type, ShouldEqual, "static")
+				})
+			})
+		})
 	})
 
 	Convey("Given a Zebedee dataset version page with a national statistics designation", t, func() {
-		pageData := getTestDatasetVersionPage()
+		pageData := getTestDatasetVersion1Page()
 		seriesData := getTestDatasetLandingPage()
 		editionData := getTestDatasetEditionPage()
 
@@ -64,7 +85,7 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 	})
 
 	Convey("Given a Zebedee dataset version page with multiple versions and a correction notice on the edition", t, func() {
-		pageData := getTestDatasetVersionPage()
+		pageData := getTestDatasetVersion1Page()
 		seriesData := getTestDatasetLandingPage()
 		editionData := getTestDatasetEditionPage()
 
@@ -115,7 +136,7 @@ func TestMapDatasetVersionToDatasetAPI(t *testing.T) {
 	})
 
 	Convey("Given a Zebedee dataset version page where the edition title is 'Current'", t, func() {
-		pageData := getTestDatasetVersionPage()
+		pageData := getTestDatasetVersion1Page()
 		seriesData := getTestDatasetLandingPage()
 		editionData := getTestDatasetEditionPage()
 		pageData.Description.Edition = testEditionCurrent
@@ -153,7 +174,7 @@ func TestCreateDatasetVersionLink(t *testing.T) {
 	})
 }
 
-func getTestDatasetVersionPage() zebedee.Dataset {
+func getTestDatasetVersion1Page() zebedee.Dataset {
 	return zebedee.Dataset{
 		Type: zebedee.PageTypeDataset,
 		Description: zebedee.Description{
@@ -170,6 +191,32 @@ func getTestDatasetVersionPage() zebedee.Dataset {
 			ReleaseDate: "2024-01-01",
 		},
 		Versions: []zebedee.Version{},
+	}
+}
+
+func getTestDatasetVersion2Page() zebedee.Dataset {
+	versionUpdateDetails := zebedee.Version{
+		ReleaseDate: "2025-02-02",
+	}
+	versions := make([]zebedee.Version, 1)
+	versions[0] = versionUpdateDetails
+
+	return zebedee.Dataset{
+		Type: zebedee.PageTypeDataset,
+		Description: zebedee.Description{
+			Title:   "Test Version Title",
+			Edition: "Test Edition Title",
+			Summary: "This is a summary of the test dataset.",
+			Contact: zebedee.Contact{
+				Name:      "John Doe",
+				Email:     "john.doe@example.com",
+				Telephone: "123-456-7890",
+			},
+			Keywords:    []string{"test", "dataset", "sample"},
+			NextRelease: "2024-12-31",
+			ReleaseDate: "2024-01-01",
+		},
+		Versions: versions,
 	}
 }
 
