@@ -123,12 +123,13 @@ func checkDatasetIDDoesNotExist(ctx context.Context, client datasetSDK.Clienter,
 }
 
 func checkSourceIDExistsInCollections(ctx context.Context, client zebedee.Clienter, uri, userAuthToken string) error {
-	_, exists, err := client.CheckCollectionsForURI(ctx, userAuthToken, uri)
+	nameCol, exists, err := client.CheckCollectionsForURI(ctx, userAuthToken, uri)
 	if err != nil {
 		log.Error(ctx, "failed to validate zebedee URI in existing collection", err)
 		return appErrors.ErrSourceIDValidation
 	}
 	if exists {
+		log.Error(ctx, "the source ID is already being used in another collection", appErrors.ErrSourceExistsInCollection, log.Data{"name of blocking collection": nameCol})
 		return appErrors.ErrSourceExistsInCollection
 	}
 	return nil
